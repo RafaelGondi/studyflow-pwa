@@ -1,5 +1,6 @@
 <template>
   <div class="max-w-lg mx-auto relative">
+    <UpdateBanner />
     <Transition name="page" mode="out-in">
       <RouterView v-if="authStore.ready" :key="route.path" />
       <div v-else class="min-h-screen flex flex-col items-center justify-center gap-4">
@@ -20,6 +21,7 @@ import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useThemeStore } from '@/stores/theme'
 import BottomNav from '@/components/layout/BottomNav.vue'
+import UpdateBanner from '@/components/ui/UpdateBanner.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
