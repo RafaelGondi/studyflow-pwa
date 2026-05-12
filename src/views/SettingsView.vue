@@ -7,31 +7,52 @@
 
     <main class="flex-1 px-4 pb-28 space-y-2">
 
-      <!-- Instalar -->
-      <template v-if="isInstallable && !isInstalled">
-        <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1 pt-2 pb-1">Aplicativo</p>
-        <div class="bg-app-card rounded-md overflow-hidden">
-          <button
-            @click="install()"
-            class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors"
-          >
-            <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
-              <svg class="w-[18px] h-[18px] text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </div>
-            <div class="flex-1 text-left">
-              <p class="text-sm font-semibold text-primary">Instalar aplicativo</p>
-              <p class="text-xs text-muted">Adicionar à tela inicial</p>
-            </div>
-            <svg class="w-4 h-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"/>
+      <!-- Aplicativo -->
+      <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1 pt-2 pb-1">Aplicativo</p>
+      <div class="bg-app-card rounded-md overflow-hidden divide-y divide-app-border">
+
+        <!-- Instalar -->
+        <button
+          v-if="isInstallable && !isInstalled"
+          @click="install()"
+          class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors"
+        >
+          <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
+            <svg class="w-[18px] h-[18px] text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-          </button>
-        </div>
-      </template>
+          </div>
+          <div class="flex-1 text-left">
+            <p class="text-sm font-semibold text-primary">Instalar aplicativo</p>
+            <p class="text-xs text-muted">Adicionar à tela inicial</p>
+          </div>
+          <svg class="w-4 h-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+
+        <!-- Atualizar -->
+        <button
+          @click="handleUpdate"
+          :disabled="updating"
+          class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors disabled:opacity-50"
+        >
+          <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
+            <svg class="w-[18px] h-[18px] text-accent" :class="{ 'animate-spin': updating }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+          </div>
+          <div class="flex-1 text-left">
+            <p class="text-sm font-semibold text-primary">{{ hasUpdate ? 'Atualização disponível' : 'Verificar atualização' }}</p>
+            <p class="text-xs text-muted">{{ updating ? 'Aplicando…' : hasUpdate ? 'Toque para reiniciar' : 'Versão atual instalada' }}</p>
+          </div>
+          <span v-if="hasUpdate" class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+        </button>
+
+      </div>
 
       <!-- Aparência -->
       <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1 pt-2 pb-1">Aparência</p>
@@ -68,9 +89,27 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useThemeStore } from '@/stores/theme'
 import { usePwaInstall } from '@/composables/usePwaInstall'
+import { usePwaUpdate } from '@/composables/usePwaUpdate'
 
 const theme = useThemeStore()
 const { isInstallable, isInstalled, install } = usePwaInstall()
+const { hasUpdate, setup, checkForUpdate, applyUpdate } = usePwaUpdate()
+
+const updating = ref(false)
+
+onMounted(setup)
+
+async function handleUpdate() {
+  if (hasUpdate.value) {
+    updating.value = true
+    applyUpdate()
+  } else {
+    updating.value = true
+    await checkForUpdate()
+    updating.value = false
+  }
+}
 </script>

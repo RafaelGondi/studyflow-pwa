@@ -1,7 +1,7 @@
 <template>
   <Transition name="slide-banner">
     <div
-      v-if="show"
+      v-if="hasUpdate && show"
       class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 py-3 max-w-lg mx-auto"
       style="background: linear-gradient(135deg, #44403c, #292524); box-shadow: 0 4px 20px #44403c50"
     >
@@ -32,44 +32,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { usePwaUpdate } from '@/composables/usePwaUpdate'
 
-const show = ref(false)
+const { hasUpdate, setup, applyUpdate: triggerUpdate } = usePwaUpdate()
+const show = ref(true)
 const updating = ref(false)
-let waitingWorker: ServiceWorker | null = null
 
-onMounted(() => {
-  if (!('serviceWorker' in navigator)) return
+onMounted(setup)
 
-  navigator.serviceWorker.ready.then(reg => {
-    // Already a waiting SW on load?
-    if (reg.waiting) {
-      waitingWorker = reg.waiting
-      show.value = true
-    }
-
-    // New SW found while page is open
-    reg.addEventListener('updatefound', () => {
-      const newWorker = reg.installing
-      if (!newWorker) return
-      newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          waitingWorker = newWorker
-          show.value = true
-        }
-      })
-    })
-  })
-
-  // When SW takes control, reload
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload()
-  })
-})
-
-async function applyUpdate() {
-  if (!waitingWorker) return
+function applyUpdate() {
   updating.value = true
-  waitingWorker.postMessage({ type: 'SKIP_WAITING' })
+  triggerUpdate()
 }
 </script>
 
