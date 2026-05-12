@@ -8,7 +8,6 @@ import {
   linkWithRedirect,
   signInWithRedirect,
   getRedirectResult,
-  signInWithCredential,
 } from 'firebase/auth'
 
 const firebaseConfig = {
@@ -27,7 +26,6 @@ export const auth = getAuth(app)
 export {
   GoogleAuthProvider,
   linkWithRedirect, signInWithRedirect, getRedirectResult,
-  signInWithCredential,
   fbSignOut,
 }
 
