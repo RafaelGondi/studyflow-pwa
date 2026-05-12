@@ -14,12 +14,12 @@
     <div class="grid grid-cols-2 gap-2 px-4 pb-3">
       <div class="rounded-xl bg-app-card p-3 flex flex-col gap-0.5">
         <span class="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">📚 Estudo</span>
-        <span class="font-mono text-xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
+        <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
       </div>
       <div class="rounded-xl bg-app-card p-3 flex flex-col gap-0.5">
         <span class="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">☕ Pausa</span>
-        <span class="font-mono text-xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
+        <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
       </div>
     </div>
@@ -43,7 +43,7 @@
           <div class="rounded-xl bg-app-card p-5 text-center space-y-4">
             <div>
               <p class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider mb-1">☕ Em pausa</p>
-              <span class="font-mono text-5xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
+              <span class="font-sans text-5xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
             </div>
             <p class="text-xs text-muted">Descanse um pouco.</p>
             <div class="flex gap-2">
@@ -107,7 +107,7 @@
             <!-- Timer display -->
             <div class="text-center py-1">
               <div
-                class="font-mono text-6xl font-bold tabular-nums leading-none"
+                class="font-sans text-6xl font-bold tabular-nums leading-none"
                 :style="{ color: activeSubject?.color ?? '#3b82f6' }"
               >
                 {{ timerStore.studyFormatted }}
