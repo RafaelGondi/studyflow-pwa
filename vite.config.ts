@@ -38,6 +38,9 @@ export default defineConfig({
       },
     }),
   ],
+  css: {
+    postcss: { plugins: [] }, // @tailwindcss/vite handles CSS — disable PostCSS to avoid double-processing
+  },
   resolve: {
     alias: { '@': '/src' },
   },
