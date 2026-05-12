@@ -13,12 +13,12 @@
     <!-- Dual stats bar -->
     <div class="grid grid-cols-2 gap-2 px-4 pb-3">
       <div class="rounded-xl bg-app-card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">📚 Estudo</span>
+        <span class="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">Estudo</span>
         <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
       </div>
       <div class="rounded-xl bg-app-card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">☕ Pausa</span>
+        <span class="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">Pausa</span>
         <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
       </div>
