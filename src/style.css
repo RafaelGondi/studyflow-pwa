@@ -1,143 +1,108 @@
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
-@import "tailwindcss";
 
-/* ── Dark mode via .dark class ─────────────────────────────── */
-@custom-variant dark (&:where(.dark, .dark *));
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* ── Design tokens ─────────────────────────────────────────── */
-@theme inline {
-  /* Structural colors — resolved at runtime from CSS vars */
-  --color-app-bg:       var(--app-bg);
-  --color-app-card:     var(--app-card);
-  --color-app-elevated: var(--app-elevated);
-  --color-app-border:   var(--app-border);
+@layer base {
+  /* ── Light theme ──────────────────────────────── */
+  :root {
+    color-scheme: light;
+    /* RGB triplets for Tailwind opacity support */
+    --app-bg:       242 239 247;   /* mauve-100 approx */
+    --app-card:     255 255 255;   /* white */
+    --app-elevated: 232 227 242;   /* mauve-200 approx */
+    --app-border:   214 207 232;   /* mauve-300 approx */
+    --text-primary:   oklch(14.5% 0.008 326);  /* mauve-950 */
+    --text-secondary: oklch(26.3% 0.024 320.12); /* mauve-800 */
+    --text-muted:     oklch(43.5% 0.029 321.78); /* mauve-600 */
+    --text-faint:     oklch(71.1% 0.019 323.02); /* mauve-400 */
+    --accent-color:   oklch(43.5% 0.029 321.78); /* mauve-600 */
+  }
 
-  /* Text colors */
-  --color-primary:   var(--text-primary);
-  --color-secondary: var(--text-secondary);
-  --color-muted:     var(--text-muted);
-  --color-faint:     var(--text-faint);
+  /* ── Dark theme ───────────────────────────────── */
+  .dark {
+    color-scheme: dark;
+    --app-bg:       30  25  42;    /* mauve-950 approx */
+    --app-card:     40  33  55;    /* mauve-900 approx */
+    --app-elevated: 55  46  72;    /* mauve-800 approx */
+    --app-border:   80  68  100;   /* mauve-700 approx */
+    --text-primary:   oklch(98.5% 0 0);           /* mauve-50 */
+    --text-secondary: oklch(92.2% 0.005 325.62);  /* mauve-200 */
+    --text-muted:     oklch(71.1% 0.019 323.02);  /* mauve-400 */
+    --text-faint:     oklch(54.2% 0.034 322.5);   /* mauve-500 */
+    --accent-color:   oklch(86.5% 0.012 325.68);  /* mauve-300 */
+  }
 
-  /* Accent */
-  --color-accent: var(--accent-color);
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
 
-  /* Fonts */
-  --font-sans: 'Satoshi', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  html {
+    background-color: oklch(14.5% 0.008 326); /* mauve-950 */
+    overscroll-behavior: none;
+  }
 
-  /* Animations */
-  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-spin-slow:  spin 3s linear infinite;
+  body {
+    @apply bg-app-bg font-sans antialiased;
+    color: var(--text-primary);
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pt-safe-top    { padding-top: env(safe-area-inset-top, 0px); }
+  .pb-safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pb-safe        { padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px); }
+
+  ::-webkit-scrollbar       { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: oklch(36.4% 0.029 323.89); border-radius: 2px; }
+
+  *:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+  }
 }
 
-/* ── Light theme ───────────────────────────────────────────── */
-:root {
-  color-scheme: light;
-  --app-bg:       var(--color-mauve-100);
-  --app-card:     var(--color-mauve-50);
-  --app-elevated: var(--color-mauve-200);
-  --app-border:   var(--color-mauve-300);
-  --text-primary:   var(--color-mauve-950);
-  --text-secondary: var(--color-mauve-800);
-  --text-muted:     var(--color-mauve-600);
-  --text-faint:     var(--color-mauve-400);
-  --accent-color:   var(--color-mauve-600);
+@layer components {
+  .placeholder-faint::placeholder { color: var(--text-faint); }
+
+  .card {
+    @apply bg-app-card border border-app-border rounded-2xl;
+  }
+
+  .btn-primary {
+    @apply text-white font-semibold rounded-xl px-4 py-2.5 transition-all duration-200 active:scale-95;
+    background-color: var(--accent-color);
+  }
+
+  .input {
+    @apply bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-primary placeholder-faint
+           focus:outline-none transition-colors w-full;
+  }
+
+  .tab-active   { @apply text-white; background-color: var(--accent-color); }
+  .tab-inactive { @apply text-muted hover:text-secondary; }
 }
 
-/* ── Dark theme ────────────────────────────────────────────── */
-.dark {
-  color-scheme: dark;
-  --app-bg:       var(--color-mauve-950);
-  --app-card:     var(--color-mauve-900);
-  --app-elevated: var(--color-mauve-800);
-  --app-border:   var(--color-mauve-700);
-  --text-primary:   var(--color-mauve-50);
-  --text-secondary: var(--color-mauve-200);
-  --text-muted:     var(--color-mauve-400);
-  --text-faint:     var(--color-mauve-600);
-  --accent-color:   var(--color-mauve-300);
-}
-
-/* ── Base styles ───────────────────────────────────────────── */
-* {
-  -webkit-tap-highlight-color: transparent;
-  box-sizing: border-box;
-}
-
-html {
-  background-color: var(--color-mauve-950);
-  overscroll-behavior: none;
-}
-
-body {
-  @apply bg-app-bg font-sans antialiased;
-  color: var(--text-primary);
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Safe area insets for PWA */
-.pt-safe-top    { padding-top: env(safe-area-inset-top, 0px); }
-.pb-safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
-.pb-safe        { padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px); }
-
-/* Scrollbar */
-::-webkit-scrollbar       { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-mauve-800); border-radius: 2px; }
-
-/* Focus */
-*:focus-visible {
-  outline: 2px solid var(--accent-color);
-  outline-offset: 2px;
-}
-
-/* ── Component styles ──────────────────────────────────────── */
-.placeholder-faint::placeholder { color: var(--text-faint); }
-
-.card {
-  @apply bg-app-card border border-app-border rounded-2xl;
-}
-
-.btn-primary {
-  @apply text-white font-semibold rounded-xl px-4 py-2.5 transition-all duration-200 active:scale-95;
-  background-color: var(--accent-color);
-}
-
-.input {
-  @apply bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-primary placeholder-faint
-         focus:outline-none transition-colors w-full;
-}
-
-.tab-active   { @apply text-white; background-color: var(--accent-color); }
-.tab-inactive { @apply text-muted hover:text-secondary; }
-
-/* ── Accent utilities ──────────────────────────────────────── */
 @layer utilities {
-  .bg-accent       { background-color: var(--accent-color); }
-  .bg-accent\/15   { background-color: color-mix(in oklch, var(--accent-color) 15%, transparent); }
-  .bg-accent\/20   { background-color: color-mix(in oklch, var(--accent-color) 20%, transparent); }
-  .bg-accent\/30   { background-color: color-mix(in oklch, var(--accent-color) 30%, transparent); }
-  .bg-accent\/50   { background-color: color-mix(in oklch, var(--accent-color) 50%, transparent); }
-  .text-accent     { color: var(--accent-color); }
-  .text-accent\/70 { color: color-mix(in oklch, var(--accent-color) 70%, transparent); }
-  .text-accent\/80 { color: color-mix(in oklch, var(--accent-color) 80%, transparent); }
-  .border-accent   { border-color: var(--accent-color); }
+  .bg-accent        { background-color: var(--accent-color); }
+  .bg-accent\/15    { background-color: color-mix(in oklch, var(--accent-color) 15%, transparent); }
+  .bg-accent\/20    { background-color: color-mix(in oklch, var(--accent-color) 20%, transparent); }
+  .bg-accent\/30    { background-color: color-mix(in oklch, var(--accent-color) 30%, transparent); }
+  .bg-accent\/50    { background-color: color-mix(in oklch, var(--accent-color) 50%, transparent); }
+  .text-accent      { color: var(--accent-color); }
+  .text-accent\/70  { color: color-mix(in oklch, var(--accent-color) 70%, transparent); }
+  .text-accent\/80  { color: color-mix(in oklch, var(--accent-color) 80%, transparent); }
+  .border-accent    { border-color: var(--accent-color); }
   .border-accent\/50 { border-color: color-mix(in oklch, var(--accent-color) 50%, transparent); }
   .hover\:bg-accent\/80:hover { background-color: color-mix(in oklch, var(--accent-color) 80%, transparent); }
 }
 
-/* ── Page transitions ──────────────────────────────────────── */
+/* Page transitions */
 .page-enter-active,
-.page-leave-active {
-  transition: all 0.25s ease;
-}
-.page-enter-from {
-  opacity: 0;
-  transform: translateX(12px);
-}
-.page-leave-to {
-  opacity: 0;
-  transform: translateX(-12px);
-}
+.page-leave-active { transition: all 0.25s ease; }
+.page-enter-from   { opacity: 0; transform: translateX(12px); }
+.page-leave-to     { opacity: 0; transform: translateX(-12px); }
