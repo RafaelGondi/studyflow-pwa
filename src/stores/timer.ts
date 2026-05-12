@@ -55,7 +55,7 @@ export const useTimerStore = defineStore('timer', () => {
   const studyElapsedMs = computed(() => {
     if (state.value.mode === 'idle' || state.value.mode === 'break') return 0
     if (state.value.mode === 'paused') return state.value.accumulatedMs
-    return state.value.accumulatedMs + (now.value - state.value.startedAt)
+    return state.value.accumulatedMs + Math.max(0, now.value - state.value.startedAt)
   })
   const studyElapsedSeconds = computed(() => Math.floor(studyElapsedMs.value / 1000))
   const studyFormatted = computed(() => formatTimer(studyElapsedSeconds.value))
@@ -82,6 +82,7 @@ export const useTimerStore = defineStore('timer', () => {
       state.value.breakStartedAt = null
     }
     const now_ = Date.now()
+    now.value = now_
     state.value.mode = 'study'
     state.value.subjectId = subjectId
     state.value.originalStartedAt = now_
@@ -104,7 +105,9 @@ export const useTimerStore = defineStore('timer', () => {
 
   function resume() {
     if (state.value.mode !== 'paused') return
-    state.value.startedAt = Date.now()
+    const now_ = Date.now()
+    now.value = now_
+    state.value.startedAt = now_
     state.value.mode = 'study'
     startTick()
     save()
