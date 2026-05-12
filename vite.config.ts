@@ -1,11 +1,9 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
-import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [
-    tailwindcss(),
     vue(),
     VitePWA({
       registerType: 'prompt',
@@ -38,9 +36,6 @@ export default defineConfig({
       },
     }),
   ],
-  css: {
-    postcss: { plugins: [] }, // @tailwindcss/vite handles CSS — disable PostCSS to avoid double-processing
-  },
   resolve: {
     alias: { '@': '/src' },
   },
