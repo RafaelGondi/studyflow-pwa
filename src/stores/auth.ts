@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import {
   onAuthStateChanged,
   signInAnonymously,
@@ -20,42 +20,44 @@ export const useAuthStore = defineStore('auth', () => {
   const signingIn   = ref(false)
   const signInError = ref<string | null>(null)
 
-  // Snapshot reativo do Firebase User — atualizado via onAuthStateChanged
-  const firebaseUser = ref<User | null>(null)
+  // Refs primitivos — Vue detecta mudanças mesmo que o objeto User
+  // seja a mesma referência (o que acontece após linkWithRedirect).
+  const isAnonymous = ref(true)
+  const displayName = ref<string | null>(null)
+  const email       = ref<string | null>(null)
+  const photoURL    = ref<string | null>(null)
 
-  const isAnonymous = computed(() => firebaseUser.value?.isAnonymous ?? true)
-  const displayName = computed(() => firebaseUser.value?.displayName ?? null)
-  const email       = computed(() => firebaseUser.value?.email ?? null)
-  const photoURL    = computed(() => firebaseUser.value?.photoURL ?? null)
-
-  onAuthStateChanged(auth, (user) => {
-    firebaseUser.value = user
+  function syncUser(user: User | null) {
+    isAnonymous.value = user?.isAnonymous ?? true
+    displayName.value = user?.displayName  ?? null
+    email.value       = user?.email        ?? null
+    photoURL.value    = user?.photoURL     ?? null
     if (user) uid.value = user.uid
-  })
+  }
+
+  // Mantém os refs em sincronia quando o Firebase muda o estado de auth
+  // (login, logout, token refresh, etc.)
+  onAuthStateChanged(auth, syncUser)
 
   // ── Init ──────────────────────────────────────────────────────────────────
-  // Chamado uma vez no mount do App. Também processa o resultado de redirect
-  // do Google (quando o usuário volta da página de autenticação).
   async function init() {
-    // 1. Processa resultado de redirect ANTES de qualquer outra coisa.
-    //    Quando vem de linkWithRedirect, o Firebase já completou o link —
-    //    authStateReady() irá ver o usuário Google.
+    // 1. Processa resultado de redirect (retorno do Google).
     try {
       const result = await getRedirectResult(auth)
       if (result) {
-        // Redirect completou com sucesso — uid já foi atualizado pelo
-        // onAuthStateChanged, mas garantimos o localStorage aqui também.
+        syncUser(result.user)
         localStorage.setItem(UID_KEY, result.user.uid)
         signingIn.value = false
       }
     } catch (err: any) {
       signingIn.value = false
-      // credential-already-in-use: conta Google já existe → faz sign-in
       if (err.code === 'auth/credential-already-in-use') {
+        // Conta Google já existe no Firebase → faz sign-in com a credencial
         const credential = GoogleAuthProvider.credentialFromError(err)
         if (credential) {
           try {
             const result = await signInWithCredential(auth, credential)
+            syncUser(result.user)
             localStorage.setItem(UID_KEY, result.user.uid)
           } catch (e) {
             console.error('[StudyFlow] credential sign-in error:', e)
@@ -74,6 +76,11 @@ export const useAuthStore = defineStore('auth', () => {
     // 2. Garante que existe um usuário (anônimo ou Google).
     const previousUid = localStorage.getItem(UID_KEY)
     uid.value = await ensureAuth()
+
+    // 3. Sync explícito após authStateReady — garante que os refs refletem
+    //    o estado final mesmo se onAuthStateChanged chegou antes do sync.
+    syncUser(auth.currentUser)
+
     ready.value = true
 
     if (previousUid && previousUid !== uid.value) {
@@ -82,11 +89,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // ── Google Sign-In via Redirect ───────────────────────────────────────────
-  // Redireciona para o Google. Quando volta, init() processa o resultado.
-  // linkWithRedirect: mantém o UID anônimo → dados preservados ✓
   async function signInWithGoogle() {
     signInError.value = null
-    signingIn.value = true          // persiste no localStorage via sessionStorage do Firebase
+    signingIn.value = true
 
     const provider = new GoogleAuthProvider()
     provider.setCustomParameters({ prompt: 'select_account' })
@@ -97,7 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
       } else {
         await signInWithRedirect(auth, provider)
       }
-      // A partir daqui a página redireciona — código abaixo não executa.
+      // Página redireciona — código abaixo não executa.
     } catch (err: any) {
       signingIn.value = false
       signInError.value = 'Erro ao iniciar login. Tente novamente.'
@@ -110,7 +115,7 @@ export const useAuthStore = defineStore('auth', () => {
     await fbSignOut(auth)
     localStorage.removeItem(UID_KEY)
     const cred = await signInAnonymously(auth)
-    uid.value = cred.user.uid
+    syncUser(cred.user)
     localStorage.setItem(UID_KEY, cred.user.uid)
   }
 
