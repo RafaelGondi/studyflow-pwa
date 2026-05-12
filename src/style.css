@@ -9,31 +9,31 @@
   /* ── Light theme (default) ──────────────────────── */
   :root {
     color-scheme: light;
-    --app-bg:       245 245 244;   /* stone-100 */
+    --app-bg:       250 249 251;   /* mauve-2 */
     --app-card:     255 255 255;   /* white */
-    --app-elevated: 231 229 228;   /* stone-200 */
-    --app-border:   214 211 209;   /* stone-300 */
-    --text-primary:   #1c1917;     /* stone-900 */
-    --text-secondary: #44403c;     /* stone-700 */
-    --text-muted:     #78716c;     /* stone-500 */
-    --text-faint:     #a8a29e;     /* stone-400 */
-    --color-accent:     68 64 60;  /* stone-700 */
-    --color-accent-hex: #44403c;
+    --app-elevated: 242 239 243;   /* mauve-3 */
+    --app-border:   227 223 230;   /* mauve-5 */
+    --text-primary:   #211f26;     /* mauve-12 */
+    --text-secondary: #65636d;     /* mauve-11 */
+    --text-muted:     #8e8c99;     /* mauve-9 */
+    --text-faint:     #bcbac7;     /* mauve-8 */
+    --color-accent:     126 94 166;  /* mauve accent */
+    --color-accent-hex: #7e5ea6;
   }
 
   /* ── Dark theme ─────────────────────────────────── */
   .dark {
     color-scheme: dark;
-    --app-bg:       12  10  9;     /* stone-950 */
-    --app-card:     28  25  23;    /* stone-900 */
-    --app-elevated: 41  37  36;    /* stone-800 */
-    --app-border:   68  64  60;    /* stone-700 */
-    --text-primary:   #fafaf9;     /* stone-50 */
-    --text-secondary: #d6d3d1;     /* stone-300 */
-    --text-muted:     #78716c;     /* stone-500 */
-    --text-faint:     #57534e;     /* stone-600 */
-    --color-accent:     214 211 209; /* stone-300 */
-    --color-accent-hex: #d6d3d1;
+    --app-bg:       22  21  26;    /* mauve dark-1 */
+    --app-card:     28  27  33;    /* mauve dark-2 */
+    --app-elevated: 38  37  44;    /* mauve dark-3 */
+    --app-border:   58  57  66;    /* mauve dark-5 */
+    --text-primary:   #eeeef0;     /* mauve dark-12 */
+    --text-secondary: #c2c0cb;     /* mauve dark-11 */
+    --text-muted:     #908e99;     /* mauve dark-9 */
+    --text-faint:     #7d7c86;     /* mauve dark-8 */
+    --color-accent:     196 174 226; /* mauve accent light */
+    --color-accent-hex: #c4aee2;
   }
 
   * {
@@ -42,7 +42,7 @@
   }
 
   html {
-    background-color: #0c0a09;
+    background-color: #16151a;
     overscroll-behavior: none;
   }
 
@@ -61,7 +61,7 @@
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #292524; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb { background: #38373d; border-radius: 2px; }
 
   /* Focus */
   *:focus-visible {
