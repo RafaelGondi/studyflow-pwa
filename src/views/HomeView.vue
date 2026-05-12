@@ -29,40 +29,41 @@
 
     <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-3">
 
-      <!-- ── IDLE: subject selector ─────────────────────────── -->
+      <!-- ── IDLE ───────────────────────────────────────────── -->
       <Transition name="fade" mode="out-in">
-        <div v-if="timerStore.mode === 'idle'" key="idle" class="space-y-3">
-          <SubjectSelector :selected="selectedSubjectId" @select="handleSelect" />
-          <Transition name="slide-up">
-            <button
-              v-if="selectedSubjectId"
-              @click="timerStore.startStudy(selectedSubjectId!)"
-              class="w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-95"
-              :style="{ background: selectedSubject?.color ?? '#3b82f6' }"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-              Iniciar Estudo
-            </button>
-          </Transition>
+        <div v-if="timerStore.mode === 'idle'" key="idle">
+          <button
+            @click="sheetOpen = true"
+            class="w-full py-4 rounded-xl bg-blue-500 font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-95"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            Iniciar Estudo
+          </button>
         </div>
 
         <!-- ── BREAK mode ─────────────────────────────────────── -->
-        <div v-else-if="timerStore.mode === 'break'" key="break" class="space-y-3">
+        <div v-else-if="timerStore.mode === 'break'" key="break">
           <div class="rounded-xl bg-app-card p-5 text-center space-y-4">
             <div>
               <p class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider mb-1">☕ Em pausa</p>
               <span class="font-mono text-5xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
             </div>
-            <p class="text-xs text-muted">Descanse um pouco. Clique em Estudo quando quiser voltar.</p>
+            <p class="text-xs text-muted">Descanse um pouco.</p>
             <div class="flex gap-2">
               <button
-                v-if="selectedSubjectId || lastSubjectId"
-                @click="timerStore.startStudy(selectedSubjectId ?? lastSubjectId!)"
+                v-if="lastSubjectId"
+                @click="timerStore.startStudy(lastSubjectId!)"
                 class="flex-1 py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
                 style="background: #3b82f6"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-                Voltar ao Estudo
+                Continuar
+              </button>
+              <button
+                @click="sheetOpen = true"
+                class="flex-1 py-3 rounded-xl bg-app-elevated text-primary text-sm font-semibold active:scale-95 transition-all"
+              >
+                Trocar matéria
               </button>
               <button
                 @click="timerStore.stop(); loadToday()"
@@ -72,17 +73,18 @@
               </button>
             </div>
           </div>
-          <SubjectSelector :selected="selectedSubjectId ?? lastSubjectId" @select="handleSelect" />
         </div>
 
         <!-- ── STUDY / PAUSED ─────────────────────────────────── -->
-        <div v-else key="active" class="space-y-3">
-          <!-- Active subject + timer -->
+        <div v-else key="active">
           <div class="rounded-xl bg-app-card p-4 space-y-4">
 
             <!-- Subject row -->
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 bg-app-elevated">
+              <div
+                class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
+                :style="{ background: `${activeSubject?.color ?? '#3b82f6'}18` }"
+              >
                 {{ activeSubject?.icon ?? '📚' }}
               </div>
               <div class="flex-1 min-w-0">
@@ -98,7 +100,7 @@
                 </div>
               </div>
               <button
-                @click="showSubjectPicker = !showSubjectPicker"
+                @click="sheetOpen = true"
                 class="text-xs text-muted px-2 py-1 rounded-lg bg-app-elevated transition-colors"
               >
                 trocar
@@ -149,13 +151,6 @@
               </button>
             </div>
           </div>
-
-          <!-- Subject picker (expandable) -->
-          <Transition name="slide-up">
-            <div v-if="showSubjectPicker">
-              <SubjectSelector :selected="timerStore.activeSubjectId" @select="switchSubject" />
-            </div>
-          </Transition>
         </div>
       </Transition>
 
@@ -183,10 +178,17 @@
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.subjectId)?.name ?? 'Matéria' }}</p>
-              <p class="text-[10px] text-muted mt-0.5">
-                {{ fmt(item.startTime) }} → {{ fmt(item.endTime) }}
-                <span v-if="pausedTime(item) > 0" class="text-amber-500"> · ⏸ {{ formatDuration(pausedTime(item)) }}</span>
-              </p>
+              <div class="text-[10px] text-muted mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5">
+                <template v-if="item.segments?.length > 1">
+                  <template v-for="(seg, i) in item.segments" :key="i">
+                    <span>{{ fmt(seg.start) }} → {{ fmt(seg.end) }}</span>
+                    <span v-if="i < item.segments.length - 1" class="text-amber-500">
+                      ⏸ {{ formatDuration(Math.round((item.segments[i+1].start - seg.end) / 1000)) }}
+                    </span>
+                  </template>
+                </template>
+                <span v-else>{{ fmt(item.startTime) }} → {{ fmt(item.endTime) }}</span>
+              </div>
             </div>
             <span class="text-sm font-bold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? '#3b82f6' }">
               {{ formatDuration(item.duration) }}
@@ -196,6 +198,12 @@
       </div>
 
     </main>
+
+    <SubjectBottomSheet
+      v-model="sheetOpen"
+      :active-id="timerStore.activeSubjectId"
+      @select="handleSheetSelect"
+    />
   </div>
 </template>
 
@@ -204,7 +212,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
-import SubjectSelector from '@/components/home/SubjectSelector.vue'
+import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 import { formatDuration, formatTimer } from '@/types'
 
@@ -212,13 +220,9 @@ const timerStore = useTimerStore()
 const sessionsStore = useSessionsStore()
 const subjectsStore = useSubjectsStore()
 
-const selectedSubjectId = ref<string | null>(null)
 const lastSubjectId = ref<string | null>(null)
-const showSubjectPicker = ref(false)
+const sheetOpen = ref(false)
 
-const selectedSubject = computed(() =>
-  selectedSubjectId.value ? subjectsStore.getSubject(selectedSubjectId.value) : null
-)
 const activeSubject = computed(() => {
   const id = timerStore.activeSubjectId
   return id ? subjectsStore.getSubject(id) : null
@@ -255,22 +259,24 @@ const sessionLog = computed(() => {
   return result.reverse() // newest first
 })
 
-function handleSelect(id: string) {
-  selectedSubjectId.value = selectedSubjectId.value === id ? null : id
+function handleSheetSelect(id: string) {
+  if (timerStore.mode === 'idle' || timerStore.mode === 'break') {
+    timerStore.startStudy(id)
+  } else {
+    switchSubject(id)
+  }
 }
 
 async function handleStop() {
   lastSubjectId.value = timerStore.activeSubjectId
   await timerStore.stop()
   await sessionsStore.loadToday()
-  showSubjectPicker.value = false
 }
 
 async function handleBreak() {
   lastSubjectId.value = timerStore.activeSubjectId
   await timerStore.startBreak()
   await sessionsStore.loadToday()
-  showSubjectPicker.value = false
 }
 
 async function switchSubject(id: string) {
@@ -278,7 +284,6 @@ async function switchSubject(id: string) {
   await timerStore.stop()
   await sessionsStore.loadToday()
   timerStore.startStudy(id)
-  showSubjectPicker.value = false
 }
 
 async function loadToday() {
@@ -287,11 +292,6 @@ async function loadToday() {
 
 function getSubject(id?: string) {
   return id ? subjectsStore.getSubject(id) : undefined
-}
-
-function pausedTime(session: { startTime: number; endTime: number; duration: number }) {
-  const totalSecs = Math.floor((session.endTime - session.startTime) / 1000)
-  return Math.max(0, totalSecs - session.duration)
 }
 
 function fmt(ts: number) {

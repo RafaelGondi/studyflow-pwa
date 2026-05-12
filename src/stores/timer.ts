@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useSessionsStore } from './sessions'
 import { formatTimer } from '@/types'
+import type { StudySegment } from '@/types'
 
 const KEY = 'studyflow_timer'
 
@@ -10,11 +11,12 @@ type Mode = 'idle' | 'study' | 'paused' | 'break'
 interface TimerState {
   mode: Mode
   subjectId: string | null
-  originalStartedAt: number  // wall-clock start of the session (never changes on pause/resume)
+  originalStartedAt: number
   startedAt: number
   accumulatedMs: number
+  segments: StudySegment[]
   breakStartedAt: number | null
-  breakAccumulatedMs: number // total break ms today (persisted across sessions)
+  breakAccumulatedMs: number
 }
 
 export const useTimerStore = defineStore('timer', () => {
@@ -26,6 +28,7 @@ export const useTimerStore = defineStore('timer', () => {
     originalStartedAt: 0,
     startedAt: 0,
     accumulatedMs: 0,
+    segments: [],
     breakStartedAt: null,
     breakAccumulatedMs: 0,
   })
@@ -35,7 +38,8 @@ export const useTimerStore = defineStore('timer', () => {
   function load() {
     const raw = localStorage.getItem(KEY)
     if (!raw) return
-    state.value = JSON.parse(raw)
+    const parsed = JSON.parse(raw)
+    state.value = { segments: [], ...parsed }
     if (state.value.mode === 'study' || state.value.mode === 'break') startTick()
   }
 
@@ -73,23 +77,26 @@ export const useTimerStore = defineStore('timer', () => {
   // ── Actions ────────────────────────────────────────────────────────────────
 
   function startStudy(subjectId: string) {
-    // if coming from break, save break duration
     if (state.value.mode === 'break' && state.value.breakStartedAt) {
       state.value.breakAccumulatedMs += Date.now() - state.value.breakStartedAt
       state.value.breakStartedAt = null
     }
+    const now_ = Date.now()
     state.value.mode = 'study'
     state.value.subjectId = subjectId
-    state.value.originalStartedAt = Date.now()
-    state.value.startedAt = Date.now()
+    state.value.originalStartedAt = now_
+    state.value.startedAt = now_
     state.value.accumulatedMs = 0
+    state.value.segments = []
     startTick()
     save()
   }
 
   function pause() {
     if (state.value.mode !== 'study') return
-    state.value.accumulatedMs += Date.now() - state.value.startedAt
+    const now_ = Date.now()
+    state.value.segments.push({ start: state.value.startedAt, end: now_ })
+    state.value.accumulatedMs += now_ - state.value.startedAt
     state.value.mode = 'paused'
     stopTick()
     save()
@@ -103,20 +110,27 @@ export const useTimerStore = defineStore('timer', () => {
     save()
   }
 
+  function buildSegments(): StudySegment[] {
+    if (state.value.mode === 'study') {
+      return [...state.value.segments, { start: state.value.startedAt, end: Date.now() }]
+    }
+    return state.value.segments
+  }
+
   async function stop() {
     if (state.value.mode === 'idle') return
     const ms = studyElapsedMs.value
     const subjectId = state.value.subjectId
     const startTime = state.value.originalStartedAt || Date.now() - ms
+    const segments = buildSegments()
 
-    // save break if stopping from break
     if (state.value.mode === 'break' && state.value.breakStartedAt) {
       state.value.breakAccumulatedMs += Date.now() - state.value.breakStartedAt
     }
 
     reset()
     if (subjectId && ms >= 5000) {
-      await sessions.save({ subjectId, startTime, endTime: Date.now(), duration: Math.floor(ms / 1000) })
+      await sessions.save({ subjectId, startTime, endTime: Date.now(), duration: Math.floor(ms / 1000), segments })
     }
   }
 
@@ -125,14 +139,16 @@ export const useTimerStore = defineStore('timer', () => {
     const ms = studyElapsedMs.value
     const subjectId = state.value.subjectId
     const startTime = state.value.originalStartedAt || Date.now() - ms
+    const segments = buildSegments()
 
     if (subjectId && ms >= 5000) {
-      await sessions.save({ subjectId, startTime, endTime: Date.now(), duration: Math.floor(ms / 1000) })
+      await sessions.save({ subjectId, startTime, endTime: Date.now(), duration: Math.floor(ms / 1000), segments })
     }
 
     state.value.mode = 'break'
     state.value.subjectId = null
     state.value.accumulatedMs = 0
+    state.value.segments = []
     state.value.breakStartedAt = Date.now()
     startTick()
     save()
@@ -146,6 +162,7 @@ export const useTimerStore = defineStore('timer', () => {
       originalStartedAt: 0,
       startedAt: 0,
       accumulatedMs: 0,
+      segments: [],
       breakStartedAt: null,
       breakAccumulatedMs: state.value.breakAccumulatedMs,
     }

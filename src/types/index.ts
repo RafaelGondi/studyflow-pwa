@@ -16,6 +16,11 @@ export interface Subject {
   createdAt: number
 }
 
+export interface StudySegment {
+  start: number
+  end: number
+}
+
 export interface StudySession {
   id: string
   subjectId: string
@@ -24,6 +29,7 @@ export interface StudySession {
   duration: number // seconds
   date: string    // YYYY-MM-DD
   userId: string
+  segments?: StudySegment[]
 }
 
 export interface ActiveTimer {
