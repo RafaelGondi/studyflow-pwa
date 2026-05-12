@@ -38,18 +38,6 @@
         </div>
       </div>
 
-      <!-- Streak card -->
-      <div
-        class="rounded-2xl p-4 flex items-center gap-4"
-        style="background: linear-gradient(135deg, #3b82f615, #2563eb15); border: 1px solid #3b82f630"
-      >
-        <div class="text-4xl">🔥</div>
-        <div>
-          <p class="text-2xl font-bold text-primary">{{ streak }} <span class="text-base font-normal text-muted">dias seguidos</span></p>
-          <p class="text-xs text-muted mt-0.5">Mantenha a sequência de estudos!</p>
-        </div>
-      </div>
-
       <!-- Weekly chart -->
       <WeeklyChart :sessions="weekSessions" />
 
@@ -143,21 +131,6 @@ const weekSessions = computed(() => {
   from.setDate(from.getDate() - 6)
   from.setHours(0, 0, 0, 0)
   return sessions.value.filter(s => s.startTime >= from.getTime())
-})
-
-const streak = computed(() => {
-  const allSessions = sessionsStore.rangeSessions
-  if (allSessions.length === 0) return 0
-  const days = new Set(allSessions.map(s => s.date))
-  let count = 0
-  const d = new Date()
-  while (true) {
-    const key = localDateStr(d)
-    if (!days.has(key)) break
-    count++
-    d.setDate(d.getDate() - 1)
-  }
-  return count
 })
 
 const groupedSessions = computed(() => {
