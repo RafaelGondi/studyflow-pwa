@@ -7,10 +7,7 @@
         <p class="text-[11px] text-muted font-medium uppercase tracking-widest">{{ greeting }}</p>
         <h1 class="text-lg font-bold text-primary">StudyFlow</h1>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-muted">{{ dateLabel }}</span>
-        <ThemeToggle />
-      </div>
+      <span class="text-xs text-muted">{{ dateLabel }}</span>
     </header>
 
     <!-- Dual stats bar -->
@@ -213,7 +210,6 @@ import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
-import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 import { formatDuration, formatTimer } from '@/types'
 
 const timerStore = useTimerStore()

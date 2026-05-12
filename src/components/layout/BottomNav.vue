@@ -33,6 +33,7 @@ import { useTimerStore } from '@/stores/timer'
 import HomeIcon from './icons/HomeIcon.vue'
 import BookIcon from './icons/BookIcon.vue'
 import ChartIcon from './icons/ChartIcon.vue'
+import SettingsIcon from './icons/SettingsIcon.vue'
 
 const route = useRoute()
 const timerStore = useTimerStore()
@@ -40,7 +41,8 @@ const timerStore = useTimerStore()
 const tabs = computed(() => [
   { to: '/',         label: 'Início',    icon: HomeIcon,  badge: timerStore.isRunning ? '●' : null },
   { to: '/subjects', label: 'Matérias',  icon: BookIcon,  badge: null },
-  { to: '/stats',    label: 'Estatísticas', icon: ChartIcon, badge: null },
+  { to: '/stats',    label: 'Estatísticas', icon: ChartIcon,    badge: null },
+  { to: '/settings', label: 'Config',       icon: SettingsIcon, badge: null },
 ])
 
 function isActive(path: string) {
