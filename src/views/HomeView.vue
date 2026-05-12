@@ -2,10 +2,10 @@
   <div class="min-h-screen bg-app-bg flex flex-col">
 
     <!-- Header -->
-    <header class="flex items-center justify-between px-5 pt-6 pb-3">
+    <header class="flex items-center justify-between px-4 pt-5 pb-2">
       <div>
-        <p class="text-xs text-muted font-medium uppercase tracking-widest">{{ greeting }}</p>
-        <h1 class="text-xl font-bold text-primary">StudyFlow</h1>
+        <p class="text-[11px] text-muted font-medium uppercase tracking-widest">{{ greeting }}</p>
+        <h1 class="text-lg font-bold text-primary">StudyFlow</h1>
       </div>
       <div class="flex items-center gap-2">
         <span class="text-xs text-muted">{{ dateLabel }}</span>
@@ -15,33 +15,30 @@
 
     <!-- Dual stats bar -->
     <div class="grid grid-cols-2 gap-2 px-4 pb-3">
-      <div class="rounded-2xl p-3 flex flex-col gap-0.5" style="background: linear-gradient(135deg, #8b5cf620, #6366f110); border: 1px solid #8b5cf630">
-        <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wider">📚 Estudo</span>
+      <div class="rounded-xl bg-app-card p-3 flex flex-col gap-0.5">
+        <span class="text-[10px] font-semibold text-violet-500 uppercase tracking-wider">📚 Estudo</span>
         <span class="font-mono text-xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
       </div>
-      <div class="rounded-2xl p-3 flex flex-col gap-0.5" style="background: linear-gradient(135deg, #f59e0b20, #f97316 10%); border: 1px solid #f59e0b30; background: linear-gradient(135deg, #f59e0b15, #f9731608); border: 1px solid #f59e0b25">
-        <span class="text-[10px] font-bold text-amber-500 uppercase tracking-wider">☕ Pausa</span>
+      <div class="rounded-xl bg-app-card p-3 flex flex-col gap-0.5">
+        <span class="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">☕ Pausa</span>
         <span class="font-mono text-xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
       </div>
     </div>
 
-    <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-4">
+    <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-3">
 
       <!-- ── IDLE: subject selector ─────────────────────────── -->
       <Transition name="fade" mode="out-in">
-        <div v-if="timerStore.mode === 'idle'" key="idle" class="space-y-4">
+        <div v-if="timerStore.mode === 'idle'" key="idle" class="space-y-3">
           <SubjectSelector :selected="selectedSubjectId" @select="handleSelect" />
           <Transition name="slide-up">
             <button
               v-if="selectedSubjectId"
               @click="timerStore.startStudy(selectedSubjectId!)"
-              class="w-full py-4 rounded-2xl font-bold text-white flex items-center justify-center gap-2 transition-all duration-200 active:scale-95"
-              :style="{
-                background: `linear-gradient(135deg, ${selectedSubject?.color ?? '#8b5cf6'}, ${selectedSubject?.color ?? '#8b5cf6'}aa)`,
-                boxShadow: `0 8px 20px ${selectedSubject?.color ?? '#8b5cf6'}40`,
-              }"
+              class="w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-95"
+              :style="{ background: selectedSubject?.color ?? '#8b5cf6' }"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
               Iniciar Estudo
@@ -50,10 +47,10 @@
         </div>
 
         <!-- ── BREAK mode ─────────────────────────────────────── -->
-        <div v-else-if="timerStore.mode === 'break'" key="break" class="space-y-4">
-          <div class="rounded-2xl border p-5 text-center space-y-4" style="background: linear-gradient(135deg, #f59e0b12, #f9731608); border-color: #f59e0b40">
+        <div v-else-if="timerStore.mode === 'break'" key="break" class="space-y-3">
+          <div class="rounded-xl bg-app-card p-5 text-center space-y-4">
             <div>
-              <p class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">☕ Em pausa</p>
+              <p class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider mb-1">☕ Em pausa</p>
               <span class="font-mono text-5xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
             </div>
             <p class="text-xs text-muted">Descanse um pouco. Clique em Estudo quando quiser voltar.</p>
@@ -62,14 +59,14 @@
                 v-if="selectedSubjectId || lastSubjectId"
                 @click="timerStore.startStudy(selectedSubjectId ?? lastSubjectId!)"
                 class="flex-1 py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-                style="background: linear-gradient(135deg, #8b5cf6, #6366f1); box-shadow: 0 4px 16px #8b5cf640"
+                style="background: #8b5cf6"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
                 Voltar ao Estudo
               </button>
               <button
                 @click="timerStore.stop(); loadToday()"
-                class="px-4 py-3 rounded-xl bg-app-elevated border border-app-border text-muted text-sm font-semibold active:scale-95 transition-all"
+                class="px-4 py-3 rounded-xl bg-app-elevated text-muted text-sm font-semibold active:scale-95 transition-all"
               >
                 Encerrar
               </button>
@@ -79,41 +76,37 @@
         </div>
 
         <!-- ── STUDY / PAUSED ─────────────────────────────────── -->
-        <div v-else key="active" class="space-y-4">
+        <div v-else key="active" class="space-y-3">
           <!-- Active subject + timer -->
-          <div class="rounded-2xl border border-app-border bg-app-card p-5 space-y-5">
+          <div class="rounded-xl bg-app-card p-4 space-y-4">
 
             <!-- Subject row -->
             <div class="flex items-center gap-3">
-              <div
-                class="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                :style="{ background: `${activeSubject?.color ?? '#8b5cf6'}22` }"
-              >
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 bg-app-elevated">
                 {{ activeSubject?.icon ?? '📚' }}
               </div>
               <div class="flex-1 min-w-0">
-                <p class="font-bold text-primary truncate">{{ activeSubject?.name ?? 'Estudo' }}</p>
+                <p class="font-semibold text-primary truncate">{{ activeSubject?.name ?? 'Estudo' }}</p>
                 <div class="flex items-center gap-1.5 mt-0.5">
                   <div
                     class="w-1.5 h-1.5 rounded-full"
                     :class="timerStore.isRunning ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"
                   />
-                  <span class="text-xs font-medium" :class="timerStore.isRunning ? 'text-emerald-500' : 'text-amber-500'">
+                  <span class="text-xs" :class="timerStore.isRunning ? 'text-emerald-500' : 'text-amber-500'">
                     {{ timerStore.isRunning ? 'Estudando' : 'Pausado' }}
                   </span>
                 </div>
               </div>
-              <!-- change subject -->
               <button
                 @click="showSubjectPicker = !showSubjectPicker"
-                class="text-xs text-muted hover:text-primary px-2 py-1 rounded-lg bg-app-elevated transition-colors"
+                class="text-xs text-muted px-2 py-1 rounded-lg bg-app-elevated transition-colors"
               >
                 trocar
               </button>
             </div>
 
             <!-- Timer display -->
-            <div class="text-center py-2">
+            <div class="text-center py-1">
               <div
                 class="font-mono text-6xl font-bold tabular-nums leading-none"
                 :style="{ color: activeSubject?.color ?? '#8b5cf6' }"
@@ -125,27 +118,18 @@
 
             <!-- Control buttons -->
             <div class="grid grid-cols-3 gap-2">
-              <!-- Stop -->
               <button
                 @click="handleStop"
-                class="py-3 rounded-xl bg-app-elevated border border-app-border flex flex-col items-center gap-1 text-muted hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/30 transition-all active:scale-95"
+                class="py-3 rounded-xl bg-app-elevated flex flex-col items-center gap-1 text-muted active:scale-95 transition-all"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
                 <span class="text-[10px] font-semibold">Parar</span>
               </button>
 
-              <!-- Study / Resume (main action) -->
               <button
                 @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
                 class="py-3 rounded-xl font-bold text-white flex flex-col items-center gap-1 transition-all active:scale-95"
-                :style="{
-                  background: timerStore.isRunning
-                    ? `linear-gradient(135deg, ${activeSubject?.color ?? '#8b5cf6'}, ${activeSubject?.color ?? '#8b5cf6'}aa)`
-                    : `linear-gradient(135deg, #10b981, #059669)`,
-                  boxShadow: timerStore.isRunning
-                    ? `0 4px 12px ${activeSubject?.color ?? '#8b5cf6'}40`
-                    : '0 4px 12px #10b98140',
-                }"
+                :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? '#8b5cf6') : '#10b981' }"
               >
                 <svg v-if="timerStore.isRunning" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
@@ -156,10 +140,9 @@
                 <span class="text-[10px] font-semibold">{{ timerStore.isRunning ? 'Pausar' : 'Retomar' }}</span>
               </button>
 
-              <!-- Break -->
               <button
                 @click="handleBreak"
-                class="py-3 rounded-xl bg-app-elevated border border-app-border flex flex-col items-center gap-1 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all active:scale-95"
+                class="py-3 rounded-xl bg-app-elevated flex flex-col items-center gap-1 text-amber-500 transition-all active:scale-95"
               >
                 <span class="text-base leading-none">☕</span>
                 <span class="text-[10px] font-semibold">Break</span>
@@ -179,37 +162,30 @@
       <!-- ── Session log ─────────────────────────────────────── -->
       <div v-if="sessionsStore.todaySessions.length > 0" class="space-y-1">
         <div class="flex items-center justify-between px-1 mb-2">
-          <h2 class="text-xs font-bold text-muted uppercase tracking-wider">Sessões de hoje</h2>
+          <h2 class="text-[11px] font-semibold text-muted uppercase tracking-wider">Sessões de hoje</h2>
           <span class="text-xs text-faint">{{ sessionsStore.todayTotalSeconds > 0 ? totalStudyFormatted : '—' }}</span>
         </div>
 
         <template v-for="(item, index) in sessionLog" :key="item.id ?? item.type + index">
           <!-- Break gap indicator -->
-          <div v-if="item.type === 'gap'" class="flex items-center gap-2 py-1 px-2">
+          <div v-if="item.type === 'gap'" class="flex items-center gap-2 py-1">
             <div class="flex-1 h-px bg-app-border" />
-            <span class="text-[10px] text-amber-500 font-semibold flex items-center gap-1">
-              <span>☕</span>
-              {{ item.label }}
+            <span class="text-[10px] text-muted flex items-center gap-1">
+              <span>☕</span>{{ item.label }}
             </span>
             <div class="flex-1 h-px bg-app-border" />
           </div>
 
           <!-- Session row -->
-          <div
-            v-else
-            class="flex items-center gap-3 p-3 rounded-xl bg-app-card border border-app-border"
-          >
-            <div
-              class="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
-              :style="{ background: `${getSubject(item.subjectId)?.color ?? '#8b5cf6'}20` }"
-            >
+          <div v-else class="flex items-center gap-3 py-2.5 px-3 rounded-xl bg-app-card">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 bg-app-elevated">
               {{ getSubject(item.subjectId)?.icon ?? '📚' }}
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.subjectId)?.name ?? 'Matéria' }}</p>
               <p class="text-[10px] text-muted mt-0.5">
                 {{ fmt(item.startTime) }} → {{ fmt(item.endTime) }}
-                <span v-if="pausedTime(item) > 0" class="text-amber-500"> · ⏸ {{ formatDuration(pausedTime(item)) }} pausado</span>
+                <span v-if="pausedTime(item) > 0" class="text-amber-500"> · ⏸ {{ formatDuration(pausedTime(item)) }}</span>
               </p>
             </div>
             <span class="text-sm font-bold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? '#8b5cf6' }">
