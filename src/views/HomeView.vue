@@ -290,9 +290,10 @@ function fmt(ts: number) {
   return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
 
-onMounted(() => {
+onMounted(async () => {
   timerStore.load()
   if (timerStore.activeSubjectId) lastSubjectId.value = timerStore.activeSubjectId
+  await sessionsStore.loadToday()
 })
 </script>
 
