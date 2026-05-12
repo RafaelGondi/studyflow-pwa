@@ -38,7 +38,7 @@
           <p class="text-muted font-medium text-sm">Nenhuma matéria cadastrada</p>
           <RouterLink
             to="/subjects"
-            class="mt-2 text-sm text-blue-500"
+            class="mt-2 text-sm text-accent"
             @click="emit('update:modelValue', false)"
           >
             Adicionar matéria →

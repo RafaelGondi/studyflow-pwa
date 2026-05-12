@@ -11,6 +11,7 @@ export default {
           elevated: 'rgb(var(--app-elevated) / <alpha-value>)',
           border:   'rgb(var(--app-border)   / <alpha-value>)',
         },
+        accent: 'rgb(var(--color-accent) / <alpha-value>)',
       },
       textColor: {
         primary:   'var(--text-primary)',

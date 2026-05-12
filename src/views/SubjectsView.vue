@@ -12,7 +12,7 @@
         <button
           @click="selectedCategoryFilter = null"
           class="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200"
-          :class="selectedCategoryFilter === null ? 'bg-blue-500/20 border-blue-500/50 text-blue-300' : 'bg-app-card border-app-border text-muted hover:text-primary'"
+          :class="selectedCategoryFilter === null ? 'bg-accent/20 border-accent/50 text-accent/70' : 'bg-app-card border-app-border text-muted hover:text-primary'"
         >
           Todas
         </button>
@@ -88,7 +88,7 @@
           <h2 class="text-sm font-semibold text-muted uppercase tracking-wider">Categorias</h2>
           <button
             @click="showCategoryModal = true"
-            class="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium"
+            class="text-xs text-accent/80 hover:text-accent/70 transition-colors font-medium"
           >
             + Adicionar
           </button>
@@ -124,7 +124,7 @@
     <button
       @click="openAddSubject"
       class="fixed right-5 bottom-24 w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 active:scale-90 z-40"
-      style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 8px 24px #3b82f640"
+      style="background: linear-gradient(135deg, #44403c, #292524); box-shadow: 0 8px 24px #44403c40"
     >
       <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>

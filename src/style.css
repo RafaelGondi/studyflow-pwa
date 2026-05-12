@@ -17,6 +17,8 @@
     --text-secondary: #44403c;     /* stone-700 */
     --text-muted:     #78716c;     /* stone-500 */
     --text-faint:     #a8a29e;     /* stone-400 */
+    --color-accent:     68 64 60;  /* stone-700 */
+    --color-accent-hex: #44403c;
   }
 
   /* ── Dark theme ─────────────────────────────────── */
@@ -30,6 +32,8 @@
     --text-secondary: #d6d3d1;     /* stone-300 */
     --text-muted:     #78716c;     /* stone-500 */
     --text-faint:     #57534e;     /* stone-600 */
+    --color-accent:     214 211 209; /* stone-300 */
+    --color-accent-hex: #d6d3d1;
   }
 
   * {
@@ -61,7 +65,7 @@
 
   /* Focus */
   *:focus-visible {
-    @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-app-bg;
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-app-bg;
   }
 }
 
@@ -73,12 +77,12 @@
   }
 
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl px-4 py-2.5 transition-all duration-200 active:scale-95;
+    @apply bg-accent hover:bg-accent/80 text-white font-semibold rounded-xl px-4 py-2.5 transition-all duration-200 active:scale-95;
   }
 
   .input {
     @apply bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-primary placeholder-faint
-           focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors w-full;
+           focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors w-full;
   }
 
   .tab-active {

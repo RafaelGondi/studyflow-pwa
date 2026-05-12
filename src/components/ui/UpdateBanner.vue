@@ -3,7 +3,7 @@
     <div
       v-if="show"
       class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 py-3 max-w-lg mx-auto"
-      style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 20px #3b82f650"
+      style="background: linear-gradient(135deg, #44403c, #292524); box-shadow: 0 4px 20px #44403c50"
     >
       <div class="flex items-center gap-2 min-w-0">
         <span class="text-base flex-shrink-0">🔄</span>

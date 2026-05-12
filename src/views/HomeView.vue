@@ -13,7 +13,7 @@
     <!-- Dual stats bar -->
     <div class="grid grid-cols-2 gap-2 px-4 pb-3">
       <div class="rounded-md bg-app-card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">Estudo</span>
+        <span class="text-[10px] font-semibold text-accent uppercase tracking-wider">Estudo</span>
         <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
       </div>
@@ -31,7 +31,7 @@
         <div v-if="timerStore.mode === 'idle'" key="idle">
           <button
             @click="sheetOpen = true"
-            class="w-full py-3 rounded-md bg-blue-500 font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-95"
+            class="w-full py-3 rounded-md bg-accent font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-95"
           >
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
             Iniciar Estudo
@@ -51,7 +51,7 @@
                 v-if="lastSubjectId"
                 @click="timerStore.startStudy(lastSubjectId!)"
                 class="flex-1 py-3 rounded-md font-bold text-white text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-                style="background: #3b82f6"
+                style="background: #44403c"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
                 Continuar
@@ -80,7 +80,7 @@
             <div class="flex items-center gap-3">
               <div
                 class="w-10 h-10 rounded-sm flex items-center justify-center text-xl flex-shrink-0"
-                :style="{ background: `${activeSubject?.color ?? '#3b82f6'}18` }"
+                :style="{ background: `${activeSubject?.color ?? '#44403c'}18` }"
               >
                 {{ activeSubject?.icon ?? '📚' }}
               </div>
@@ -108,7 +108,7 @@
             <div class="text-center py-1">
               <div
                 class="font-sans text-6xl font-bold tabular-nums leading-none"
-                :style="{ color: activeSubject?.color ?? '#3b82f6' }"
+                :style="{ color: activeSubject?.color ?? '#44403c' }"
               >
                 {{ timerStore.studyFormatted }}
               </div>
@@ -128,7 +128,7 @@
               <button
                 @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
                 class="py-3 rounded-md font-bold text-white flex flex-col items-center gap-1 transition-all active:scale-95"
-                :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? '#3b82f6') : '#10b981' }"
+                :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? '#44403c') : '#10b981' }"
               >
                 <svg v-if="timerStore.isRunning" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
@@ -165,12 +165,12 @@
           <div v-else class="flex items-start gap-3 py-2.5">
             <div
               class="w-1 self-stretch rounded-full mt-1 flex-shrink-0"
-              :style="{ background: getSubject(item.subjectId)?.color ?? '#3b82f6' }"
+              :style="{ background: getSubject(item.subjectId)?.color ?? '#44403c' }"
             />
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-2">
                 <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.subjectId)?.name ?? 'Matéria' }}</p>
-                <span class="text-sm font-semibold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? '#3b82f6' }">
+                <span class="text-sm font-semibold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? '#44403c' }">
                   {{ formatDuration(item.duration) }}
                 </span>
               </div>

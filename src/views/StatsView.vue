@@ -15,7 +15,7 @@
           @click="period = p.value"
           class="flex-1 py-2 rounded-sm text-sm font-semibold transition-all duration-200"
           :class="period === p.value
-            ? 'bg-blue-500 text-white shadow-sm'
+            ? 'bg-accent text-white shadow-sm'
             : 'text-muted hover:text-secondary'"
         >
           {{ p.label }}
@@ -64,7 +64,7 @@
           >
             <div
               class="w-9 h-9 rounded-sm flex items-center justify-center text-lg flex-shrink-0"
-              :style="{ background: `${getSubject(s.subjectId)?.color ?? '#3b82f6'}20` }"
+              :style="{ background: `${getSubject(s.subjectId)?.color ?? '#44403c'}20` }"
             >
               {{ getSubject(s.subjectId)?.icon ?? '📚' }}
             </div>

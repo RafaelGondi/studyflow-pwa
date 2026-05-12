@@ -26,7 +26,7 @@
                   type="button"
                   @click="form.icon = icon"
                   class="w-10 h-10 rounded-md text-xl flex items-center justify-center transition-all duration-150 active:scale-90"
-                  :class="form.icon === icon ? 'bg-blue-500/30 ring-2 ring-blue-500' : 'bg-app-elevated hover:bg-app-elevated'"
+                  :class="form.icon === icon ? 'bg-accent/30 ring-2 ring-accent' : 'bg-app-elevated hover:bg-app-elevated'"
                 >
                   {{ icon }}
                 </button>
@@ -41,7 +41,7 @@
                 type="text"
                 placeholder="Ex: Matemática"
                 required
-                class="w-full bg-app-elevated border border-app-border rounded-md px-4 py-3 text-primary placeholder:text-faint focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                class="w-full bg-app-elevated border border-app-border rounded-md px-4 py-3 text-primary placeholder:text-faint focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
               />
             </div>
 
@@ -50,7 +50,7 @@
               <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Categoria</label>
               <select
                 v-model="form.categoryId"
-                class="w-full bg-app-elevated border border-app-border rounded-md px-4 py-3 text-primary focus:outline-none focus:border-blue-500 transition-colors"
+                class="w-full bg-app-elevated border border-app-border rounded-md px-4 py-3 text-primary focus:outline-none focus:border-accent transition-colors"
               >
                 <option :value="null">Sem categoria</option>
                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>

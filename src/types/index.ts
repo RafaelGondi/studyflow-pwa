@@ -43,7 +43,7 @@ export interface ActiveTimer {
 export const SUBJECT_COLORS = [
   { name: 'violet',  value: '#8b5cf6' },
   { name: 'indigo',  value: '#6366f1' },
-  { name: 'blue',    value: '#3b82f6' },
+  { name: 'blue',    value: '#44403c' },
   { name: 'cyan',    value: '#06b6d4' },
   { name: 'teal',    value: '#14b8a6' },
   { name: 'emerald', value: '#10b981' },
