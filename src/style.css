@@ -8,25 +8,25 @@
   /* ── Light theme (default) ──────────────────────── */
   :root {
     color-scheme: light;
-    --app-bg:       242 242 250;
+    --app-bg:       244 244 245;
     --app-card:     255 255 255;
-    --app-elevated: 234 234 246;
-    --app-border:   218 218 236;
-    --text-primary:   #111118;
-    --text-secondary: #48485e;
-    --text-muted:     #7a7a90;
-    --text-faint:     #a0a0b4;
+    --app-elevated: 228 228 231;
+    --app-border:   212 212 216;
+    --text-primary:   #18181b;
+    --text-secondary: #3f3f46;
+    --text-muted:     #71717a;
+    --text-faint:     #a1a1aa;
   }
 
   /* ── Dark theme ─────────────────────────────────── */
   .dark {
     color-scheme: dark;
-    --app-bg:       12  12  14;
-    --app-card:     22  22  26;
-    --app-elevated: 30  30  38;
-    --app-border:   42  42  52;
-    --text-primary:   #f1f1f5;
-    --text-secondary: #b0b0c0;
+    --app-bg:       9   9   11;
+    --app-card:     24  24  27;
+    --app-elevated: 39  39  42;
+    --app-border:   63  63  70;
+    --text-primary:   #fafafa;
+    --text-secondary: #d4d4d8;
     --text-muted:     #71717a;
     --text-faint:     #52525b;
   }
@@ -60,7 +60,7 @@
 
   /* Focus */
   *:focus-visible {
-    @apply outline-none ring-2 ring-violet-500 ring-offset-2 ring-offset-app-bg;
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-app-bg;
   }
 }
 
@@ -72,16 +72,16 @@
   }
 
   .btn-primary {
-    @apply bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-xl px-4 py-2.5 transition-all duration-200 active:scale-95;
+    @apply bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl px-4 py-2.5 transition-all duration-200 active:scale-95;
   }
 
   .input {
     @apply bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600
-           focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors w-full;
+           focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors w-full;
   }
 
   .tab-active {
-    @apply bg-violet-500 text-white;
+    @apply bg-blue-500 text-white;
   }
 
   .tab-inactive {

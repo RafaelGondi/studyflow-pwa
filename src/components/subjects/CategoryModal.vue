@@ -23,7 +23,7 @@
                 type="text"
                 placeholder="Ex: Exatas, Humanas..."
                 required
-                class="w-full bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-primary placeholder:text-faint focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors"
+                class="w-full bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-primary placeholder:text-faint focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -50,7 +50,7 @@
               type="submit"
               :disabled="!form.name.trim() || saving"
               class="w-full py-3.5 rounded-xl font-bold text-white transition-all duration-200 disabled:opacity-50"
-              style="background: linear-gradient(135deg, #8b5cf6, #6366f1)"
+              style="background: linear-gradient(135deg, #3b82f6, #2563eb)"
             >
               {{ saving ? 'Salvando...' : category ? 'Salvar' : 'Criar categoria' }}
             </button>

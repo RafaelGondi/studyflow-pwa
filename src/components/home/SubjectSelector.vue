@@ -8,7 +8,7 @@
     <div v-if="subjects.length === 0" class="flex flex-col items-center justify-center py-10 text-center">
       <span class="text-4xl mb-3">📚</span>
       <p class="text-muted font-medium">Nenhuma matéria cadastrada</p>
-      <RouterLink to="/subjects" class="mt-2 text-sm text-violet-500 hover:text-violet-400 transition-colors">
+      <RouterLink to="/subjects" class="mt-2 text-sm text-blue-500 hover:text-blue-400 transition-colors">
         Adicionar matéria →
       </RouterLink>
     </div>

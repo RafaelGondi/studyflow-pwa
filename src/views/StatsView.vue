@@ -15,7 +15,7 @@
           @click="period = p.value"
           class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
           :class="period === p.value
-            ? 'bg-violet-500 text-white shadow-sm'
+            ? 'bg-blue-500 text-white shadow-sm'
             : 'text-muted hover:text-secondary'"
         >
           {{ p.label }}
@@ -41,7 +41,7 @@
       <!-- Streak card -->
       <div
         class="rounded-2xl p-4 flex items-center gap-4"
-        style="background: linear-gradient(135deg, #8b5cf615, #6366f115); border: 1px solid #8b5cf630"
+        style="background: linear-gradient(135deg, #3b82f615, #2563eb15); border: 1px solid #3b82f630"
       >
         <div class="text-4xl">🔥</div>
         <div>
@@ -76,7 +76,7 @@
           >
             <div
               class="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
-              :style="{ background: `${getSubject(s.subjectId)?.color ?? '#8b5cf6'}20` }"
+              :style="{ background: `${getSubject(s.subjectId)?.color ?? '#3b82f6'}20` }"
             >
               {{ getSubject(s.subjectId)?.icon ?? '📚' }}
             </div>

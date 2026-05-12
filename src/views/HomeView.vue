@@ -16,7 +16,7 @@
     <!-- Dual stats bar -->
     <div class="grid grid-cols-2 gap-2 px-4 pb-3">
       <div class="rounded-xl bg-app-card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-semibold text-violet-500 uppercase tracking-wider">📚 Estudo</span>
+        <span class="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">📚 Estudo</span>
         <span class="font-mono text-xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
       </div>
@@ -38,7 +38,7 @@
               v-if="selectedSubjectId"
               @click="timerStore.startStudy(selectedSubjectId!)"
               class="w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-95"
-              :style="{ background: selectedSubject?.color ?? '#8b5cf6' }"
+              :style="{ background: selectedSubject?.color ?? '#3b82f6' }"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
               Iniciar Estudo
@@ -59,7 +59,7 @@
                 v-if="selectedSubjectId || lastSubjectId"
                 @click="timerStore.startStudy(selectedSubjectId ?? lastSubjectId!)"
                 class="flex-1 py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-                style="background: #8b5cf6"
+                style="background: #3b82f6"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
                 Voltar ao Estudo
@@ -109,7 +109,7 @@
             <div class="text-center py-1">
               <div
                 class="font-mono text-6xl font-bold tabular-nums leading-none"
-                :style="{ color: activeSubject?.color ?? '#8b5cf6' }"
+                :style="{ color: activeSubject?.color ?? '#3b82f6' }"
               >
                 {{ timerStore.studyFormatted }}
               </div>
@@ -129,7 +129,7 @@
               <button
                 @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
                 class="py-3 rounded-xl font-bold text-white flex flex-col items-center gap-1 transition-all active:scale-95"
-                :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? '#8b5cf6') : '#10b981' }"
+                :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? '#3b82f6') : '#10b981' }"
               >
                 <svg v-if="timerStore.isRunning" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
@@ -188,7 +188,7 @@
                 <span v-if="pausedTime(item) > 0" class="text-amber-500"> · ⏸ {{ formatDuration(pausedTime(item)) }}</span>
               </p>
             </div>
-            <span class="text-sm font-bold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? '#8b5cf6' }">
+            <span class="text-sm font-bold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? '#3b82f6' }">
               {{ formatDuration(item.duration) }}
             </span>
           </div>

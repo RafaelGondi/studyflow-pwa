@@ -47,7 +47,7 @@ const chartData = computed(() => {
     labels,
     datasets: [{
       data,
-      backgroundColor: data.map((_, i) => i === 6 ? '#8b5cf6' : '#8b5cf630'),
+      backgroundColor: data.map((_, i) => i === 6 ? '#3b82f6' : '#3b82f630'),
       borderRadius: 8,
       borderSkipped: false,
     }],

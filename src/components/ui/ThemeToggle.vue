@@ -4,7 +4,7 @@
     class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-90"
     :class="theme.isDark
       ? 'bg-app-elevated text-amber-400 hover:bg-app-border'
-      : 'bg-app-elevated text-violet-600 hover:bg-app-border'"
+      : 'bg-app-elevated text-blue-600 hover:bg-app-border'"
     :title="theme.isDark ? 'Mudar para claro' : 'Mudar para escuro'"
   >
     <!-- Sun (light mode icon shown in dark mode) -->

@@ -6,16 +6,16 @@
         :key="tab.to"
         :to="tab.to"
         class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200 group"
-        :class="isActive(tab.to) ? 'text-violet-500' : 'text-muted hover:text-secondary'"
+        :class="isActive(tab.to) ? 'text-blue-500' : 'text-muted hover:text-secondary'"
       >
         <div
           class="relative flex items-center justify-center w-10 h-8 rounded-xl transition-all duration-200"
-          :class="isActive(tab.to) ? 'bg-violet-500/15' : 'group-hover:bg-app-elevated'"
+          :class="isActive(tab.to) ? 'bg-blue-500/15' : 'group-hover:bg-app-elevated'"
         >
           <component :is="tab.icon" class="w-5 h-5" :stroke-width="isActive(tab.to) ? 2.5 : 1.8" />
           <span
             v-if="tab.badge"
-            class="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 flex items-center justify-center rounded-full bg-violet-500 text-white text-[10px] font-semibold"
+            class="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 flex items-center justify-center rounded-full bg-blue-500 text-white text-[10px] font-semibold"
           >
             {{ tab.badge }}
           </span>
