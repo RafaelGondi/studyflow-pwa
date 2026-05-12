@@ -12,6 +12,8 @@ export default defineConfig({
         name: 'StudyFlow',
         short_name: 'StudyFlow',
         description: 'Gerenciador de estudos moderno',
+        start_url: '/',
+        scope: '/',
         theme_color: '#0c0c0e',
         background_color: '#0c0c0e',
         display: 'standalone',
