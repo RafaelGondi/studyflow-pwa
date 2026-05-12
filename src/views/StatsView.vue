@@ -8,12 +8,12 @@
 
     <!-- Period selector -->
     <div class="px-4 pb-4">
-      <div class="flex bg-app-card border border-app-border rounded-xl p-1 gap-1">
+      <div class="flex bg-app-card border border-app-border rounded-md p-1 gap-1">
         <button
           v-for="p in periods"
           :key="p.value"
           @click="period = p.value"
-          class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
+          class="flex-1 py-2 rounded-sm text-sm font-semibold transition-all duration-200"
           :class="period === p.value
             ? 'bg-blue-500 text-white shadow-sm'
             : 'text-muted hover:text-secondary'"
@@ -26,12 +26,12 @@
     <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-4">
       <!-- Summary cards -->
       <div class="grid grid-cols-2 gap-3">
-        <div class="bg-app-card border border-app-border rounded-2xl p-4">
+        <div class="bg-app-card border border-app-border rounded-sm p-4">
           <p class="text-xs text-muted font-medium uppercase tracking-wider">Total</p>
           <p class="text-2xl font-bold text-primary mt-1">{{ formatDuration(totalSeconds) }}</p>
           <p class="text-xs text-faint mt-1">{{ periodLabel }}</p>
         </div>
-        <div class="bg-app-card border border-app-border rounded-2xl p-4">
+        <div class="bg-app-card border border-app-border rounded-sm p-4">
           <p class="text-xs text-muted font-medium uppercase tracking-wider">Sessões</p>
           <p class="text-2xl font-bold text-primary mt-1">{{ sessions.length }}</p>
           <p class="text-xs text-faint mt-1">{{ avgLabel }}</p>
@@ -60,10 +60,10 @@
           <div
             v-for="s in group.sessions"
             :key="s.id"
-            class="flex items-center gap-3 p-3 rounded-xl bg-app-card border border-app-border"
+            class="flex items-center gap-3 p-3 rounded-md bg-app-card border border-app-border"
           >
             <div
-              class="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+              class="w-9 h-9 rounded-sm flex items-center justify-center text-lg flex-shrink-0"
               :style="{ background: `${getSubject(s.subjectId)?.color ?? '#3b82f6'}20` }"
             >
               {{ getSubject(s.subjectId)?.icon ?? '📚' }}
@@ -76,7 +76,7 @@
               <span class="text-sm font-semibold text-secondary">{{ formatDuration(s.duration) }}</span>
               <button
                 @click="deleteSession(s.id)"
-                class="w-7 h-7 rounded-lg flex items-center justify-center text-faint hover:text-red-400 hover:bg-red-400/10 transition-all"
+                class="w-7 h-7 rounded-sm flex items-center justify-center text-faint hover:text-red-400 hover:bg-red-400/10 transition-all"
               >
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <polyline points="3 6 5 6 21 6"/>

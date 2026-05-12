@@ -11,7 +11,7 @@
     <Transition name="sheet">
       <div
         v-if="modelValue"
-        class="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto rounded-t-2xl bg-app-card flex flex-col"
+        class="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto rounded-t-xl bg-app-card flex flex-col"
         style="max-height: 80dvh"
       >
         <!-- Handle -->
@@ -51,11 +51,11 @@
             v-for="subject in subjects"
             :key="subject.id"
             @click="select(subject.id)"
-            class="w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all active:scale-[0.98]"
+            class="w-full flex items-center gap-3 px-3 py-3 rounded-md transition-all active:scale-[0.98]"
             :class="activeId === subject.id ? 'bg-app-elevated' : 'hover:bg-app-elevated'"
           >
             <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              class="w-10 h-10 rounded-md flex items-center justify-center text-xl flex-shrink-0"
               :style="{ background: `${subject.color}20` }"
             >
               {{ subject.icon }}

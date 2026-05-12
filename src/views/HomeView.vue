@@ -12,12 +12,12 @@
 
     <!-- Dual stats bar -->
     <div class="grid grid-cols-2 gap-2 px-4 pb-3">
-      <div class="rounded-xl bg-app-card p-3 flex flex-col gap-0.5">
+      <div class="rounded-md bg-app-card p-3 flex flex-col gap-0.5">
         <span class="text-[10px] font-semibold text-blue-500 uppercase tracking-wider">Estudo</span>
         <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
       </div>
-      <div class="rounded-xl bg-app-card p-3 flex flex-col gap-0.5">
+      <div class="rounded-md bg-app-card p-3 flex flex-col gap-0.5">
         <span class="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">Pausa</span>
         <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
         <span class="text-[10px] text-muted">hoje</span>
@@ -31,7 +31,7 @@
         <div v-if="timerStore.mode === 'idle'" key="idle">
           <button
             @click="sheetOpen = true"
-            class="w-full py-3 rounded-xl bg-blue-500 font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-95"
+            class="w-full py-3 rounded-md bg-blue-500 font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-95"
           >
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
             Iniciar Estudo
@@ -40,7 +40,7 @@
 
         <!-- ── BREAK mode ─────────────────────────────────────── -->
         <div v-else-if="timerStore.mode === 'break'" key="break">
-          <div class="rounded-xl bg-app-card p-5 text-center space-y-4">
+          <div class="rounded-md bg-app-card p-5 text-center space-y-4">
             <div>
               <p class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider mb-1">☕ Em pausa</p>
               <span class="font-sans text-5xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
@@ -50,7 +50,7 @@
               <button
                 v-if="lastSubjectId"
                 @click="timerStore.startStudy(lastSubjectId!)"
-                class="flex-1 py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+                class="flex-1 py-3 rounded-md font-bold text-white text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
                 style="background: #3b82f6"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
@@ -58,13 +58,13 @@
               </button>
               <button
                 @click="sheetOpen = true"
-                class="flex-1 py-3 rounded-xl bg-app-elevated text-primary text-sm font-semibold active:scale-95 transition-all"
+                class="flex-1 py-3 rounded-md bg-app-elevated text-primary text-sm font-semibold active:scale-95 transition-all"
               >
                 Trocar matéria
               </button>
               <button
                 @click="timerStore.stop(); loadToday()"
-                class="px-4 py-3 rounded-xl bg-app-elevated text-muted text-sm font-semibold active:scale-95 transition-all"
+                class="px-4 py-3 rounded-md bg-app-elevated text-muted text-sm font-semibold active:scale-95 transition-all"
               >
                 Encerrar
               </button>
@@ -74,12 +74,12 @@
 
         <!-- ── STUDY / PAUSED ─────────────────────────────────── -->
         <div v-else key="active">
-          <div class="rounded-xl bg-app-card p-4 space-y-4">
+          <div class="rounded-md bg-app-card p-4 space-y-4">
 
             <!-- Subject row -->
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
+                class="w-10 h-10 rounded-sm flex items-center justify-center text-xl flex-shrink-0"
                 :style="{ background: `${activeSubject?.color ?? '#3b82f6'}18` }"
               >
                 {{ activeSubject?.icon ?? '📚' }}
@@ -98,7 +98,7 @@
               </div>
               <button
                 @click="sheetOpen = true"
-                class="text-xs text-muted px-2 py-1 rounded-lg bg-app-elevated transition-colors"
+                class="text-xs text-muted px-2 py-1 rounded-sm bg-app-elevated transition-colors"
               >
                 trocar
               </button>
@@ -119,7 +119,7 @@
             <div class="grid grid-cols-3 gap-2">
               <button
                 @click="handleStop"
-                class="py-3 rounded-xl bg-app-elevated flex flex-col items-center gap-1 text-muted active:scale-95 transition-all"
+                class="py-3 rounded-md bg-app-elevated flex flex-col items-center gap-1 text-muted active:scale-95 transition-all"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
                 <span class="text-[10px] font-semibold">Parar</span>
@@ -127,7 +127,7 @@
 
               <button
                 @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
-                class="py-3 rounded-xl font-bold text-white flex flex-col items-center gap-1 transition-all active:scale-95"
+                class="py-3 rounded-md font-bold text-white flex flex-col items-center gap-1 transition-all active:scale-95"
                 :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? '#3b82f6') : '#10b981' }"
               >
                 <svg v-if="timerStore.isRunning" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -141,7 +141,7 @@
 
               <button
                 @click="handleBreak"
-                class="py-3 rounded-xl bg-app-elevated flex flex-col items-center gap-1 text-amber-500 transition-all active:scale-95"
+                class="py-3 rounded-md bg-app-elevated flex flex-col items-center gap-1 text-amber-500 transition-all active:scale-95"
               >
                 <span class="text-base leading-none">☕</span>
                 <span class="text-[10px] font-semibold">Break</span>

@@ -42,10 +42,10 @@
         <div
           v-for="subject in filteredSubjects"
           :key="subject.id"
-          class="flex items-center gap-4 p-4 rounded-2xl bg-app-card border border-app-border transition-all duration-200 hover:bg-app-elevated group"
+          class="flex items-center gap-4 p-4 rounded-sm bg-app-card border border-app-border transition-all duration-200 hover:bg-app-elevated group"
         >
           <div
-            class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 shadow-sm"
+            class="w-12 h-12 rounded-md flex items-center justify-center text-2xl flex-shrink-0 shadow-sm"
             :style="{ background: `${subject.color}20` }"
           >
             {{ subject.icon }}
@@ -62,7 +62,7 @@
           <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               @click="openEditSubject(subject)"
-              class="w-8 h-8 rounded-lg bg-app-elevated flex items-center justify-center text-muted hover:text-primary transition-colors"
+              class="w-8 h-8 rounded-sm bg-app-elevated flex items-center justify-center text-muted hover:text-primary transition-colors"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -71,7 +71,7 @@
             </button>
             <button
               @click="confirmDeleteSubject(subject.id)"
-              class="w-8 h-8 rounded-lg bg-app-elevated flex items-center justify-center text-muted hover:text-red-400 transition-colors"
+              class="w-8 h-8 rounded-sm bg-app-elevated flex items-center justify-center text-muted hover:text-red-400 transition-colors"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <polyline points="3 6 5 6 21 6"/>
@@ -102,7 +102,7 @@
           <div
             v-for="cat in subjectsStore.categories"
             :key="cat.id"
-            class="flex items-center gap-2 px-3 py-2 rounded-xl border transition-all group"
+            class="flex items-center gap-2 px-3 py-2 rounded-md border transition-all group"
             :style="{ background: `${cat.color}15`, borderColor: `${cat.color}40` }"
           >
             <div class="w-2 h-2 rounded-full" :style="{ background: cat.color }" />

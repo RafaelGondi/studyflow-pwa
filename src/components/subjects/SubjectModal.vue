@@ -3,7 +3,7 @@
     <Transition name="modal">
       <div v-if="show" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="emit('close')" />
-        <div class="relative w-full max-w-lg bg-app-card border border-app-border rounded-t-3xl sm:rounded-3xl p-6 pb-safe-bottom shadow-2xl">
+        <div class="relative w-full max-w-lg bg-app-card border border-app-border rounded-t-3xl sm:rounded-md p-6 pb-safe-bottom shadow-2xl">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-lg font-bold text-primary">
               {{ subject ? 'Editar matéria' : 'Nova matéria' }}
@@ -25,7 +25,7 @@
                   :key="icon"
                   type="button"
                   @click="form.icon = icon"
-                  class="w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all duration-150 active:scale-90"
+                  class="w-10 h-10 rounded-md text-xl flex items-center justify-center transition-all duration-150 active:scale-90"
                   :class="form.icon === icon ? 'bg-blue-500/30 ring-2 ring-blue-500' : 'bg-app-elevated hover:bg-app-elevated'"
                 >
                   {{ icon }}
@@ -41,7 +41,7 @@
                 type="text"
                 placeholder="Ex: Matemática"
                 required
-                class="w-full bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-primary placeholder:text-faint focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                class="w-full bg-app-elevated border border-app-border rounded-md px-4 py-3 text-primary placeholder:text-faint focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -50,7 +50,7 @@
               <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Categoria</label>
               <select
                 v-model="form.categoryId"
-                class="w-full bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-primary focus:outline-none focus:border-blue-500 transition-colors"
+                class="w-full bg-app-elevated border border-app-border rounded-md px-4 py-3 text-primary focus:outline-none focus:border-blue-500 transition-colors"
               >
                 <option :value="null">Sem categoria</option>
                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
@@ -78,8 +78,8 @@
             </div>
 
             <!-- Preview -->
-            <div class="p-3 rounded-xl bg-app-elevated border border-app-border flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" :style="{ background: `${form.color}25` }">
+            <div class="p-3 rounded-md bg-app-elevated border border-app-border flex items-center gap-3">
+              <div class="w-10 h-10 rounded-md flex items-center justify-center text-xl" :style="{ background: `${form.color}25` }">
                 {{ form.icon }}
               </div>
               <div>
@@ -94,7 +94,7 @@
             <button
               type="submit"
               :disabled="!form.name.trim() || saving"
-              class="w-full py-3.5 rounded-xl font-bold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
+              class="w-full py-3.5 rounded-md font-bold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
               :style="{ background: `linear-gradient(135deg, ${form.color}, ${form.color}bb)` }"
             >
               {{ saving ? 'Salvando...' : subject ? 'Salvar' : 'Criar matéria' }}

@@ -3,7 +3,7 @@
     <Transition name="modal">
       <div v-if="show" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="emit('close')" />
-        <div class="relative w-full max-w-lg bg-app-card border border-app-border rounded-t-3xl sm:rounded-3xl p-6 pb-safe-bottom shadow-2xl">
+        <div class="relative w-full max-w-lg bg-app-card border border-app-border rounded-t-3xl sm:rounded-md p-6 pb-safe-bottom shadow-2xl">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-lg font-bold text-primary">
               {{ category ? 'Editar categoria' : 'Nova categoria' }}
@@ -23,7 +23,7 @@
                 type="text"
                 placeholder="Ex: Exatas, Humanas..."
                 required
-                class="w-full bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-primary placeholder:text-faint focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                class="w-full bg-app-elevated border border-app-border rounded-md px-4 py-3 text-primary placeholder:text-faint focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -49,7 +49,7 @@
             <button
               type="submit"
               :disabled="!form.name.trim() || saving"
-              class="w-full py-3.5 rounded-xl font-bold text-white transition-all duration-200 disabled:opacity-50"
+              class="w-full py-3.5 rounded-md font-bold text-white transition-all duration-200 disabled:opacity-50"
               style="background: linear-gradient(135deg, #3b82f6, #2563eb)"
             >
               {{ saving ? 'Salvando...' : category ? 'Salvar' : 'Criar categoria' }}

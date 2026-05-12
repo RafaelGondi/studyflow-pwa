@@ -13,10 +13,10 @@
       <div
         v-for="item in items"
         :key="item.subjectId"
-        class="flex items-center gap-3 p-3 rounded-xl bg-app-card border border-app-border"
+        class="flex items-center gap-3 p-3 rounded-md bg-app-card border border-app-border"
       >
         <div
-          class="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+          class="w-9 h-9 rounded-sm flex items-center justify-center text-lg flex-shrink-0"
           :style="{ background: `${item.color}20` }"
         >
           {{ item.icon }}

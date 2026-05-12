@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="bg-app-card border border-app-border rounded-2xl p-4">
+  <div class="bg-app-card border border-app-border rounded-sm p-4">
     <h3 class="text-sm font-semibold text-muted uppercase tracking-wider mb-4">Por matéria</h3>
     <div v-if="items.length === 0" class="py-8 text-center text-faint text-sm">
       Nenhum dado disponível

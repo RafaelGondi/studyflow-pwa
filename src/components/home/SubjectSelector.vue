@@ -18,7 +18,7 @@
         v-for="subject in subjects"
         :key="subject.id"
         @click="emit('select', subject.id)"
-        class="relative flex flex-col items-start gap-2 p-4 rounded-2xl border transition-all duration-200 active:scale-95 text-left"
+        class="relative flex flex-col items-start gap-2 p-4 rounded-sm border transition-all duration-200 active:scale-95 text-left"
         :class="[
           selected === subject.id
             ? 'border-transparent scale-[1.02] shadow-lg'
@@ -32,7 +32,7 @@
         } : {}"
       >
         <div
-          class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-sm"
+          class="w-10 h-10 rounded-md flex items-center justify-center text-xl shadow-sm"
           :style="{ background: `${subject.color}25` }"
         >
           {{ subject.icon }}

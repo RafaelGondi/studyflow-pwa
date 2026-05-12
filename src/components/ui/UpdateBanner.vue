@@ -12,7 +12,7 @@
       <div class="flex items-center gap-2 flex-shrink-0">
         <button
           @click="updateServiceWorker(true)"
-          class="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-sm font-bold transition-all active:scale-95"
+          class="px-3 py-1.5 rounded-sm bg-white/20 hover:bg-white/30 text-white text-sm font-bold transition-all active:scale-95"
         >
           Atualizar
         </button>
