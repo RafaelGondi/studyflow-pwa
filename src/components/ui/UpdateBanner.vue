@@ -1,7 +1,7 @@
 <template>
   <Transition name="slide-banner">
     <div
-      v-if="needRefresh"
+      v-if="show"
       class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 py-3 max-w-lg mx-auto"
       style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 20px #3b82f650"
     >
@@ -11,13 +11,14 @@
       </div>
       <div class="flex items-center gap-2 flex-shrink-0">
         <button
-          @click="updateServiceWorker(true)"
-          class="px-3 py-1.5 rounded-sm bg-white/20 hover:bg-white/30 text-white text-sm font-bold transition-all active:scale-95"
+          @click="applyUpdate"
+          :disabled="updating"
+          class="px-3 py-1.5 rounded-sm bg-white/20 hover:bg-white/30 text-white text-sm font-bold transition-all active:scale-95 disabled:opacity-60"
         >
-          Atualizar
+          {{ updating ? 'Atualizando…' : 'Atualizar' }}
         </button>
         <button
-          @click="close"
+          @click="show = false"
           class="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
         >
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -30,13 +31,45 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRegisterSW } from 'virtual:pwa-register/vue'
+import { ref, onMounted } from 'vue'
 
-const { needRefresh, updateServiceWorker } = useRegisterSW()
+const show = ref(false)
+const updating = ref(false)
+let waitingWorker: ServiceWorker | null = null
 
-function close() {
-  needRefresh.value = false
+onMounted(() => {
+  if (!('serviceWorker' in navigator)) return
+
+  navigator.serviceWorker.ready.then(reg => {
+    // Already a waiting SW on load?
+    if (reg.waiting) {
+      waitingWorker = reg.waiting
+      show.value = true
+    }
+
+    // New SW found while page is open
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing
+      if (!newWorker) return
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          waitingWorker = newWorker
+          show.value = true
+        }
+      })
+    })
+  })
+
+  // When SW takes control, reload
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload()
+  })
+})
+
+async function applyUpdate() {
+  if (!waitingWorker) return
+  updating.value = true
+  waitingWorker.postMessage({ type: 'SKIP_WAITING' })
 }
 </script>
 
