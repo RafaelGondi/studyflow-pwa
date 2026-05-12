@@ -29,14 +29,7 @@
       >
         <span class="text-base leading-none mt-0.5">⚠️</span>
         <div class="flex-1">
-          <p class="text-sm text-primary font-medium">
-            <template v-if="authStore.signInError === 'popup-blocked'">Popup bloqueado pelo navegador</template>
-            <template v-else-if="authStore.signInError === 'popup-closed'">Login cancelado</template>
-            <template v-else>Erro ao fazer login. Tente novamente.</template>
-          </p>
-          <p v-if="authStore.signInError === 'popup-blocked'" class="text-xs text-muted mt-0.5">
-            Permita popups para este site e tente novamente.
-          </p>
+          <p class="text-sm text-primary font-medium">{{ authStore.signInError }}</p>
         </div>
         <button @click="authStore.clearSignInError()" class="text-muted text-lg leading-none">×</button>
       </div>
@@ -107,7 +100,7 @@
             </div>
             <div class="flex-1 text-left">
               <p class="text-sm font-semibold text-primary">
-                {{ authStore.signingIn ? 'Abrindo…' : 'Entrar com Google' }}
+                {{ authStore.signingIn ? 'Redirecionando…' : 'Entrar com Google' }}
               </p>
               <p class="text-xs text-muted">Seus dados ficam seguros mesmo ao atualizar o app</p>
             </div>
@@ -231,14 +224,9 @@ const signingOut = ref(false)
 onMounted(setup)
 
 async function handleGoogleSignIn() {
-  const result = await authStore.signInWithGoogle()
-  if (result === 'linked' || result === 'switched') {
-    // Recarrega dados para o novo/mesmo UID
-    await Promise.all([
-      subjectsStore.load(),
-      sessionsStore.loadToday(),
-    ])
-  }
+  // Inicia o redirect para o Google — a página vai navegar.
+  // O resultado é processado em authStore.init() quando o app volta.
+  await authStore.signInWithGoogle()
 }
 
 async function handleSignOut() {
