@@ -10,29 +10,29 @@
   :root {
     color-scheme: light;
     /* RGB triplets for Tailwind opacity support */
-    --app-bg:       242 239 247;   /* mauve-100 approx */
+    --app-bg:       238 243 245;   /* mist-100 approx */
     --app-card:     255 255 255;   /* white */
-    --app-elevated: 232 227 242;   /* mauve-200 approx */
-    --app-border:   214 207 232;   /* mauve-300 approx */
-    --text-primary:   oklch(14.5% 0.008 326);  /* mauve-950 */
-    --text-secondary: oklch(26.3% 0.024 320.12); /* mauve-800 */
-    --text-muted:     oklch(43.5% 0.029 321.78); /* mauve-600 */
-    --text-faint:     oklch(71.1% 0.019 323.02); /* mauve-400 */
-    --accent-color:   oklch(43.5% 0.029 321.78); /* mauve-600 */
+    --app-elevated: 227 235 238;   /* mist-200 approx */
+    --app-border:   209 221 225;   /* mist-300 approx */
+    --text-primary:   oklch(14.8% 0.004 228.8);  /* mist-950 */
+    --text-secondary: oklch(27.5% 0.011 216.9);  /* mist-800 */
+    --text-muted:     oklch(45%   0.017 213.2);  /* mist-600 */
+    --text-faint:     oklch(72.3% 0.014 214.4);  /* mist-400 */
+    --accent-color:   oklch(45%   0.017 213.2);  /* mist-600 */
   }
 
   /* ── Dark theme ───────────────────────────────── */
   .dark {
     color-scheme: dark;
-    --app-bg:       30  25  42;    /* mauve-950 approx */
-    --app-card:     40  33  55;    /* mauve-900 approx */
-    --app-elevated: 55  46  72;    /* mauve-800 approx */
-    --app-border:   80  68  100;   /* mauve-700 approx */
-    --text-primary:   oklch(98.5% 0 0);           /* mauve-50 */
-    --text-secondary: oklch(92.2% 0.005 325.62);  /* mauve-200 */
-    --text-muted:     oklch(71.1% 0.019 323.02);  /* mauve-400 */
-    --text-faint:     oklch(54.2% 0.034 322.5);   /* mauve-500 */
-    --accent-color:   oklch(86.5% 0.012 325.68);  /* mauve-300 */
+    --app-bg:       23  28  30;    /* mist-950 approx */
+    --app-card:     35  43  46;    /* mist-900 approx */
+    --app-elevated: 46  56  60;    /* mist-800 approx */
+    --app-border:   63  80  86;    /* mist-700 approx */
+    --text-primary:   oklch(98.7% 0.002 197.1);  /* mist-50 */
+    --text-secondary: oklch(92.5% 0.005 214.3);  /* mist-200 */
+    --text-muted:     oklch(72.3% 0.014 214.4);  /* mist-400 */
+    --text-faint:     oklch(56%   0.021 213.5);  /* mist-500 */
+    --accent-color:   oklch(87.2% 0.007 219.6);  /* mist-300 */
   }
 
   * {
@@ -41,7 +41,7 @@
   }
 
   html {
-    background-color: oklch(14.5% 0.008 326); /* mauve-950 */
+    background-color: oklch(14.8% 0.004 228.8); /* mist-950 */
     overscroll-behavior: none;
   }
 
@@ -58,7 +58,7 @@
 
   ::-webkit-scrollbar       { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: oklch(36.4% 0.029 323.89); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb { background: oklch(37.8% 0.015 216); border-radius: 2px; }
 
   *:focus-visible {
     outline: 2px solid var(--accent-color);

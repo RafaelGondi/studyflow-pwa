@@ -14,8 +14,8 @@ export default defineConfig({
         description: 'Gerenciador de estudos moderno',
         start_url: '/',
         scope: '/',
-        theme_color: '#16151a',
-        background_color: '#16151a',
+        theme_color: '#171c1e',
+        background_color: '#171c1e',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
