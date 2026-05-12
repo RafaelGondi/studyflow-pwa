@@ -31,9 +31,9 @@
         <div v-if="timerStore.mode === 'idle'" key="idle">
           <button
             @click="sheetOpen = true"
-            class="w-full py-4 rounded-xl bg-blue-500 font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-95"
+            class="w-full py-3 rounded-xl bg-blue-500 font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-95"
           >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
             Iniciar Estudo
           </button>
         </div>
