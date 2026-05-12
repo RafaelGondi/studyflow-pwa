@@ -1,6 +1,6 @@
 <template>
   <div class="bg-app-card border border-app-border rounded-sm p-4">
-    <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">Esta semana</h3>
+    <h3 class="text-sm font-semibold text-faint uppercase tracking-wider mb-4">Esta semana</h3>
     <Bar :data="chartData" :options="chartOptions" class="max-h-48" />
   </div>
 </template>

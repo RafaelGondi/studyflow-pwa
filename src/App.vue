@@ -5,7 +5,7 @@
       <RouterView v-if="authStore.ready" :key="route.path" />
       <div v-else class="min-h-screen flex flex-col items-center justify-center gap-4">
         <div class="text-5xl animate-pulse-slow">📚</div>
-        <p class="text-zinc-400 text-sm font-medium">Carregando StudyFlow...</p>
+        <p class="text-faint text-sm font-medium">Carregando StudyFlow...</p>
       </div>
     </Transition>
 
