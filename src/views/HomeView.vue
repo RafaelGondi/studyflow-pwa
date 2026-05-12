@@ -105,24 +105,25 @@
             </div>
 
             <!-- Timer display -->
-            <div class="text-center py-1 relative">
+            <div class="text-center py-1">
               <div
                 class="font-sans text-6xl font-bold tabular-nums leading-none"
                 :style="{ color: activeSubject?.color ?? 'var(--accent-color)' }"
               >
                 {{ timerStore.studyFormatted }}
               </div>
-              <p class="text-xs text-muted mt-2">sessão atual</p>
-              <!-- Focus button -->
-              <button
-                @click="focusMode = true"
-                class="absolute top-0 right-0 w-8 h-8 rounded-sm bg-app-elevated flex items-center justify-center text-muted hover:text-primary transition-colors"
-                title="Modo foco"
-              >
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                </svg>
-              </button>
+              <div class="flex items-center justify-center gap-2 mt-2">
+                <p class="text-xs text-muted">sessão atual</p>
+                <button
+                  @click="focusMode = true"
+                  class="w-6 h-6 rounded-sm bg-app-elevated flex items-center justify-center text-muted hover:text-primary transition-colors"
+                  title="Modo foco"
+                >
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <!-- Control buttons -->

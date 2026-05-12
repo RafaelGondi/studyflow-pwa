@@ -1,9 +1,15 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth'
+import {
+  getAuth,
+  signInAnonymously,
+  signOut as fbSignOut,
+  GoogleAuthProvider,
+  linkWithPopup,
+  signInWithCredential,
+  signInWithPopup,
+} from 'firebase/auth'
 
-// Substitua com as credenciais do seu projeto Firebase
-// Firebase Console > Project Settings > Your Apps > SDK setup and configuration
 const firebaseConfig = {
   apiKey: 'AIzaSyC_Q_J2dD9b0rweBSejCDhmk8P8w0aSUjY',
   authDomain: 'studyflow-42125.firebaseapp.com',
@@ -17,21 +23,33 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig)
 export const db = getFirestore(app)
 export const auth = getAuth(app)
+export { GoogleAuthProvider, linkWithPopup, signInWithCredential, signInWithPopup, fbSignOut }
+
+// Chave local que âncora o UID entre reloads e updates de SW.
+export const UID_KEY = 'studyflow_uid'
 
 export async function ensureAuth(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      unsubscribe()
-      if (user) {
-        resolve(user.uid)
-      } else {
-        try {
-          const cred = await signInAnonymously(auth)
-          resolve(cred.user.uid)
-        } catch (e) {
-          reject(e)
-        }
-      }
-    })
-  })
+  // authStateReady() aguarda o Firebase terminar de restaurar a sessão
+  // do localStorage/IndexedDB — elimina race condition do onAuthStateChanged.
+  await auth.authStateReady()
+
+  if (auth.currentUser) {
+    localStorage.setItem(UID_KEY, auth.currentUser.uid)
+    return auth.currentUser.uid
+  }
+
+  // Nenhum usuário encontrado — cria conta anônima.
+  const previousUid = localStorage.getItem(UID_KEY)
+  const cred = await signInAnonymously(auth)
+  const newUid = cred.user.uid
+
+  if (previousUid && previousUid !== newUid) {
+    console.warn(
+      '[StudyFlow] Novo usuário anônimo criado — dados anteriores perdidos.\n' +
+      `  UID anterior : ${previousUid}\n  UID novo     : ${newUid}`
+    )
+  }
+
+  localStorage.setItem(UID_KEY, newUid)
+  return newUid
 }

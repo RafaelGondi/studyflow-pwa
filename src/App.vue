@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSubjectsStore } from '@/stores/subjects'
@@ -28,6 +28,14 @@ const authStore = useAuthStore()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 const themeStore = useThemeStore()
+
+// Recarrega todos os dados quando o UID muda (ex.: login com Google)
+watch(() => authStore.uid, (newUid, oldUid) => {
+  if (newUid && oldUid && newUid !== oldUid) {
+    subjectsStore.load()
+    sessionsStore.loadToday()
+  }
+})
 
 onMounted(async () => {
   themeStore.init()
