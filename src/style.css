@@ -65,7 +65,8 @@
 
   /* Focus */
   *:focus-visible {
-    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-app-bg;
+    outline: 2px solid var(--color-accent-hex);
+    outline-offset: 2px;
   }
 }
 
@@ -77,16 +78,17 @@
   }
 
   .btn-primary {
-    @apply bg-accent hover:bg-accent/80 text-white font-semibold rounded-xl px-4 py-2.5 transition-all duration-200 active:scale-95;
+    @apply text-white font-semibold rounded-xl px-4 py-2.5 transition-all duration-200 active:scale-95;
+    background-color: var(--color-accent-hex);
   }
 
   .input {
     @apply bg-app-elevated border border-app-border rounded-xl px-4 py-3 text-primary placeholder-faint
-           focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors w-full;
+           focus:outline-none transition-colors w-full;
   }
 
   .tab-active {
-    @apply bg-blue-500 text-white;
+    @apply bg-accent text-white;
   }
 
   .tab-inactive {
