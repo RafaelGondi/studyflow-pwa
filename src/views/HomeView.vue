@@ -152,7 +152,7 @@
       </Transition>
 
       <!-- ── Session log ─────────────────────────────────────── -->
-      <div v-if="sessionsStore.todaySessions.length > 0" class="pt-1">
+      <div v-if="sessionsStore.todaySessions.length > 0" class="pt-5">
         <p class="text-xs text-muted mb-3 px-1">hoje</p>
         <template v-for="(item, index) in sessionLog" :key="item.id ?? item.type + index">
 
