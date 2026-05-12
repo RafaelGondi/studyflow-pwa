@@ -96,6 +96,24 @@
   }
 }
 
+/* Accent utilities — defined via CSS var so they adapt to light/dark */
+@layer utilities {
+  .bg-accent        { background-color: rgb(var(--color-accent) / 1); }
+  .bg-accent\/15    { background-color: rgb(var(--color-accent) / 0.15); }
+  .bg-accent\/20    { background-color: rgb(var(--color-accent) / 0.20); }
+  .bg-accent\/30    { background-color: rgb(var(--color-accent) / 0.30); }
+  .bg-accent\/50    { background-color: rgb(var(--color-accent) / 0.50); }
+  .text-accent      { color: rgb(var(--color-accent) / 1); }
+  .text-accent\/70  { color: rgb(var(--color-accent) / 0.70); }
+  .text-accent\/80  { color: rgb(var(--color-accent) / 0.80); }
+  .border-accent    { border-color: rgb(var(--color-accent) / 1); }
+  .border-accent\/50 { border-color: rgb(var(--color-accent) / 0.50); }
+  .ring-accent      { --tw-ring-color: rgb(var(--color-accent) / 1); }
+  .hover\:bg-accent\/80:hover { background-color: rgb(var(--color-accent) / 0.80); }
+  .focus\:border-accent:focus { border-color: rgb(var(--color-accent) / 1); }
+  .focus\:ring-accent:focus   { --tw-ring-color: rgb(var(--color-accent) / 1); }
+}
+
 /* Page transitions */
 .page-enter-active,
 .page-leave-active {
