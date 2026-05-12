@@ -80,7 +80,7 @@
             <div class="flex items-center gap-3">
               <div
                 class="w-10 h-10 rounded-sm flex items-center justify-center text-xl flex-shrink-0"
-                :style="{ background: `${activeSubject?.color ?? '#44403c'}18` }"
+                :style="{ background: `${activeSubject?.color ?? 'var(--accent-color)'}18` }"
               >
                 {{ activeSubject?.icon ?? '📚' }}
               </div>
@@ -108,7 +108,7 @@
             <div class="text-center py-1">
               <div
                 class="font-sans text-6xl font-bold tabular-nums leading-none"
-                :style="{ color: activeSubject?.color ?? '#44403c' }"
+                :style="{ color: activeSubject?.color ?? 'var(--accent-color)' }"
               >
                 {{ timerStore.studyFormatted }}
               </div>
@@ -128,7 +128,7 @@
               <button
                 @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
                 class="py-3 rounded-md font-bold text-white flex flex-col items-center gap-1 transition-all active:scale-95"
-                :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? '#44403c') : '#10b981' }"
+                :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? 'var(--accent-color)') : '#10b981' }"
               >
                 <svg v-if="timerStore.isRunning" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
@@ -165,12 +165,12 @@
           <div v-else class="flex items-start gap-3 py-2.5">
             <div
               class="w-1 self-stretch rounded-full mt-1 flex-shrink-0"
-              :style="{ background: getSubject(item.subjectId)?.color ?? '#44403c' }"
+              :style="{ background: getSubject(item.subjectId)?.color ?? 'var(--accent-color)' }"
             />
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-2">
                 <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.subjectId)?.name ?? 'Matéria' }}</p>
-                <span class="text-sm font-semibold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? '#44403c' }">
+                <span class="text-sm font-semibold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? 'var(--accent-color)' }">
                   {{ formatDuration(item.duration) }}
                 </span>
               </div>

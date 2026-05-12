@@ -47,7 +47,7 @@ const chartData = computed(() => {
     labels,
     datasets: [{
       data,
-      backgroundColor: data.map((_, i) => i === 6 ? '#44403c' : '#44403c30'),
+      backgroundColor: data.map((_, i) => i === 6 ? 'var(--accent-color)' : 'color-mix(in oklch, var(--accent-color) 30%, transparent)'),
       borderRadius: 8,
       borderSkipped: false,
     }],

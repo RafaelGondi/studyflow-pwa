@@ -124,7 +124,7 @@
     <button
       @click="openAddSubject"
       class="fixed right-5 bottom-24 w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 active:scale-90 z-40"
-      style="background: linear-gradient(135deg, #44403c, #292524); box-shadow: 0 8px 24px #44403c40"
+      style="background: linear-gradient(135deg, var(--accent-color), color-mix(in oklch, var(--accent-color) 60%, black)); box-shadow: 0 8px 24px color-mix(in oklch, var(--accent-color) 40%, transparent)"
     >
       <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>

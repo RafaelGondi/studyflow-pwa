@@ -58,7 +58,7 @@ const items = computed(() => {
       return {
         subjectId,
         name: s?.name ?? 'Desconhecida',
-        color: s?.color ?? '#44403c',
+        color: s?.color ?? 'var(--accent-color)',
         icon: s?.icon ?? '📚',
         seconds,
         pct: Math.round((seconds / total) * 100),

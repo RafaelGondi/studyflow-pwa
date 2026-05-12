@@ -64,7 +64,7 @@
           >
             <div
               class="w-9 h-9 rounded-sm flex items-center justify-center text-lg flex-shrink-0"
-              :style="{ background: `${getSubject(s.subjectId)?.color ?? '#44403c'}20` }"
+              :style="{ background: `${getSubject(s.subjectId)?.color ?? 'var(--accent-color)'}20` }"
             >
               {{ getSubject(s.subjectId)?.icon ?? '📚' }}
             </div>

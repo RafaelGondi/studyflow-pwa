@@ -50,7 +50,7 @@
               type="submit"
               :disabled="!form.name.trim() || saving"
               class="w-full py-3.5 rounded-md font-bold text-white transition-all duration-200 disabled:opacity-50"
-              style="background: linear-gradient(135deg, #44403c, #292524)"
+              style="background: linear-gradient(135deg, var(--accent-color), color-mix(in oklch, var(--accent-color) 60%, black))"
             >
               {{ saving ? 'Salvando...' : category ? 'Salvar' : 'Criar categoria' }}
             </button>
