@@ -105,7 +105,7 @@
             </div>
 
             <!-- Timer display -->
-            <div class="text-center py-1">
+            <div class="text-center py-1 relative">
               <div
                 class="font-sans text-6xl font-bold tabular-nums leading-none"
                 :style="{ color: activeSubject?.color ?? 'var(--accent-color)' }"
@@ -113,6 +113,16 @@
                 {{ timerStore.studyFormatted }}
               </div>
               <p class="text-xs text-muted mt-2">sessão atual</p>
+              <!-- Focus button -->
+              <button
+                @click="focusMode = true"
+                class="absolute top-0 right-0 w-8 h-8 rounded-sm bg-app-elevated flex items-center justify-center text-muted hover:text-primary transition-colors"
+                title="Modo foco"
+              >
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                </svg>
+              </button>
             </div>
 
             <!-- Control buttons -->
@@ -193,6 +203,12 @@
 
     </main>
 
+    <FocusMode
+      :active="focusMode"
+      :subject="activeSubject"
+      @close="focusMode = false"
+    />
+
     <SubjectBottomSheet
       v-model="sheetOpen"
       :active-id="timerStore.activeSubjectId"
@@ -207,6 +223,7 @@ import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
+import FocusMode from '@/components/home/FocusMode.vue'
 import { formatDuration, formatTimer } from '@/types'
 
 const timerStore = useTimerStore()
@@ -215,6 +232,7 @@ const subjectsStore = useSubjectsStore()
 
 const lastSubjectId = ref<string | null>(null)
 const sheetOpen = ref(false)
+const focusMode = ref(false)
 
 const activeSubject = computed(() => {
   const id = timerStore.activeSubjectId
