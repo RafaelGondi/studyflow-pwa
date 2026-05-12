@@ -207,7 +207,10 @@
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.subjectId)?.name ?? 'Matéria' }}</p>
-              <p class="text-[10px] text-muted mt-0.5">{{ fmt(item.startTime) }} → {{ fmt(item.endTime) }}</p>
+              <p class="text-[10px] text-muted mt-0.5">
+                {{ fmt(item.startTime) }} → {{ fmt(item.endTime) }}
+                <span v-if="pausedTime(item) > 0" class="text-amber-500"> · ⏸ {{ formatDuration(pausedTime(item)) }} pausado</span>
+              </p>
             </div>
             <span class="text-sm font-bold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? '#8b5cf6' }">
               {{ formatDuration(item.duration) }}
@@ -308,6 +311,11 @@ async function loadToday() {
 
 function getSubject(id?: string) {
   return id ? subjectsStore.getSubject(id) : undefined
+}
+
+function pausedTime(session: { startTime: number; endTime: number; duration: number }) {
+  const totalSecs = Math.floor((session.endTime - session.startTime) / 1000)
+  return Math.max(0, totalSecs - session.duration)
 }
 
 function fmt(ts: number) {

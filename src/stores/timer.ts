@@ -10,6 +10,7 @@ type Mode = 'idle' | 'study' | 'paused' | 'break'
 interface TimerState {
   mode: Mode
   subjectId: string | null
+  originalStartedAt: number  // wall-clock start of the session (never changes on pause/resume)
   startedAt: number
   accumulatedMs: number
   breakStartedAt: number | null
@@ -22,6 +23,7 @@ export const useTimerStore = defineStore('timer', () => {
   const state = ref<TimerState>({
     mode: 'idle',
     subjectId: null,
+    originalStartedAt: 0,
     startedAt: 0,
     accumulatedMs: 0,
     breakStartedAt: null,
@@ -78,6 +80,7 @@ export const useTimerStore = defineStore('timer', () => {
     }
     state.value.mode = 'study'
     state.value.subjectId = subjectId
+    state.value.originalStartedAt = Date.now()
     state.value.startedAt = Date.now()
     state.value.accumulatedMs = 0
     startTick()
@@ -104,7 +107,7 @@ export const useTimerStore = defineStore('timer', () => {
     if (state.value.mode === 'idle') return
     const ms = studyElapsedMs.value
     const subjectId = state.value.subjectId
-    const startTime = Date.now() - ms
+    const startTime = state.value.originalStartedAt || Date.now() - ms
 
     // save break if stopping from break
     if (state.value.mode === 'break' && state.value.breakStartedAt) {
@@ -121,7 +124,7 @@ export const useTimerStore = defineStore('timer', () => {
     if (state.value.mode === 'idle') return
     const ms = studyElapsedMs.value
     const subjectId = state.value.subjectId
-    const startTime = Date.now() - ms
+    const startTime = state.value.originalStartedAt || Date.now() - ms
 
     if (subjectId && ms >= 5000) {
       await sessions.save({ subjectId, startTime, endTime: Date.now(), duration: Math.floor(ms / 1000) })
@@ -140,6 +143,7 @@ export const useTimerStore = defineStore('timer', () => {
     state.value = {
       mode: 'idle',
       subjectId: null,
+      originalStartedAt: 0,
       startedAt: 0,
       accumulatedMs: 0,
       breakStartedAt: null,
