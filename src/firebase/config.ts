@@ -5,9 +5,8 @@ import {
   signInAnonymously,
   signOut as fbSignOut,
   GoogleAuthProvider,
-  linkWithRedirect,
-  signInWithRedirect,
-  getRedirectResult,
+  linkWithPopup,
+  signInWithPopup,
 } from 'firebase/auth'
 
 const firebaseConfig = {
@@ -23,11 +22,7 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig)
 export const db = getFirestore(app)
 export const auth = getAuth(app)
-export {
-  GoogleAuthProvider,
-  linkWithRedirect, signInWithRedirect, getRedirectResult,
-  fbSignOut,
-}
+export { GoogleAuthProvider, linkWithPopup, signInWithPopup, fbSignOut }
 
 // Chave local que âncora o UID entre reloads e updates de SW.
 export const UID_KEY = 'studyflow_uid'

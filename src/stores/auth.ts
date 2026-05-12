@@ -8,12 +8,12 @@ import {
 import {
   auth, ensureAuth, UID_KEY,
   GoogleAuthProvider,
-  linkWithRedirect, signInWithRedirect, getRedirectResult,
+  linkWithPopup, signInWithPopup,
   fbSignOut,
 } from '@/firebase/config'
 
-// Indica que o usuário já vinculou uma conta Google com sucesso ao menos
-// uma vez. Nas próximas entradas usa signInWithRedirect (sem link).
+// Flag: indica que já existe uma conta Google vinculada.
+// Na próxima entrada usa signInWithPopup (sem tentar link).
 const GOOGLE_LINKED_KEY = 'studyflow_google_linked'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -24,7 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
   const signInError = ref<string | null>(null)
 
   // Refs primitivos — Vue detecta mudanças mesmo que o objeto User
-  // seja a mesma referência após linkWithRedirect.
+  // seja a mesma referência após linkWithPopup.
   const isAnonymous = ref(true)
   const displayName = ref<string | null>(null)
   const email       = ref<string | null>(null)
@@ -42,55 +42,25 @@ export const useAuthStore = defineStore('auth', () => {
 
   // ── Init ──────────────────────────────────────────────────────────────────
   async function init() {
-    // Processa resultado do redirect do Google (se houver).
-    try {
-      const result = await getRedirectResult(auth)
-      if (result) {
-        syncUser(result.user)
-        localStorage.setItem(UID_KEY, result.user.uid)
-        // Marca que já existe uma conta Google vinculada.
-        localStorage.setItem(GOOGLE_LINKED_KEY, 'true')
-        signingIn.value = false
-      }
-    } catch (err: any) {
-      signingIn.value = false
-      // credential-already-in-use: a conta Google já existe no Firebase
-      // e o link foi negado. Marca a flag para que a próxima tentativa
-      // use signInWithRedirect em vez de linkWithRedirect.
-      if (err.code === 'auth/credential-already-in-use') {
-        localStorage.setItem(GOOGLE_LINKED_KEY, 'true')
-        signInError.value = 'Esta conta Google já existe. Tente entrar novamente.'
-      } else if (
-        err.code !== 'auth/popup-closed-by-user' &&
-        err.code !== 'auth/cancelled-popup-request'
-      ) {
-        console.error('[StudyFlow] getRedirectResult error:', err)
-        signInError.value = 'Erro ao finalizar login com Google.'
-      }
-    }
-
-    // Garante que existe um usuário (anônimo ou Google).
     const previousUid = localStorage.getItem(UID_KEY)
     uid.value = await ensureAuth()
-
-    // Sync explícito — garante que os refs refletem o estado final
-    // independente da ordem dos callbacks do Firebase.
     syncUser(auth.currentUser)
-
     ready.value = true
-
     if (previousUid && previousUid !== uid.value) {
       dataLost.value = true
     }
   }
 
-  // ── Google Sign-In via Redirect ───────────────────────────────────────────
+  // ── Google Sign-In via Popup ───────────────────────────────────────────────
+  //
+  // Popup é síncrono: o resultado chega na mesma sessão, sem reload.
+  // No Chrome Android abre uma nova aba (não popup bloqueável), fecha
+  // sozinha ao concluir e retorna via postMessage.
   //
   // Estratégia:
-  //  • Primeira vez (sem flag): linkWithRedirect → mantém UID anônimo,
+  //  • Primeira vez (sem flag): linkWithPopup → mantém UID anônimo,
   //    dados do Firestore preservados automaticamente.
-  //  • Vezes seguintes (com flag): signInWithRedirect → login direto,
-  //    evita o erro credential-already-in-use do link.
+  //  • Vezes seguintes (com flag): signInWithPopup → login direto.
   async function signInWithGoogle() {
     signInError.value = null
     signingIn.value = true
@@ -100,19 +70,53 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const alreadyLinked = localStorage.getItem(GOOGLE_LINKED_KEY) === 'true'
+      let result
 
       if (!alreadyLinked && auth.currentUser?.isAnonymous) {
-        // Primeira vez: tenta vincular para preservar dados anônimos.
-        await linkWithRedirect(auth.currentUser, provider)
+        result = await linkWithPopup(auth.currentUser, provider)
       } else {
-        // Já vinculou antes (ou não é anônimo): login direto.
-        await signInWithRedirect(auth, provider)
+        result = await signInWithPopup(auth, provider)
       }
-      // A partir daqui a página redireciona — código abaixo não executa.
+
+      syncUser(result.user)
+      localStorage.setItem(UID_KEY, result.user.uid)
+      localStorage.setItem(GOOGLE_LINKED_KEY, 'true')
+
+      // Recarrega dados do Firestore para o UID (pode ter mudado no switch)
+      uid.value = result.user.uid
+
     } catch (err: any) {
+      // Conta Google já vinculada a outro Firebase UID →
+      // tenta de novo como signInWithPopup direto.
+      if (err.code === 'auth/credential-already-in-use') {
+        localStorage.setItem(GOOGLE_LINKED_KEY, 'true')
+        try {
+          const result = await signInWithPopup(auth, provider)
+          syncUser(result.user)
+          localStorage.setItem(UID_KEY, result.user.uid)
+          uid.value = result.user.uid
+        } catch (innerErr: any) {
+          _handlePopupError(innerErr)
+        }
+      } else {
+        _handlePopupError(err)
+      }
+    } finally {
       signingIn.value = false
-      signInError.value = 'Erro ao iniciar login. Tente novamente.'
-      console.error('[StudyFlow] signInWithGoogle error:', err)
+    }
+  }
+
+  function _handlePopupError(err: any) {
+    if (
+      err.code === 'auth/popup-closed-by-user' ||
+      err.code === 'auth/cancelled-popup-request'
+    ) {
+      // Usuário fechou — sem mensagem de erro
+    } else if (err.code === 'auth/popup-blocked') {
+      signInError.value = 'Popup bloqueado. Permita popups para este site e tente novamente.'
+    } else {
+      signInError.value = 'Erro ao fazer login. Tente novamente.'
+      console.error('[StudyFlow] Google sign-in error:', err)
     }
   }
 
@@ -120,7 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function signOut() {
     await fbSignOut(auth)
     localStorage.removeItem(UID_KEY)
-    // Mantém GOOGLE_LINKED_KEY — na próxima entrada usa signInWithRedirect.
+    // Mantém GOOGLE_LINKED_KEY: na próxima entrada usa signInWithPopup direto.
     const cred = await signInAnonymously(auth)
     syncUser(cred.user)
     localStorage.setItem(UID_KEY, cred.user.uid)
