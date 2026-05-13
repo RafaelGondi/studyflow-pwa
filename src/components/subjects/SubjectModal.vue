@@ -60,20 +60,42 @@
             <!-- Color picker -->
             <div>
               <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Cor</label>
-              <div class="flex flex-wrap gap-2">
+              <div class="grid grid-cols-8 gap-2 mb-2">
                 <button
                   v-for="c in SUBJECT_COLORS"
                   :key="c.value"
                   type="button"
                   @click="form.color = c.value"
-                  class="w-9 h-9 rounded-full transition-all duration-150 active:scale-90 flex items-center justify-center"
+                  class="w-8 h-8 rounded-full transition-all duration-150 active:scale-90 flex items-center justify-center flex-shrink-0"
                   :style="{ background: c.value }"
-                  :class="form.color === c.value ? 'ring-2 ring-offset-2 ring-offset-app-card scale-110' : 'opacity-70 hover:opacity-100'"
+                  :class="form.color === c.value ? 'ring-2 ring-offset-2 ring-offset-app-card scale-110' : 'opacity-75 hover:opacity-100 hover:scale-105'"
                 >
-                  <svg v-if="form.color === c.value" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <svg v-if="form.color === c.value" class="w-3.5 h-3.5 text-white drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </button>
+
+                <!-- Cor personalizada -->
+                <label
+                  class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105 active:scale-90 overflow-hidden border-2 border-dashed border-app-border relative"
+                  :class="isCustomColor ? 'ring-2 ring-offset-2 ring-offset-app-card scale-110' : ''"
+                  :style="isCustomColor ? { background: form.color, borderColor: form.color } : {}"
+                  title="Cor personalizada"
+                >
+                  <input
+                    type="color"
+                    :value="isCustomColor ? form.color : '#000000'"
+                    @input="onCustomColor"
+                    class="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  />
+                  <svg v-if="!isCustomColor" class="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+                  </svg>
+                  <svg v-else class="w-3.5 h-3.5 text-white drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </label>
               </div>
             </div>
 
@@ -112,6 +134,8 @@ import { useSubjectsStore } from '@/stores/subjects'
 import { SUBJECT_COLORS, SUBJECT_ICONS } from '@/types'
 import type { Subject } from '@/types'
 
+const PRESET_VALUES = new Set(SUBJECT_COLORS.map(c => c.value))
+
 const props = defineProps<{ show: boolean; subject?: Subject | null }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
 
@@ -140,6 +164,12 @@ watch(() => props.show, (val) => {
     }
   }
 })
+
+const isCustomColor = computed(() => !PRESET_VALUES.has(form.value.color))
+
+function onCustomColor(e: Event) {
+  form.value.color = (e.target as HTMLInputElement).value
+}
 
 const categoryName = computed(() => {
   if (!form.value.categoryId) return null

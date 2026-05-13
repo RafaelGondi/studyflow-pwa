@@ -41,16 +41,36 @@ export interface ActiveTimer {
 }
 
 export const SUBJECT_COLORS = [
+  // Vermelhos / Rosas
+  { name: 'red',     value: '#ef4444' },
+  { name: 'rose',    value: '#f43f5e' },
+  { name: 'pink',    value: '#ec4899' },
+  { name: 'fuchsia', value: '#d946ef' },
+  // Roxos / Índigos
+  { name: 'purple',  value: '#a855f7' },
   { name: 'violet',  value: '#8b5cf6' },
   { name: 'indigo',  value: '#6366f1' },
-  { name: 'blue',    value: '#44403c' },
+  { name: 'blue',    value: '#3b82f6' },
+  // Azuis / Ciano
+  { name: 'sky',     value: '#0ea5e9' },
   { name: 'cyan',    value: '#06b6d4' },
   { name: 'teal',    value: '#14b8a6' },
   { name: 'emerald', value: '#10b981' },
+  // Verdes
+  { name: 'green',   value: '#22c55e' },
+  { name: 'lime',    value: '#84cc16' },
+  // Amarelos / Laranjas
+  { name: 'yellow',  value: '#eab308' },
   { name: 'amber',   value: '#f59e0b' },
   { name: 'orange',  value: '#f97316' },
-  { name: 'rose',    value: '#f43f5e' },
-  { name: 'pink',    value: '#ec4899' },
+  // Neutros / Terrosos
+  { name: 'red-dark',   value: '#b91c1c' },
+  { name: 'brown',      value: '#92400e' },
+  { name: 'stone',      value: '#78716c' },
+  { name: 'slate',      value: '#475569' },
+  { name: 'zinc',       value: '#52525b' },
+  { name: 'blue-dark',  value: '#1d4ed8' },
+  { name: 'purple-dark', value: '#6d28d9' },
 ]
 
 export const SUBJECT_ICONS = [
