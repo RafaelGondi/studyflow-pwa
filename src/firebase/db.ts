@@ -54,8 +54,10 @@ export async function deleteCategory(uid: string, id: string): Promise<void> {
 // ── Sessions ──────────────────────────────────────────────────────────────────
 
 export async function fetchSessionsByDate(uid: string, date: string): Promise<StudySession[]> {
-  const snap = await getDocs(query(sessionsCol(uid), where('date', '==', date), orderBy('startTime', 'desc')))
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as StudySession))
+  const snap = await getDocs(query(sessionsCol(uid), where('date', '==', date)))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as StudySession))
+    .sort((a, b) => b.startTime - a.startTime)
 }
 
 export async function fetchSessionsByDateRange(uid: string, from: string, to: string): Promise<StudySession[]> {
