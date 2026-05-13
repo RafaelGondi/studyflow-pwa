@@ -98,23 +98,37 @@
           Nenhuma categoria criada
         </div>
 
-        <div v-else class="flex flex-wrap gap-2">
+        <div v-else class="space-y-2">
           <div
             v-for="cat in subjectsStore.categories"
             :key="cat.id"
-            class="flex items-center gap-2 px-3 py-2 rounded-md border transition-all group"
-            :style="{ background: `${cat.color}15`, borderColor: `${cat.color}40` }"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-md border transition-all group"
+            :style="{ background: `${cat.color}12`, borderColor: `${cat.color}35` }"
           >
-            <div class="w-2 h-2 rounded-full" :style="{ background: cat.color }" />
-            <span class="text-sm font-medium" :style="{ color: cat.color }">{{ cat.name }}</span>
-            <button
-              @click="confirmDeleteCategory(cat.id)"
-              class="w-4 h-4 rounded-full flex items-center justify-center text-faint hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 ml-1"
-            >
-              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
+            <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ background: cat.color }" />
+            <span class="text-sm font-semibold flex-1 min-w-0 truncate" :style="{ color: cat.color }">{{ cat.name }}</span>
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                @click="openEditCategory(cat)"
+                class="w-7 h-7 rounded-sm flex items-center justify-center text-muted hover:text-primary transition-colors"
+                :style="{ background: `${cat.color}20` }"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button
+                @click="confirmDeleteCategory(cat.id)"
+                class="w-7 h-7 rounded-sm flex items-center justify-center text-muted hover:text-red-400 transition-colors"
+                :style="{ background: `${cat.color}20` }"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -140,7 +154,8 @@
 
     <CategoryModal
       :show="showCategoryModal"
-      @close="showCategoryModal = false"
+      :category="editingCategory"
+      @close="showCategoryModal = false; editingCategory = null"
       @saved="subjectsStore.load()"
     />
   </div>
@@ -151,12 +166,13 @@ import { ref, computed } from 'vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
-import type { Subject } from '@/types'
+import type { Subject, Category } from '@/types'
 
 const subjectsStore = useSubjectsStore()
 const showSubjectModal = ref(false)
 const showCategoryModal = ref(false)
 const editingSubject = ref<Subject | null>(null)
+const editingCategory = ref<Category | null>(null)
 const selectedCategoryFilter = ref<string | null>(null)
 
 const filteredSubjects = computed(() => {
@@ -178,6 +194,11 @@ async function confirmDeleteSubject(id: string) {
   if (confirm('Excluir esta matéria? O histórico de sessões será mantido.')) {
     await subjectsStore.removeSubject(id)
   }
+}
+
+function openEditCategory(cat: Category) {
+  editingCategory.value = cat
+  showCategoryModal.value = true
 }
 
 async function confirmDeleteCategory(id: string) {
