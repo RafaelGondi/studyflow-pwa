@@ -60,13 +60,14 @@
             <!-- Color picker -->
             <div>
               <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Cor</label>
-              <div class="grid grid-cols-8 gap-2 mb-2">
+              <!-- 16 cores predefinidas: 8 por linha -->
+              <div class="grid grid-cols-8 gap-2">
                 <button
                   v-for="c in SUBJECT_COLORS"
                   :key="c.value"
                   type="button"
                   @click="form.color = c.value"
-                  class="w-8 h-8 rounded-full transition-all duration-150 active:scale-90 flex items-center justify-center flex-shrink-0"
+                  class="w-8 h-8 rounded-full transition-all duration-150 active:scale-90 flex items-center justify-center"
                   :style="{ background: c.value }"
                   :class="form.color === c.value ? 'ring-2 ring-offset-2 ring-offset-app-card scale-110' : 'opacity-75 hover:opacity-100 hover:scale-105'"
                 >
@@ -74,10 +75,12 @@
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </button>
+              </div>
 
-                <!-- Cor personalizada -->
+              <!-- Cor personalizada -->
+              <div class="flex items-center gap-3 mt-2">
                 <label
-                  class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105 active:scale-90 overflow-hidden border-2 border-dashed border-app-border relative"
+                  class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-150 hover:scale-105 active:scale-90 overflow-hidden border-2 border-dashed border-app-border relative flex-shrink-0"
                   :class="isCustomColor ? 'ring-2 ring-offset-2 ring-offset-app-card scale-110' : ''"
                   :style="isCustomColor ? { background: form.color, borderColor: form.color } : {}"
                   title="Cor personalizada"
@@ -96,6 +99,7 @@
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </label>
+                <span class="text-xs text-muted">{{ isCustomColor ? form.color : 'Cor personalizada' }}</span>
               </div>
             </div>
 
