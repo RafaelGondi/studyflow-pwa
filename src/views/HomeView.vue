@@ -15,19 +15,21 @@
       <div class="rounded-md bg-app-card p-3 flex flex-col gap-0.5">
         <span class="text-[10px] font-semibold text-accent uppercase tracking-wider">Estudo</span>
         <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
-        <span class="text-[10px] text-muted">hoje</span>
+        <span class="text-[10px] text-muted">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
       </div>
       <div class="rounded-md bg-app-card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">Pausa</span>
-        <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
-        <span class="text-[10px] text-muted">hoje</span>
+        <span class="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">{{ isToday ? 'Pausa' : 'Sessões' }}</span>
+        <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ isToday ? timerStore.breakFormatted : displaySessions.length }}</span>
+        <span class="text-[10px] text-muted">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
       </div>
     </div>
 
     <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-3">
 
-      <!-- ── IDLE ───────────────────────────────────────────── -->
+      <!-- ── Timer controls: only when viewing today ──────────── -->
       <Transition name="fade" mode="out-in">
+        <div v-if="isToday" key="today">
+        <Transition name="fade" mode="out-in">
         <div v-if="timerStore.mode === 'idle'" key="idle">
           <button
             @click="sheetOpen = true"
@@ -160,6 +162,9 @@
             </div>
           </div>
         </div>
+      </Transition>
+        </div>
+        <div v-else key="past" />
       </Transition>
 
       <!-- ── Session log ─────────────────────────────────────── -->
@@ -331,9 +336,13 @@ const dateLabel = computed(() =>
   new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
 )
 
-const totalStudyFormatted = computed(() =>
-  formatTimer(sessionsStore.todayTotalSeconds + timerStore.studyElapsedSeconds)
-)
+const totalStudyFormatted = computed(() => {
+  if (isToday.value) {
+    return formatTimer(sessionsStore.todayTotalSeconds + timerStore.studyElapsedSeconds)
+  }
+  const total = displaySessions.value.reduce((acc, s) => acc + s.duration, 0)
+  return formatTimer(total)
+})
 
 const sessionLog = computed(() => {
   const sessions = [...displaySessions.value].sort((a, b) => a.startTime - b.startTime)
