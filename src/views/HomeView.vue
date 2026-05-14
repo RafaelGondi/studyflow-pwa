@@ -265,6 +265,7 @@ import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
+import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { formatDuration, formatTimer, localDateStr, todayDateString } from '@/types'
 import type { StudySession } from '@/types'
 
@@ -275,6 +276,14 @@ const subjectsStore = useSubjectsStore()
 const lastSubjectId = ref<string | null>(null)
 const sheetOpen = ref(false)
 const focusMode = ref(false)
+
+// ── Gesto de foco (giroscópio) ─────────────────────────────────────────────
+const { isFaceDown } = useFaceDownFocus()
+watch(isFaceDown, (faceDown) => {
+  if (faceDown && timerStore.mode !== 'idle') {
+    focusMode.value = true
+  }
+})
 
 // ── Date navigation ────────────────────────────────────────────────────────
 const viewDate = ref(todayDateString())

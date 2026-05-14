@@ -121,6 +121,38 @@
         </template>
       </div>
 
+      <!-- ── Comportamento ─────────────────────────────────────────── -->
+      <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1 pt-2 pb-1">Comportamento</p>
+      <div class="bg-app-card rounded-md overflow-hidden divide-y divide-app-border">
+
+        <!-- Gesto de foco (giroscópio) -->
+        <button
+          @click="handleFaceDownToggle"
+          class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors"
+        >
+          <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
+            <svg class="w-[18px] h-[18px] text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+              <line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+          </div>
+          <div class="flex-1 text-left">
+            <p class="text-sm font-semibold text-primary">Gesto de foco</p>
+            <p class="text-xs text-muted">
+              <template v-if="faceDown.permissionError.value">Permissão negada pelo sistema</template>
+              <template v-else>Vire o celular pra baixo para abrir o modo foco</template>
+            </p>
+          </div>
+          <div
+            class="w-11 h-6 rounded-full transition-colors flex items-center px-0.5 flex-shrink-0"
+            :class="faceDown.enabled.value ? 'bg-accent' : 'bg-app-elevated'"
+          >
+            <div class="w-5 h-5 rounded-full bg-white shadow transition-transform" :class="faceDown.enabled.value ? 'translate-x-5' : 'translate-x-0'" />
+          </div>
+        </button>
+
+      </div>
+
       <!-- ── Aplicativo ─────────────────────────────────────────────── -->
       <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1 pt-2 pb-1">Aplicativo</p>
       <div class="bg-app-card rounded-md overflow-hidden divide-y divide-app-border">
@@ -210,6 +242,7 @@ import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { usePwaInstall } from '@/composables/usePwaInstall'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
+import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 
 const theme = useThemeStore()
 const authStore = useAuthStore()
@@ -217,9 +250,14 @@ const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 const { isInstallable, isInstalled, install } = usePwaInstall()
 const { hasUpdate, setup, checkForUpdate, applyUpdate } = usePwaUpdate()
+const faceDown = useFaceDownFocus()
 
 const updating   = ref(false)
 const signingOut = ref(false)
+
+async function handleFaceDownToggle() {
+  await faceDown.toggle()
+}
 
 onMounted(setup)
 
