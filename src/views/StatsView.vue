@@ -103,7 +103,7 @@ const sessionsStore = useSessionsStore()
 const subjectsStore = useSubjectsStore()
 
 type Period = 'today' | 'week' | 'month'
-const period = ref<Period>('week')
+const period = ref<Period>('today')
 
 const periods = [
   { value: 'today' as Period, label: 'Hoje' },
