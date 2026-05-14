@@ -2,19 +2,19 @@
   <div class="max-w-lg mx-auto relative">
     <UpdateBanner />
     <Transition name="page" mode="out-in">
-      <RouterView v-if="authStore.ready" :key="route.path" />
+      <RouterView v-if="appReady" :key="route.path" />
       <div v-else class="min-h-screen flex flex-col items-center justify-center gap-4">
         <div class="text-5xl animate-pulse-slow">📚</div>
         <p class="text-faint text-sm font-medium">Carregando StudyFlow...</p>
       </div>
     </Transition>
 
-    <BottomNav v-if="authStore.ready" />
+    <BottomNav v-if="appReady" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSubjectsStore } from '@/stores/subjects'
@@ -28,6 +28,9 @@ const authStore = useAuthStore()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 const themeStore = useThemeStore()
+
+// Só mostra a UI quando auth + subjects + sessions estão prontos
+const appReady = ref(false)
 
 // Recarrega todos os dados quando o UID muda (ex.: login com Google)
 watch(() => authStore.uid, (newUid, oldUid) => {
@@ -44,5 +47,6 @@ onMounted(async () => {
     subjectsStore.load(),
     sessionsStore.loadToday(),
   ])
+  appReady.value = true
 })
 </script>
