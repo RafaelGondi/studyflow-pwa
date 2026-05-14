@@ -20,6 +20,11 @@ export const useSessionsStore = defineStore('sessions', () => {
     rangeSessions.value = await db.fetchSessionsByDateRange(auth.uid, from, to)
   }
 
+  async function loadDate(date: string): Promise<StudySession[]> {
+    if (!auth.uid) return []
+    return db.fetchSessionsByDate(auth.uid, date)
+  }
+
   async function save(data: Omit<StudySession, 'id' | 'userId' | 'date'>) {
     if (!auth.uid) return
     const date = localDateStr(new Date(data.startTime))
@@ -50,6 +55,6 @@ export const useSessionsStore = defineStore('sessions', () => {
   return {
     todaySessions, rangeSessions,
     todayTotalSeconds, todayBySubject,
-    loadToday, loadRange, save, remove,
+    loadToday, loadRange, loadDate, save, remove,
   }
 })

@@ -163,9 +163,44 @@
       </Transition>
 
       <!-- ── Session log ─────────────────────────────────────── -->
-      <div v-if="sessionsStore.todaySessions.length > 0" class="pt-5">
-        <p class="text-xs text-muted mb-3 px-1">hoje</p>
-        <template v-for="(item, index) in sessionLog" :key="item.id ?? item.type + index">
+      <div class="pt-5">
+        <!-- Date navigator -->
+        <div class="flex items-center justify-between px-1 mb-3">
+          <button
+            @click="goPrev"
+            class="w-7 h-7 rounded-md bg-app-elevated flex items-center justify-center text-muted active:scale-90 transition-all"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+
+          <span class="text-xs font-semibold text-muted">{{ dateNavLabel }}</span>
+
+          <button
+            @click="goNext"
+            :disabled="isToday"
+            class="w-7 h-7 rounded-md bg-app-elevated flex items-center justify-center transition-all"
+            :class="isToday ? 'text-faint opacity-30 cursor-default' : 'text-muted active:scale-90'"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Loading spinner -->
+        <div v-if="loadingHistory" class="py-6 flex justify-center">
+          <div class="w-5 h-5 rounded-full border-2 border-app-elevated border-t-accent animate-spin" />
+        </div>
+
+        <!-- Empty state -->
+        <div v-else-if="displaySessions.length === 0" class="py-8 text-center text-faint text-sm">
+          Nenhuma sessão neste dia
+        </div>
+
+        <!-- Sessions -->
+        <template v-else v-for="(item, index) in sessionLog" :key="item.id ?? item.type + index">
 
           <!-- Break gap -->
           <div v-if="item.type === 'gap'" class="pl-4 py-1.5">
@@ -219,13 +254,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
-import { formatDuration, formatTimer } from '@/types'
+import { formatDuration, formatTimer, localDateStr, todayDateString } from '@/types'
+import type { StudySession } from '@/types'
 
 const timerStore = useTimerStore()
 const sessionsStore = useSessionsStore()
@@ -234,6 +270,50 @@ const subjectsStore = useSubjectsStore()
 const lastSubjectId = ref<string | null>(null)
 const sheetOpen = ref(false)
 const focusMode = ref(false)
+
+// ── Date navigation ────────────────────────────────────────────────────────
+const viewDate = ref(todayDateString())
+const viewSessions = ref<StudySession[]>([])
+const loadingHistory = ref(false)
+
+const isToday = computed(() => viewDate.value === todayDateString())
+
+const displaySessions = computed<StudySession[]>(() =>
+  isToday.value ? sessionsStore.todaySessions : viewSessions.value
+)
+
+const dateNavLabel = computed(() => {
+  if (isToday.value) return 'Hoje'
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (viewDate.value === localDateStr(yesterday)) return 'Ontem'
+  const d = new Date(viewDate.value + 'T12:00:00')
+  return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
+})
+
+async function fetchViewDate() {
+  if (isToday.value) return
+  loadingHistory.value = true
+  viewSessions.value = await sessionsStore.loadDate(viewDate.value)
+  loadingHistory.value = false
+}
+
+function goPrev() {
+  const d = new Date(viewDate.value + 'T12:00:00')
+  d.setDate(d.getDate() - 1)
+  viewDate.value = localDateStr(d)
+}
+
+function goNext() {
+  if (isToday.value) return
+  const d = new Date(viewDate.value + 'T12:00:00')
+  d.setDate(d.getDate() + 1)
+  viewDate.value = localDateStr(d)
+}
+
+watch(viewDate, fetchViewDate)
+
+// ── ─────────────────────────────────────────────────────────────────────────
 
 const activeSubject = computed(() => {
   const id = timerStore.activeSubjectId
@@ -256,7 +336,7 @@ const totalStudyFormatted = computed(() =>
 )
 
 const sessionLog = computed(() => {
-  const sessions = [...sessionsStore.todaySessions].sort((a, b) => a.startTime - b.startTime)
+  const sessions = [...displaySessions.value].sort((a, b) => a.startTime - b.startTime)
   const result: Array<any> = []
   for (let i = 0; i < sessions.length; i++) {
     result.push({ type: 'session', ...sessions[i] })
