@@ -43,10 +43,15 @@ watch(() => authStore.uid, (newUid, oldUid) => {
 onMounted(async () => {
   themeStore.init()
   await authStore.init()
-  await Promise.all([
-    subjectsStore.load(),
-    sessionsStore.loadToday(),
-  ])
-  appReady.value = true
+  try {
+    await Promise.all([
+      subjectsStore.load(),
+      sessionsStore.loadToday(),
+    ])
+  } catch (e) {
+    console.error('[StudyFlow] Erro ao carregar dados iniciais:', e)
+  } finally {
+    appReady.value = true
+  }
 })
 </script>

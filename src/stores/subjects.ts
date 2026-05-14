@@ -13,11 +13,16 @@ export const useSubjectsStore = defineStore('subjects', () => {
   async function load() {
     if (!auth.uid) return
     loading.value = true
-    ;[subjects.value, categories.value] = await Promise.all([
-      db.fetchSubjects(auth.uid),
-      db.fetchCategories(auth.uid),
-    ])
-    loading.value = false
+    try {
+      ;[subjects.value, categories.value] = await Promise.all([
+        db.fetchSubjects(auth.uid),
+        db.fetchCategories(auth.uid),
+      ])
+    } catch (e) {
+      console.error('[StudyFlow] Erro ao carregar matérias/categorias:', e)
+    } finally {
+      loading.value = false
+    }
   }
 
   async function addSubject(data: Omit<Subject, 'id' | 'userId' | 'createdAt'>) {

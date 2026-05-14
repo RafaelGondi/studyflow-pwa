@@ -14,8 +14,10 @@ function sessionsCol(uid: string) { return collection(db, 'users', uid, 'session
 // ── Subjects ─────────────────────────────────────────────────────────────────
 
 export async function fetchSubjects(uid: string): Promise<Subject[]> {
-  const snap = await getDocs(query(subjectsCol(uid), orderBy('createdAt', 'asc')))
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Subject))
+  const snap = await getDocs(query(subjectsCol(uid)))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as Subject))
+    .sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
 }
 
 export async function addSubject(uid: string, data: Omit<Subject, 'id' | 'userId' | 'createdAt'>): Promise<Subject> {
@@ -34,8 +36,10 @@ export async function deleteSubject(uid: string, id: string): Promise<void> {
 // ── Categories ────────────────────────────────────────────────────────────────
 
 export async function fetchCategories(uid: string): Promise<Category[]> {
-  const snap = await getDocs(query(categoriesCol(uid), orderBy('createdAt', 'asc')))
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Category))
+  const snap = await getDocs(query(categoriesCol(uid)))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as Category))
+    .sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
 }
 
 export async function addCategory(uid: string, data: Omit<Category, 'id' | 'userId' | 'createdAt'>): Promise<Category> {
