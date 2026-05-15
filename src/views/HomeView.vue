@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-app-bg flex flex-col">
+  <div class="min-h-screen bg-app-bg flex flex-col" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
 
     <!-- Header -->
     <header class="flex items-center justify-between px-4 pt-5 pb-2">
@@ -326,6 +326,24 @@ function goNext() {
 }
 
 watch(viewDate, fetchViewDate)
+
+// ── Swipe para navegar entre dias ──────────────────────────────────────────
+let _swipeX = 0
+let _swipeY = 0
+
+function onTouchStart(e: TouchEvent) {
+  _swipeX = e.touches[0].clientX
+  _swipeY = e.touches[0].clientY
+}
+
+function onTouchEnd(e: TouchEvent) {
+  const dx = e.changedTouches[0].clientX - _swipeX
+  const dy = e.changedTouches[0].clientY - _swipeY
+  // Ignora se movimento vertical domina ou se não atingiu o limiar
+  if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+  if (dx < 0) goNext()  // swipe para a esquerda → dia seguinte
+  else goPrev()          // swipe para a direita  → dia anterior
+}
 
 // ── ─────────────────────────────────────────────────────────────────────────
 
