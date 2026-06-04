@@ -33,6 +33,17 @@ export const useSessionsStore = defineStore('sessions', () => {
     return session
   }
 
+  async function update(id: string, data: Partial<StudySession>) {
+    if (!auth.uid) return
+    await db.updateSession(auth.uid, id, data)
+    const patch = (list: StudySession[]) => {
+      const idx = list.findIndex(s => s.id === id)
+      if (idx !== -1) list[idx] = { ...list[idx], ...data }
+    }
+    patch(todaySessions.value)
+    patch(rangeSessions.value)
+  }
+
   async function remove(id: string) {
     if (!auth.uid) return
     await db.deleteSession(auth.uid, id)
@@ -55,6 +66,6 @@ export const useSessionsStore = defineStore('sessions', () => {
   return {
     todaySessions, rangeSessions,
     todayTotalSeconds, todayBySubject,
-    loadToday, loadRange, loadDate, save, remove,
+    loadToday, loadRange, loadDate, save, update, remove,
   }
 })

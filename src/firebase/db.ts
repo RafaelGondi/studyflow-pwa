@@ -71,6 +71,10 @@ export async function fetchSessionsByDateRange(uid: string, from: string, to: st
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as StudySession))
 }
 
+export async function updateSession(uid: string, id: string, data: Partial<StudySession>): Promise<void> {
+  await updateDoc(doc(sessionsCol(uid), id), data)
+}
+
 export async function saveSession(uid: string, data: Omit<StudySession, 'id' | 'userId'>): Promise<StudySession> {
   const ref = await addDoc(sessionsCol(uid), { ...data, userId: uid })
   return { id: ref.id, ...data, userId: uid }

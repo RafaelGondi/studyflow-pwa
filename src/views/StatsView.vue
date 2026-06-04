@@ -75,6 +75,15 @@
             <div class="flex items-center gap-2">
               <span class="text-sm font-semibold text-secondary">{{ formatDuration(s.duration) }}</span>
               <button
+                @click="editingSession = s"
+                class="w-7 h-7 rounded-sm flex items-center justify-center text-faint hover:text-primary hover:bg-app-elevated transition-all"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button
                 @click="deleteSession(s.id)"
                 class="w-7 h-7 rounded-sm flex items-center justify-center text-faint hover:text-red-400 hover:bg-red-400/10 transition-all"
               >
@@ -88,19 +97,28 @@
         </div>
       </div>
     </main>
+
+    <SessionEditModal
+      :show="!!editingSession"
+      :session="editingSession"
+      @close="editingSession = null"
+      @saved="loadRange(); editingSession = null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, type Ref } from 'vue'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
 import WeeklyChart from '@/components/stats/WeeklyChart.vue'
 import SubjectDonut from '@/components/stats/SubjectDonut.vue'
+import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import { formatDuration, localDateStr } from '@/types'
 
 const sessionsStore = useSessionsStore()
 const subjectsStore = useSubjectsStore()
+const editingSession = ref<import('@/types').StudySession | null>(null)
 
 type Period = 'today' | 'week' | 'month'
 const period = ref<Period>('today')

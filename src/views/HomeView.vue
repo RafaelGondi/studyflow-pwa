@@ -213,7 +213,7 @@
           </div>
 
           <!-- Session row -->
-          <div v-else class="flex items-start gap-3 py-2.5">
+          <div v-else class="flex items-start gap-3 py-2.5 group">
             <div
               class="w-1 self-stretch rounded-full mt-1 flex-shrink-0"
               :style="{ background: getSubject(item.subjectId)?.color ?? 'var(--accent-color)' }"
@@ -221,9 +221,20 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-2">
                 <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.subjectId)?.name ?? 'Matéria' }}</p>
-                <span class="text-sm font-semibold flex-shrink-0" :style="{ color: getSubject(item.subjectId)?.color ?? 'var(--accent-color)' }">
-                  {{ formatDuration(item.duration) }}
-                </span>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                  <span class="text-sm font-semibold" :style="{ color: getSubject(item.subjectId)?.color ?? 'var(--accent-color)' }">
+                    {{ formatDuration(item.duration) }}
+                  </span>
+                  <button
+                    @click="editingSession = item"
+                    class="w-6 h-6 rounded-sm flex items-center justify-center text-faint hover:text-primary hover:bg-app-elevated transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div class="text-[11px] text-muted mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5">
                 <template v-if="item.segments?.length > 1">
@@ -255,6 +266,13 @@
       :active-id="timerStore.activeSubjectId"
       @select="handleSheetSelect"
     />
+
+    <SessionEditModal
+      :show="!!editingSession"
+      :session="editingSession"
+      @close="editingSession = null"
+      @saved="editingSession = null"
+    />
   </div>
 </template>
 
@@ -265,6 +283,7 @@ import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
+import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { formatDuration, formatTimer, localDateStr, todayDateString } from '@/types'
 import type { StudySession } from '@/types'
@@ -276,6 +295,7 @@ const subjectsStore = useSubjectsStore()
 const lastSubjectId = ref<string | null>(null)
 const sheetOpen = ref(false)
 const focusMode = ref(false)
+const editingSession = ref<StudySession | null>(null)
 
 // ── Gesto de foco (giroscópio) ─────────────────────────────────────────────
 const { isFaceDown } = useFaceDownFocus()
