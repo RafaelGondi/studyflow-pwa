@@ -2,7 +2,7 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="show" class="fixed inset-0 z-[110] flex items-end sm:items-center justify-center">
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="emit('close')" />
+        <div class="absolute inset-0 z-0 bg-black/70 backdrop-blur-sm" @click="emit('close')" />
         <div class="modal-sheet modal-panel">
           <div class="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-4">
             <h2 class="font-display text-lg font-bold text-primary">
