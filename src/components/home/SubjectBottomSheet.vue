@@ -3,7 +3,7 @@
     <Transition name="backdrop">
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-40 bg-black/40"
+        class="fixed inset-0 z-[105] bg-black/40"
         @click="emit('update:modelValue', false)"
       />
     </Transition>
@@ -11,8 +11,8 @@
     <Transition name="sheet">
       <div
         v-if="modelValue"
-        class="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto rounded-t-3xl modal-panel flex flex-col"
-        style="max-height: 80dvh"
+        class="fixed bottom-0 left-0 right-0 z-[110] max-w-lg mx-auto rounded-t-3xl modal-panel flex flex-col min-h-0"
+        style="max-height: min(80dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 24px))"
       >
         <!-- Handle -->
         <div class="flex justify-center pt-3 pb-2 flex-shrink-0">
@@ -46,7 +46,7 @@
         </div>
 
         <!-- Subject list -->
-        <div v-else class="overflow-y-auto px-3 pb-6 space-y-1">
+        <div v-else class="sheet-list flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 space-y-1">
           <button
             v-for="subject in subjects"
             :key="subject.id"
@@ -121,4 +121,9 @@ function select(id: string) {
 .sheet-enter-active { transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
 .sheet-leave-active { transition: transform 0.25s ease-in; }
 .sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
+
+.sheet-list {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  -webkit-overflow-scrolling: touch;
+}
 </style>
