@@ -3,12 +3,12 @@
     <Transition name="modal">
       <div v-if="show" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="emit('close')" />
-        <div class="relative w-full max-w-lg bg-app-card border border-app-border rounded-t-3xl sm:rounded-md p-6 pb-safe-bottom shadow-2xl">
+        <div class="relative w-full max-w-lg modal-panel rounded-t-3xl sm:rounded-akoma-lg p-6 pb-safe-bottom">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-bold text-primary">
+            <h2 class="font-display text-lg font-bold text-primary">
               {{ subject ? 'Editar matéria' : 'Nova matéria' }}
             </h2>
-            <button @click="emit('close')" class="w-8 h-8 rounded-full bg-app-elevated flex items-center justify-center text-muted hover:text-primary transition-colors">
+            <button @click="emit('close')" class="w-8 h-8 rounded-full btn-icon tap-scale">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
@@ -25,8 +25,8 @@
                   :key="icon"
                   type="button"
                   @click="form.icon = icon"
-                  class="w-10 h-10 rounded-md text-xl flex items-center justify-center transition-all duration-150 active:scale-90"
-                  :class="form.icon === icon ? 'bg-accent/30 ring-2 ring-accent' : 'bg-app-elevated hover:bg-app-elevated'"
+                  class="w-10 h-10 rounded-akoma text-xl flex items-center justify-center transition-all duration-150 tap-scale"
+                  :class="form.icon === icon ? 'bg-accent/30 ring-2 ring-accent' : 'btn-icon'"
                 >
                   {{ icon }}
                 </button>
@@ -41,7 +41,7 @@
                 type="text"
                 placeholder="Ex: Matemática"
                 required
-                class="w-full bg-app-elevated border border-app-border rounded-md px-4 py-3 text-primary placeholder:text-faint focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
+                class="input"
               />
             </div>
 
@@ -50,7 +50,7 @@
               <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Categoria</label>
               <select
                 v-model="form.categoryId"
-                class="w-full bg-app-elevated border border-app-border rounded-md px-4 py-3 text-primary focus:outline-none focus:border-accent transition-colors"
+                class="input"
               >
                 <option :value="null">Sem categoria</option>
                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
@@ -104,8 +104,8 @@
             </div>
 
             <!-- Preview -->
-            <div class="p-3 rounded-md bg-app-elevated border border-app-border flex items-center gap-3">
-              <div class="w-10 h-10 rounded-md flex items-center justify-center text-xl" :style="{ background: `${form.color}25` }">
+            <div class="p-3 rounded-akoma btn-icon border border-app-border flex items-center gap-3">
+              <div class="w-10 h-10 rounded-akoma flex items-center justify-center text-xl" :style="{ background: `${form.color}25` }">
                 {{ form.icon }}
               </div>
               <div>
@@ -120,7 +120,7 @@
             <button
               type="submit"
               :disabled="!form.name.trim() || saving"
-              class="w-full py-3.5 rounded-md font-bold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
+              class="w-full py-3.5 rounded-pill font-bold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed tap-scale"
               :style="{ background: `linear-gradient(135deg, ${form.color}, ${form.color}bb)` }"
             >
               {{ saving ? 'Salvando...' : subject ? 'Salvar' : 'Criar matéria' }}

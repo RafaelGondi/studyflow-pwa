@@ -1,6 +1,6 @@
 <template>
-  <div class="bg-app-card border border-app-border rounded-sm p-4 space-y-4">
-    <h3 class="text-sm font-semibold text-muted uppercase tracking-wider">Por matéria</h3>
+  <div class="card p-4 space-y-4">
+    <h3 class="text-xs font-bold text-muted uppercase tracking-wider">Por matéria</h3>
 
     <div v-if="subjectItems.length === 0" class="py-8 text-center text-faint text-sm">
       Nenhum dado disponível
@@ -20,13 +20,13 @@
         <!-- List with tab toggle -->
         <div class="flex-1 w-full min-w-0">
           <!-- Tabs -->
-          <div class="flex bg-app-elevated rounded-md p-0.5 gap-0.5 mb-3">
+          <div class="seg-control mb-3">
             <button
               v-for="t in tabs"
               :key="t.key"
               @click="activeTab = t.key"
-              class="flex-1 py-1 rounded-sm text-xs font-semibold transition-all"
-              :class="activeTab === t.key ? 'bg-app-card text-primary shadow-sm' : 'text-muted'"
+              class="seg-tab"
+              :class="activeTab === t.key ? 'seg-tab-active' : ''"
             >
               {{ t.label }}
             </button>
@@ -57,11 +57,11 @@
       <!-- Legenda dos anéis -->
       <div class="flex items-center gap-4 pt-1 border-t border-app-border">
         <div class="flex items-center gap-1.5">
-          <div class="w-5 h-2 rounded-full bg-app-elevated border-2 border-muted/30" />
+          <div class="w-5 h-2 rounded-full btn-icon border-2 border-muted/30" />
           <span class="text-[10px] text-muted">anel externo = matérias</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <div class="w-3 h-2 rounded-full bg-app-elevated border-2 border-muted/30" />
+          <div class="w-3 h-2 rounded-full btn-icon border-2 border-muted/30" />
           <span class="text-[10px] text-muted">anel interno = categorias</span>
         </div>
       </div>
@@ -170,7 +170,9 @@ const subjectItems = computed(() => {
 // datasets[1] = inner ring (categories)
 
 const chartData = computed(() => {
-  const border = theme.isDark ? '#16161a' : '#ffffff'
+  const border = theme.isDark
+    ? getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#1a1917'
+    : getComputedStyle(document.documentElement).getPropertyValue('--bg-elevated').trim() || '#ffffff'
   return {
     labels: subjectItems.value.map(i => i.name),
     datasets: [

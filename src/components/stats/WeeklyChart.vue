@@ -1,6 +1,6 @@
 <template>
-  <div class="bg-app-card border border-app-border rounded-sm p-4">
-    <h3 class="text-sm font-semibold text-faint uppercase tracking-wider mb-4">Esta semana</h3>
+  <div class="card p-4">
+    <h3 class="text-xs font-bold text-muted uppercase tracking-wider mb-4">Esta semana</h3>
     <Bar :data="chartData" :options="chartOptions" class="max-h-48" />
   </div>
 </template>
@@ -55,8 +55,8 @@ const chartData = computed(() => {
 })
 
 const chartOptions = computed(() => {
-  const tickColor = theme.isDark ? '#71717a' : '#9ca3af'
-  const gridColor = theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'
+  const tickColor = getComputedStyle(document.documentElement).getPropertyValue('--text-tertiary').trim() || '#a3a29c'
+  const gridColor = theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(44,44,42,0.06)'
   return {
     responsive: true,
     maintainAspectRatio: false,

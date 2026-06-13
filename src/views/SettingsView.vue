@@ -1,16 +1,16 @@
 <template>
-  <div class="min-h-screen bg-app-bg flex flex-col">
-    <header class="px-4 pt-5 pb-4">
-      <p class="text-[11px] text-muted font-medium uppercase tracking-widest">Preferências</p>
-      <h1 class="text-lg font-bold text-primary">Configurações</h1>
+  <div class="min-h-screen flex flex-col akoma-page">
+    <header class="mb-5 reveal">
+      <span class="page-label">Preferências</span>
+      <h1 class="page-title">Ajustes</h1>
     </header>
 
-    <main class="flex-1 px-4 pb-28 space-y-2">
+    <main class="flex-1 pb-4 space-y-2 reveal reveal-d1">
 
       <!-- Aviso de dados perdidos -->
       <div
         v-if="authStore.dataLost"
-        class="rounded-md border border-red-500/30 bg-red-500/10 p-4 flex gap-3"
+        class="rounded-akoma border border-red-500/30 bg-red-500/10 p-4 flex gap-3"
       >
         <span class="text-lg leading-none mt-0.5">⚠️</span>
         <div class="flex-1 min-w-0">
@@ -25,7 +25,7 @@
       <!-- Erro de login -->
       <div
         v-if="authStore.signInError"
-        class="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-3"
+        class="rounded-akoma border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-3"
       >
         <span class="text-base leading-none mt-0.5">⚠️</span>
         <div class="flex-1">
@@ -37,13 +37,13 @@
       <!-- ── Conta ─────────────────────────────────────────────────── -->
       <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1 pt-2 pb-1">Conta</p>
 
-      <div class="bg-app-card rounded-md overflow-hidden divide-y divide-app-border">
+      <div class="settings-group divide-y divide-app-border">
 
         <!-- Logado com Google -->
         <template v-if="!authStore.isAnonymous">
           <!-- Perfil -->
           <div class="flex items-center gap-4 px-4 py-3.5">
-            <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-app-elevated">
+            <div class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 btn-icon">
               <img
                 v-if="authStore.photoURL"
                 :src="authStore.photoURL"
@@ -66,9 +66,9 @@
           <button
             @click="handleSignOut"
             :disabled="signingOut"
-            class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors disabled:opacity-50"
+            class="settings-row disabled:opacity-50"
           >
-            <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
+            <div class="w-9 h-9 rounded-akoma btn-icon flex items-center justify-center flex-shrink-0">
               <svg class="w-[18px] h-[18px] text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                 <polyline points="16 17 21 12 16 7"/>
@@ -87,9 +87,9 @@
           <button
             @click="handleGoogleSignIn"
             :disabled="authStore.signingIn"
-            class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors disabled:opacity-50"
+            class="settings-row disabled:opacity-50"
           >
-            <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
+            <div class="w-9 h-9 rounded-akoma btn-icon flex items-center justify-center flex-shrink-0">
               <!-- Google "G" logo -->
               <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -123,14 +123,14 @@
 
       <!-- ── Comportamento ─────────────────────────────────────────── -->
       <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1 pt-2 pb-1">Comportamento</p>
-      <div class="bg-app-card rounded-md overflow-hidden divide-y divide-app-border">
+      <div class="settings-group divide-y divide-app-border">
 
         <!-- Gesto de foco (giroscópio) -->
         <button
           @click="handleFaceDownToggle"
-          class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors"
+          class="settings-row"
         >
-          <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
+          <div class="w-9 h-9 rounded-akoma btn-icon flex items-center justify-center flex-shrink-0">
             <svg class="w-[18px] h-[18px] text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
               <line x1="12" y1="18" x2="12.01" y2="18"/>
@@ -145,7 +145,7 @@
           </div>
           <div
             class="w-11 h-6 rounded-full transition-colors flex items-center px-0.5 flex-shrink-0"
-            :class="faceDown.enabled.value ? 'bg-accent' : 'bg-app-elevated'"
+            :class="faceDown.enabled.value ? 'bg-accent' : 'btn-icon'"
           >
             <div class="w-5 h-5 rounded-full bg-white shadow transition-transform" :class="faceDown.enabled.value ? 'translate-x-5' : 'translate-x-0'" />
           </div>
@@ -155,15 +155,15 @@
 
       <!-- ── Aplicativo ─────────────────────────────────────────────── -->
       <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1 pt-2 pb-1">Aplicativo</p>
-      <div class="bg-app-card rounded-md overflow-hidden divide-y divide-app-border">
+      <div class="settings-group divide-y divide-app-border">
 
         <!-- Instalar -->
         <button
           v-if="isInstallable && !isInstalled"
           @click="install()"
-          class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors"
+          class="settings-row"
         >
-          <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
+          <div class="w-9 h-9 rounded-akoma btn-icon flex items-center justify-center flex-shrink-0">
             <svg class="w-[18px] h-[18px] text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
@@ -183,9 +183,9 @@
         <button
           @click="handleUpdate"
           :disabled="updating"
-          class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors disabled:opacity-50"
+          class="settings-row disabled:opacity-50"
         >
-          <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
+          <div class="w-9 h-9 rounded-akoma btn-icon flex items-center justify-center flex-shrink-0">
             <svg class="w-[18px] h-[18px] text-accent" :class="{ 'animate-spin': updating }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23 4 23 10 17 10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
@@ -203,12 +203,12 @@
       <!-- ── Aparência ───────────────────────────────────────────────── -->
       <p class="text-[11px] font-semibold text-muted uppercase tracking-wider px-1 pt-2 pb-1">Aparência</p>
 
-      <div class="bg-app-card rounded-md overflow-hidden">
+      <div class="settings-group">
         <button
           @click="theme.toggle()"
-          class="w-full flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors"
+          class="settings-row"
         >
-          <div class="w-9 h-9 rounded-sm bg-app-elevated flex items-center justify-center flex-shrink-0">
+          <div class="w-9 h-9 rounded-akoma btn-icon flex items-center justify-center flex-shrink-0">
             <svg v-if="theme.isDark" class="w-[18px] h-[18px] text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5"/>
               <line x1="12" y1="1"  x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
@@ -224,7 +224,7 @@
             <p class="text-sm font-semibold text-primary">Tema</p>
             <p class="text-xs text-muted">{{ theme.isDark ? 'Modo escuro' : 'Modo claro' }}</p>
           </div>
-          <div class="w-11 h-6 rounded-full transition-colors flex items-center px-0.5" :class="theme.isDark ? 'bg-accent' : 'bg-app-elevated'">
+          <div class="w-11 h-6 rounded-full transition-colors flex items-center px-0.5" :class="theme.isDark ? 'bg-accent' : 'btn-icon'">
             <div class="w-5 h-5 rounded-full bg-white shadow transition-transform" :class="theme.isDark ? 'translate-x-5' : 'translate-x-0'" />
           </div>
         </button>

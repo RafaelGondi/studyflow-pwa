@@ -18,11 +18,11 @@
         v-for="subject in subjects"
         :key="subject.id"
         @click="emit('select', subject.id)"
-        class="relative flex flex-col items-start gap-2 p-4 rounded-sm border transition-all duration-200 active:scale-95 text-left"
+        class="relative flex flex-col items-start gap-2 p-4 rounded-akoma border transition-all duration-200 tap-scale text-left"
         :class="[
           selected === subject.id
-            ? 'border-transparent scale-[1.02] shadow-lg'
-            : 'border-app-border bg-app-card hover:bg-app-elevated',
+            ? 'border-transparent scale-[1.02] shadow-akoma-md'
+            : 'border-app-border card hover:bg-app-elevated',
         ]"
         :style="selected === subject.id ? {
           background: `linear-gradient(135deg, ${subject.color}22, ${subject.color}0a)`,
@@ -32,7 +32,7 @@
         } : {}"
       >
         <div
-          class="w-10 h-10 rounded-md flex items-center justify-center text-xl shadow-sm"
+          class="w-10 h-10 rounded-akoma flex items-center justify-center text-xl shadow-akoma"
           :style="{ background: `${subject.color}25` }"
         >
           {{ subject.icon }}

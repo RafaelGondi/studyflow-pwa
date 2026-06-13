@@ -21,7 +21,7 @@
         <!-- Subject -->
         <div class="flex flex-col items-center gap-2 mb-12">
           <div
-            class="w-14 h-14 rounded-md flex items-center justify-center text-3xl"
+            class="w-14 h-14 rounded-akoma flex items-center justify-center text-3xl"
             :style="{ background: `${subject?.color ?? '#ffffff'}18` }"
           >
             {{ subject?.icon ?? '📚' }}
@@ -35,7 +35,7 @@
         <div
           class="font-sans tabular-nums leading-none"
           style="font-size: clamp(4rem, 18vw, 9rem); font-weight: 700;"
-          :style="{ color: subject?.color ?? 'var(--accent-color)' }"
+          :style="{ color: subject?.color ?? 'var(--accent)' }"
         >
           {{ timerStore.studyFormatted }}
         </div>
@@ -59,7 +59,7 @@
             :style="{
               background: timerStore.isRunning
                 ? 'rgba(255,255,255,0.08)'
-                : (subject?.color ?? 'var(--accent-color)')
+                : (subject?.color ?? 'var(--accent)')
             }"
           >
             <svg v-if="timerStore.isRunning" class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">

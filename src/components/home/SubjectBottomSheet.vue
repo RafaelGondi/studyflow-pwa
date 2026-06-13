@@ -11,20 +11,20 @@
     <Transition name="sheet">
       <div
         v-if="modelValue"
-        class="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto rounded-t-xl bg-app-card flex flex-col"
+        class="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto rounded-t-3xl modal-panel flex flex-col"
         style="max-height: 80dvh"
       >
         <!-- Handle -->
         <div class="flex justify-center pt-3 pb-2 flex-shrink-0">
-          <div class="w-10 h-1 rounded-full bg-app-border" />
+          <div class="w-10 h-1 rounded-full" style="background: var(--border-strong)" />
         </div>
 
         <!-- Title -->
         <div class="flex items-center justify-between px-4 pb-3 flex-shrink-0">
-          <h2 class="text-sm font-semibold text-primary">Selecionar matéria</h2>
+          <h2 class="font-display text-sm font-semibold text-primary">Selecionar matéria</h2>
           <button
             @click="emit('update:modelValue', false)"
-            class="w-7 h-7 flex items-center justify-center rounded-full bg-app-elevated text-muted"
+            class="w-7 h-7 btn-icon rounded-full tap-scale"
           >
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -51,11 +51,11 @@
             v-for="subject in subjects"
             :key="subject.id"
             @click="select(subject.id)"
-            class="w-full flex items-center gap-3 px-3 py-3 rounded-md transition-all active:scale-[0.98]"
-            :class="activeId === subject.id ? 'bg-app-elevated' : 'hover:bg-app-elevated'"
+            class="w-full flex items-center gap-3 px-3 py-3 rounded-akoma transition-all tap-scale"
+            :class="activeId === subject.id ? 'bg-accent/15' : 'hover:bg-app-elevated'"
           >
             <div
-              class="w-10 h-10 rounded-md flex items-center justify-center text-xl flex-shrink-0"
+              class="w-10 h-10 rounded-akoma flex items-center justify-center text-xl flex-shrink-0"
               :style="{ background: `${subject.color}20` }"
             >
               {{ subject.icon }}

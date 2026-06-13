@@ -1,30 +1,28 @@
 <template>
-  <div class="min-h-screen bg-app-bg flex flex-col" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
+  <div class="min-h-screen flex flex-col akoma-page" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
 
-    <!-- Header -->
-    <header class="flex items-center justify-between px-4 pt-5 pb-2">
+    <header class="flex items-center justify-between mb-5 reveal">
       <div>
-        <p class="text-[11px] text-muted font-medium uppercase tracking-widest">{{ greeting }}</p>
-        <h1 class="text-lg font-bold text-primary">StudyFlow</h1>
+        <span class="page-label">{{ greeting }}</span>
+        <h1 class="page-title">StudyFlow</h1>
       </div>
-      <span class="text-xs text-muted">{{ dateLabel }}</span>
+      <span class="text-xs font-semibold text-muted">{{ dateLabel }}</span>
     </header>
 
-    <!-- Dual stats bar -->
-    <div class="grid grid-cols-2 gap-2 px-4 pb-3">
-      <div class="rounded-md bg-app-card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-semibold text-accent uppercase tracking-wider">Estudo</span>
-        <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
+    <div class="grid grid-cols-2 gap-3 mb-4 reveal reveal-d1">
+      <div class="card p-3 flex flex-col gap-0.5">
+        <span class="text-[10px] font-bold text-accent uppercase tracking-wider">Estudo</span>
+        <span class="font-display text-2xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
         <span class="text-[10px] text-muted">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
       </div>
-      <div class="rounded-md bg-app-card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-semibold text-amber-500 uppercase tracking-wider">{{ isToday ? 'Pausa' : 'Sessões' }}</span>
-        <span class="font-sans text-xl font-bold text-primary tabular-nums">{{ isToday ? timerStore.breakFormatted : displaySessions.length }}</span>
+      <div class="card p-3 flex flex-col gap-0.5">
+        <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--cat-3)">{{ isToday ? 'Pausa' : 'Sessões' }}</span>
+        <span class="font-display text-2xl font-bold text-primary tabular-nums">{{ isToday ? timerStore.breakFormatted : displaySessions.length }}</span>
         <span class="text-[10px] text-muted">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
       </div>
     </div>
 
-    <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-3">
+    <main class="flex-1 overflow-y-auto pb-4 space-y-3 reveal reveal-d2">
 
       <!-- ── Timer controls: only when viewing today ──────────── -->
       <Transition name="fade" mode="out-in">
@@ -33,7 +31,7 @@
         <div v-if="timerStore.mode === 'idle'" key="idle">
           <button
             @click="sheetOpen = true"
-            class="w-full py-3 rounded-md bg-accent font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-95"
+            class="w-full py-3 btn-primary text-sm flex items-center justify-center gap-2 tap-scale"
           >
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
             Iniciar Estudo
@@ -42,7 +40,7 @@
 
         <!-- ── BREAK mode ─────────────────────────────────────── -->
         <div v-else-if="timerStore.mode === 'break'" key="break">
-          <div class="rounded-md bg-app-card p-5 text-center space-y-4">
+          <div class="card p-5 text-center space-y-4">
             <div>
               <p class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider mb-1">☕ Em pausa</p>
               <span class="font-sans text-5xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
@@ -52,21 +50,20 @@
               <button
                 v-if="lastSubjectId"
                 @click="timerStore.startStudy(lastSubjectId!)"
-                class="flex-1 py-3 rounded-md font-bold text-white text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-                style="background: #44403c"
+                class="flex-1 py-3 rounded-pill font-bold text-white text-sm flex items-center justify-center gap-2 tap-scale bg-accent"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
                 Continuar
               </button>
               <button
                 @click="sheetOpen = true"
-                class="flex-1 py-3 rounded-md bg-app-elevated text-primary text-sm font-semibold active:scale-95 transition-all"
+                class="flex-1 py-3 btn-secondary text-sm tap-scale"
               >
                 Trocar matéria
               </button>
               <button
                 @click="timerStore.stop(); loadToday()"
-                class="px-4 py-3 rounded-md bg-app-elevated text-muted text-sm font-semibold active:scale-95 transition-all"
+                class="px-4 py-3 btn-secondary text-muted text-sm tap-scale"
               >
                 Encerrar
               </button>
@@ -76,12 +73,12 @@
 
         <!-- ── STUDY / PAUSED ─────────────────────────────────── -->
         <div v-else key="active">
-          <div class="rounded-md bg-app-card p-4 space-y-4">
+          <div class="card p-4 space-y-4">
 
             <!-- Subject row -->
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-sm flex items-center justify-center text-xl flex-shrink-0"
+                class="w-10 h-10 rounded-akoma flex items-center justify-center text-xl flex-shrink-0"
                 :style="{ background: `${activeSubject?.color ?? 'var(--accent-color)'}18` }"
               >
                 {{ activeSubject?.icon ?? '📚' }}
@@ -100,7 +97,7 @@
               </div>
               <button
                 @click="sheetOpen = true"
-                class="text-xs text-muted px-2 py-1 rounded-sm bg-app-elevated transition-colors"
+                class="text-xs text-muted px-2 py-1 rounded-akoma btn-icon tap-scale"
               >
                 trocar
               </button>
@@ -118,7 +115,7 @@
                 <p class="text-xs text-muted">sessão atual</p>
                 <button
                   @click="focusMode = true"
-                  class="w-6 h-6 rounded-sm bg-app-elevated flex items-center justify-center text-muted hover:text-primary transition-colors"
+                  class="w-6 h-6 btn-icon tap-scale"
                   title="Modo foco"
                 >
                   <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -132,7 +129,7 @@
             <div class="grid grid-cols-3 gap-2">
               <button
                 @click="handleStop"
-                class="py-3 rounded-md bg-app-elevated flex flex-col items-center gap-1 text-muted active:scale-95 transition-all"
+                class="py-3 btn-secondary flex flex-col items-center gap-1 text-muted tap-scale"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
                 <span class="text-[10px] font-semibold">Parar</span>
@@ -140,7 +137,7 @@
 
               <button
                 @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
-                class="py-3 rounded-md font-bold text-white flex flex-col items-center gap-1 transition-all active:scale-95"
+                class="py-3 rounded-akoma font-bold text-white flex flex-col items-center gap-1 tap-scale"
                 :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? 'var(--accent-color)') : '#10b981' }"
               >
                 <svg v-if="timerStore.isRunning" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -154,7 +151,8 @@
 
               <button
                 @click="handleBreak"
-                class="py-3 rounded-md bg-app-elevated flex flex-col items-center gap-1 text-amber-500 transition-all active:scale-95"
+                class="py-3 btn-secondary flex flex-col items-center gap-1 tap-scale"
+                style="color: var(--cat-3)"
               >
                 <span class="text-base leading-none">☕</span>
                 <span class="text-[10px] font-semibold">Break</span>
@@ -173,7 +171,7 @@
         <div class="flex items-center justify-between px-1 mb-3">
           <button
             @click="goPrev"
-            class="w-7 h-7 rounded-md bg-app-elevated flex items-center justify-center text-muted active:scale-90 transition-all"
+            class="w-7 h-7 btn-icon tap-scale"
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="15 18 9 12 15 6"/>
@@ -186,7 +184,7 @@
             @click="goNext"
             :disabled="isToday"
             class="w-7 h-7 rounded-md bg-app-elevated flex items-center justify-center transition-all"
-            :class="isToday ? 'text-faint opacity-30 cursor-default' : 'text-muted active:scale-90'"
+            :class="isToday ? 'text-faint opacity-30 cursor-default' : 'tap-scale'"
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="9 18 15 12 9 6"/>
@@ -227,7 +225,7 @@
                   </span>
                   <button
                     @click="editingSession = item"
-                    class="w-6 h-6 rounded-sm flex items-center justify-center text-faint hover:text-primary hover:bg-app-elevated transition-all opacity-0 group-hover:opacity-100"
+                    class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100"
                   >
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>

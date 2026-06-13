@@ -3,6 +3,11 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  server: {
+    port: 5174,
+    strictPort: true,
+    host: true,
+  },
   plugins: [
     vue(),
     VitePWA({
@@ -14,8 +19,8 @@ export default defineConfig({
         description: 'Gerenciador de estudos moderno',
         start_url: '/',
         scope: '/',
-        theme_color: '#171c1e',
-        background_color: '#171c1e',
+        theme_color: '#14b8a6',
+        background_color: '#f6f5f2',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

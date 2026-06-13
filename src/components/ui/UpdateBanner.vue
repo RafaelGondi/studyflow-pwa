@@ -13,7 +13,7 @@
         <button
           @click="applyUpdate"
           :disabled="updating"
-          class="px-3 py-1.5 rounded-sm bg-white/20 hover:bg-white/30 text-white text-sm font-bold transition-all active:scale-95 disabled:opacity-60"
+          class="px-3 py-1.5 rounded-pill bg-white/20 hover:bg-white/30 text-white text-sm font-bold transition-all tap-scale disabled:opacity-60"
         >
           {{ updating ? 'Atualizando…' : 'Atualizar' }}
         </button>

@@ -1,10 +1,10 @@
 <template>
   <button
     @click="theme.toggle()"
-    class="w-9 h-9 rounded-md flex items-center justify-center transition-all duration-200 active:scale-90"
+    class="w-9 h-9 rounded-akoma btn-icon tap-scale"
     :class="theme.isDark
-      ? 'bg-app-elevated text-amber-400 hover:bg-app-border'
-      : 'bg-app-elevated text-accent hover:bg-app-border'"
+      ? 'text-[var(--cat-3)]'
+      : 'text-accent'"
     :title="theme.isDark ? 'Mudar para claro' : 'Mudar para escuro'"
   >
     <!-- Sun (light mode icon shown in dark mode) -->

@@ -1,18 +1,17 @@
 ﻿<template>
-  <div class="min-h-screen bg-app-bg flex flex-col">
-    <!-- Header -->
-    <header class="px-5 pt-safe-top pb-4 pt-6">
-      <h1 class="text-2xl font-bold text-primary">Matérias</h1>
-      <p class="text-sm text-muted mt-1">{{ subjectsStore.subjects.length }} matérias · {{ subjectsStore.categories.length }} categorias</p>
+  <div class="min-h-screen flex flex-col akoma-page">
+    <header class="mb-5 reveal">
+      <span class="page-label">Organização</span>
+      <h1 class="page-title">Matérias</h1>
+      <p class="text-sm text-muted mt-2">{{ subjectsStore.subjects.length }} matérias · {{ subjectsStore.categories.length }} categorias</p>
     </header>
 
-    <!-- Category filter tabs -->
-    <div class="px-4 pb-2">
-      <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+    <div class="pb-3 reveal reveal-d1">
+      <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
         <button
           @click="selectedCategoryFilter = null"
           class="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200"
-          :class="selectedCategoryFilter === null ? 'bg-accent/20 border-accent/50 text-accent/70' : 'bg-app-card border-app-border text-muted hover:text-primary'"
+          :class="selectedCategoryFilter === null ? 'bg-accent-soft border-transparent text-accent' : 'card border-app-border text-muted'"
         >
           Todas
         </button>
@@ -21,7 +20,7 @@
           :key="cat.id"
           @click="selectedCategoryFilter = cat.id"
           class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200"
-          :class="selectedCategoryFilter === cat.id ? 'border-transparent text-white' : 'bg-app-card border-app-border text-muted hover:text-primary'"
+          :class="selectedCategoryFilter === cat.id ? 'border-transparent text-white' : 'card border-app-border text-muted hover:text-primary'"
           :style="selectedCategoryFilter === cat.id ? { background: `${cat.color}30`, borderColor: `${cat.color}60`, color: cat.color } : {}"
         >
           <div class="w-1.5 h-1.5 rounded-full" :style="{ background: cat.color }" />
@@ -30,7 +29,7 @@
       </div>
     </div>
 
-    <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-6">
+    <main class="flex-1 overflow-y-auto pb-4 space-y-6 reveal reveal-d2">
       <!-- Subjects grid -->
       <div v-if="filteredSubjects.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
         <span class="text-5xl mb-4">📚</span>
@@ -42,10 +41,10 @@
         <div
           v-for="subject in filteredSubjects"
           :key="subject.id"
-          class="flex items-center gap-4 p-4 rounded-sm bg-app-card border border-app-border transition-all duration-200 hover:bg-app-elevated group"
+          class="flex items-center gap-4 p-4 card tap-scale group"
         >
           <div
-            class="w-12 h-12 rounded-md flex items-center justify-center text-2xl flex-shrink-0 shadow-sm"
+            class="w-12 h-12 rounded-akoma flex items-center justify-center text-2xl flex-shrink-0 shadow-akoma"
             :style="{ background: `${subject.color}20` }"
           >
             {{ subject.icon }}
@@ -62,7 +61,7 @@
           <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               @click="openEditSubject(subject)"
-              class="w-8 h-8 rounded-sm bg-app-elevated flex items-center justify-center text-muted hover:text-primary transition-colors"
+              class="w-8 h-8 btn-icon tap-scale"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -71,7 +70,7 @@
             </button>
             <button
               @click="confirmDeleteSubject(subject.id)"
-              class="w-8 h-8 rounded-sm bg-app-elevated flex items-center justify-center text-muted hover:text-red-400 transition-colors"
+              class="w-8 h-8 btn-icon tap-scale hover:text-red-400"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <polyline points="3 6 5 6 21 6"/>
@@ -102,7 +101,7 @@
           <div
             v-for="cat in subjectsStore.categories"
             :key="cat.id"
-            class="flex items-center gap-3 px-3 py-2.5 rounded-md border transition-all group"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-akoma border transition-all group"
             :style="{ background: `${cat.color}12`, borderColor: `${cat.color}35` }"
           >
             <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ background: cat.color }" />
@@ -137,8 +136,7 @@
     <!-- FAB -->
     <button
       @click="openAddSubject"
-      class="fixed right-5 bottom-24 w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 active:scale-90 z-40"
-      style="background: linear-gradient(135deg, var(--accent-color), color-mix(in oklch, var(--accent-color) 60%, black)); box-shadow: 0 8px 24px color-mix(in oklch, var(--accent-color) 40%, transparent)"
+      class="fixed right-5 bottom-24 w-14 h-14 rounded-full btn-primary shadow-akoma-md flex items-center justify-center z-40 tap-scale"
     >
       <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>

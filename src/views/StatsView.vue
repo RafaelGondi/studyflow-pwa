@@ -1,37 +1,35 @@
 ﻿<template>
-  <div class="min-h-screen bg-app-bg flex flex-col">
-    <!-- Header -->
-    <header class="px-5 pt-safe-top pb-4 pt-6">
-      <h1 class="text-2xl font-bold text-primary">Estatísticas</h1>
-      <p class="text-sm text-muted mt-1">Acompanhe seu progresso</p>
+  <div class="min-h-screen flex flex-col akoma-page">
+    <header class="mb-5 reveal">
+      <span class="page-label">Progresso</span>
+      <h1 class="page-title">Estatísticas</h1>
+      <p class="text-sm text-muted mt-2">Acompanhe seu ritmo de estudo</p>
     </header>
 
-    <!-- Period selector -->
-    <div class="px-4 pb-4">
-      <div class="flex bg-app-card border border-app-border rounded-md p-1 gap-1">
+    <div class="pb-4 reveal reveal-d1">
+      <div class="flex card p-1 gap-1">
         <button
           v-for="p in periods"
           :key="p.value"
           @click="period = p.value"
-          class="flex-1 py-2 rounded-sm text-sm font-semibold transition-all duration-200"
+          class="flex-1 py-2 rounded-pill text-sm font-semibold transition-all duration-200 tap-scale"
           :class="period === p.value
-            ? 'bg-accent text-white shadow-sm'
-            : 'text-muted hover:text-secondary'"
+            ? 'bg-accent text-white shadow-akoma'
+            : 'text-muted'"
         >
           {{ p.label }}
         </button>
       </div>
     </div>
 
-    <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-4">
-      <!-- Summary cards -->
+    <main class="flex-1 overflow-y-auto pb-4 space-y-4 reveal reveal-d2">
       <div class="grid grid-cols-2 gap-3">
-        <div class="bg-app-card border border-app-border rounded-sm p-4">
+        <div class="card p-4">
           <p class="text-xs text-muted font-medium uppercase tracking-wider">Total</p>
           <p class="text-2xl font-bold text-primary mt-1">{{ formatDuration(totalSeconds) }}</p>
           <p class="text-xs text-faint mt-1">{{ periodLabel }}</p>
         </div>
-        <div class="bg-app-card border border-app-border rounded-sm p-4">
+        <div class="card p-4">
           <p class="text-xs text-muted font-medium uppercase tracking-wider">Sessões</p>
           <p class="text-2xl font-bold text-primary mt-1">{{ sessions.length }}</p>
           <p class="text-xs text-faint mt-1">{{ avgLabel }}</p>
@@ -60,10 +58,10 @@
           <div
             v-for="s in group.sessions"
             :key="s.id"
-            class="flex items-center gap-3 p-3 rounded-md bg-app-card border border-app-border"
+            class="list-row"
           >
             <div
-              class="w-9 h-9 rounded-sm flex items-center justify-center text-lg flex-shrink-0"
+              class="w-9 h-9 rounded-akoma flex items-center justify-center text-lg flex-shrink-0"
               :style="{ background: `${getSubject(s.subjectId)?.color ?? 'var(--accent-color)'}20` }"
             >
               {{ getSubject(s.subjectId)?.icon ?? '📚' }}
@@ -76,7 +74,7 @@
               <span class="text-sm font-semibold text-secondary">{{ formatDuration(s.duration) }}</span>
               <button
                 @click="editingSession = s"
-                class="w-7 h-7 rounded-sm flex items-center justify-center text-faint hover:text-primary hover:bg-app-elevated transition-all"
+                class="w-7 h-7 btn-icon tap-scale"
               >
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -85,7 +83,7 @@
               </button>
               <button
                 @click="deleteSession(s.id)"
-                class="w-7 h-7 rounded-sm flex items-center justify-center text-faint hover:text-red-400 hover:bg-red-400/10 transition-all"
+                class="w-7 h-7 btn-icon tap-scale hover:text-red-400"
               >
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <polyline points="3 6 5 6 21 6"/>

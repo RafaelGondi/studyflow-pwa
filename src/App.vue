@@ -1,14 +1,16 @@
 <template>
-  <div class="max-w-lg mx-auto relative">
+  <div class="shell">
+    <AmbientBg />
     <UpdateBanner />
-    <Transition name="page" mode="out-in">
-      <RouterView v-if="appReady" :key="route.path" />
-      <div v-else class="min-h-screen flex flex-col items-center justify-center gap-4">
-        <div class="text-5xl animate-pulse-slow">📚</div>
-        <p class="text-faint text-sm font-medium">Carregando StudyFlow...</p>
-      </div>
-    </Transition>
-
+    <main class="akoma-shell">
+      <Transition name="page" mode="out-in">
+        <RouterView v-if="appReady" :key="route.path" />
+        <div v-else class="min-h-[70dvh] flex flex-col items-center justify-center gap-4 reveal">
+          <div class="text-5xl animate-pulse-slow">📚</div>
+          <p class="text-muted text-sm font-medium">Carregando StudyFlow...</p>
+        </div>
+      </Transition>
+    </main>
     <BottomNav v-if="appReady" />
   </div>
 </template>
@@ -20,6 +22,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useThemeStore } from '@/stores/theme'
+import AmbientBg from '@/components/layout/AmbientBg.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import UpdateBanner from '@/components/ui/UpdateBanner.vue'
 
@@ -29,10 +32,8 @@ const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 const themeStore = useThemeStore()
 
-// Só mostra a UI quando auth + subjects + sessions estão prontos
 const appReady = ref(false)
 
-// Recarrega todos os dados quando o UID muda (ex.: login com Google)
 watch(() => authStore.uid, (newUid, oldUid) => {
   if (newUid && oldUid && newUid !== oldUid) {
     subjectsStore.load()
@@ -44,10 +45,7 @@ onMounted(async () => {
   themeStore.init()
   await authStore.init()
   try {
-    await Promise.all([
-      subjectsStore.load(),
-      sessionsStore.loadToday(),
-    ])
+    await Promise.all([subjectsStore.load(), sessionsStore.loadToday()])
   } catch (e) {
     console.error('[StudyFlow] Erro ao carregar dados iniciais:', e)
   } finally {
@@ -55,3 +53,12 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.shell {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+</style>
