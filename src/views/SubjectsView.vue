@@ -7,25 +7,23 @@
     </header>
 
     <div class="pb-3 reveal reveal-d1">
-      <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
-        <button
+      <div class="filter-scroll">
+        <CategoryChip
+          accent
+          :active="selectedCategoryFilter === null"
           @click="selectedCategoryFilter = null"
-          class="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200"
-          :class="selectedCategoryFilter === null ? 'bg-accent-soft border-transparent text-accent' : 'card border-app-border text-muted'"
         >
           Todas
-        </button>
-        <button
+        </CategoryChip>
+        <CategoryChip
           v-for="cat in subjectsStore.categories"
           :key="cat.id"
+          :active="selectedCategoryFilter === cat.id"
+          :color="cat.color"
           @click="selectedCategoryFilter = cat.id"
-          class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200"
-          :class="selectedCategoryFilter === cat.id ? 'border-transparent text-white' : 'card border-app-border text-muted hover:text-primary'"
-          :style="selectedCategoryFilter === cat.id ? { background: `${cat.color}30`, borderColor: `${cat.color}60`, color: cat.color } : {}"
         >
-          <div class="w-1.5 h-1.5 rounded-full" :style="{ background: cat.color }" />
           {{ cat.name }}
-        </button>
+        </CategoryChip>
       </div>
     </div>
 
@@ -44,7 +42,7 @@
           class="flex items-center gap-4 p-4 card tap-scale group"
         >
           <div
-            class="w-12 h-12 rounded-akoma flex items-center justify-center text-2xl flex-shrink-0 shadow-akoma"
+            class="w-12 h-12 rounded-akoma flex items-center justify-center text-2xl flex-shrink-0"
             :style="{ background: `${subject.color}20` }"
           >
             {{ subject.icon }}
@@ -52,9 +50,12 @@
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-primary">{{ subject.name }}</p>
             <div class="flex items-center gap-2 mt-1">
-              <div class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: subject.color }" />
+              <div
+                class="w-2 h-2 rounded-full flex-shrink-0"
+                :style="{ background: getSubjectCategory(subject)?.color ?? subject.color }"
+              />
               <span class="text-xs text-muted truncate">
-                {{ subjectsStore.getCategory(subject.categoryId ?? '')?.name ?? 'Sem categoria' }}
+                {{ getSubjectCategory(subject)?.name ?? 'Sem categoria' }}
               </span>
             </div>
           </div>
@@ -101,11 +102,19 @@
           <div
             v-for="cat in subjectsStore.categories"
             :key="cat.id"
-            class="flex items-center gap-3 px-3 py-2.5 rounded-akoma border transition-all group"
-            :style="{ background: `${cat.color}12`, borderColor: `${cat.color}35` }"
+            class="card flex items-center gap-3 px-3 py-3 transition-all group"
           >
-            <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ background: cat.color }" />
-            <span class="text-sm font-semibold flex-1 min-w-0 truncate" :style="{ color: cat.color }">{{ cat.name }}</span>
+            <div
+              class="w-1 self-stretch rounded-full flex-shrink-0 min-h-[28px]"
+              :style="{ background: cat.color }"
+            />
+            <span class="text-sm font-semibold flex-1 min-w-0 truncate text-primary">{{ cat.name }}</span>
+            <span
+              class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm text-white flex-shrink-0"
+              :style="{ background: cat.color }"
+            >
+              {{ countInCategory(cat.id) }}
+            </span>
             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 @click="openEditCategory(cat)"
@@ -164,6 +173,7 @@ import { ref, computed } from 'vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
+import CategoryChip from '@/components/ui/CategoryChip.vue'
 import type { Subject, Category } from '@/types'
 
 const subjectsStore = useSubjectsStore()
@@ -199,6 +209,15 @@ function openEditCategory(cat: Category) {
   showCategoryModal.value = true
 }
 
+function getSubjectCategory(subject: Subject) {
+  return subject.categoryId ? subjectsStore.getCategory(subject.categoryId) : null
+}
+
+function countInCategory(catId: string) {
+  const n = subjectsStore.subjects.filter(s => s.categoryId === catId).length
+  return n === 1 ? '1 matéria' : `${n} matérias`
+}
+
 async function confirmDeleteCategory(id: string) {
   if (confirm('Excluir esta categoria? As matérias serão mantidas sem categoria.')) {
     await subjectsStore.removeCategory(id)
@@ -207,6 +226,18 @@ async function confirmDeleteCategory(id: string) {
 </script>
 
 <style scoped>
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.filter-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: visible;
+  margin: 0 calc(-1 * var(--page-pad-x)) 14px;
+  padding: 6px var(--page-pad-x);
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.filter-scroll::-webkit-scrollbar {
+  display: none;
+}
 </style>

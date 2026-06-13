@@ -1,10 +1,10 @@
 ﻿<template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div v-if="show" class="fixed inset-0 z-[110] flex items-end sm:items-center justify-center">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="emit('close')" />
-        <div class="relative w-full max-w-lg modal-panel rounded-t-3xl sm:rounded-akoma-lg p-6 pb-safe-bottom">
-          <div class="flex items-center justify-between mb-6">
+        <div class="modal-sheet modal-panel">
+          <div class="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-4">
             <h2 class="font-display text-lg font-bold text-primary">
               {{ subject ? 'Editar matéria' : 'Nova matéria' }}
             </h2>
@@ -15,6 +15,7 @@
             </button>
           </div>
 
+          <div class="modal-scroll">
           <form @submit.prevent="handleSubmit" class="space-y-5">
             <!-- Icon picker -->
             <div>
@@ -120,12 +121,13 @@
             <button
               type="submit"
               :disabled="!form.name.trim() || saving"
-              class="w-full py-3.5 rounded-pill font-bold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed tap-scale"
+              class="w-full py-3.5 rounded-akoma font-bold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed tap-scale"
               :style="{ background: `linear-gradient(135deg, ${form.color}, ${form.color}bb)` }"
             >
               {{ saving ? 'Salvando...' : subject ? 'Salvar' : 'Criar matéria' }}
             </button>
           </form>
+          </div>
         </div>
       </div>
     </Transition>

@@ -37,15 +37,15 @@
   --cat-5: #d45d8c;
   --cat-6: #8a8984;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(44, 44, 42, 0.04), 0 4px 12px rgba(44, 44, 42, 0.04);
-  --shadow-md: 0 4px 24px rgba(44, 44, 42, 0.08);
-  --shadow-nav: 0 -4px 24px rgba(44, 44, 42, 0.06);
+  /* Shadows — StudyFlow: meio-termo (entre Akoma e flat) */
+  --shadow-sm: 0 1px 2px rgba(44, 44, 42, 0.05), 0 2px 10px rgba(44, 44, 42, 0.04);
+  --shadow-md: 0 4px 16px rgba(44, 44, 42, 0.07);
+  --shadow-nav: 0 -3px 18px rgba(44, 44, 42, 0.06);
 
-  /* Radius */
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
+  /* Radius — StudyFlow: meio-termo */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
 
   /* Layout */
@@ -97,9 +97,9 @@
   --cat-5: #e87aa8;
   --cat-6: #9c9b96;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.3);
-  --shadow-nav: 0 -4px 24px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.14), 0 2px 10px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.22);
+  --shadow-nav: 0 -3px 18px rgba(0, 0, 0, 0.22);
 
   --nav-glass: rgba(34, 34, 40, 0.92);
   --fill-strong: #eeedea;

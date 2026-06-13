@@ -1,12 +1,11 @@
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div v-if="show" class="fixed inset-0 z-[110] flex items-end sm:items-center justify-center">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="emit('close')" />
-        <div class="relative w-full max-w-lg modal-panel rounded-t-3xl sm:rounded-akoma-lg p-6 pb-safe-bottom">
+        <div class="modal-sheet modal-panel">
 
-          <!-- Header -->
-          <div class="flex items-center justify-between mb-6">
+          <div class="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-4">
             <h2 class="font-display text-lg font-bold text-primary">Editar sessão</h2>
             <button @click="emit('close')" class="w-8 h-8 rounded-full btn-icon tap-scale">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -15,6 +14,7 @@
             </button>
           </div>
 
+          <div class="modal-scroll">
           <!-- Subject info (read-only) -->
           <div class="flex items-center gap-3 p-3 rounded-akoma btn-icon mb-5">
             <div class="w-8 h-8 rounded-akoma flex items-center justify-center text-lg flex-shrink-0"
@@ -60,11 +60,12 @@
             <button
               type="submit"
               :disabled="endBeforeStart || saving"
-              class="w-full py-3.5 rounded-pill font-bold text-white btn-primary disabled:opacity-50 tap-scale"
+              class="w-full py-3.5 font-bold text-white btn-primary disabled:opacity-50 tap-scale"
             >
               {{ saving ? 'Salvando...' : 'Salvar alterações' }}
             </button>
           </form>
+          </div>
         </div>
       </div>
     </Transition>

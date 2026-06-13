@@ -11,7 +11,7 @@
     <Transition name="sheet">
       <div
         v-if="modelValue"
-        class="fixed bottom-0 left-0 right-0 z-[110] max-w-lg mx-auto rounded-t-3xl modal-panel flex flex-col min-h-0"
+        class="fixed bottom-0 left-0 right-0 z-[110] max-w-lg mx-auto modal-panel flex flex-col min-h-0"
         style="max-height: min(80dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 24px))"
       >
         <!-- Handle -->

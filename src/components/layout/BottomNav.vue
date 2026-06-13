@@ -170,7 +170,7 @@ function isActive(path: string) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-color: var(--border-strong);
-    box-shadow: var(--shadow-nav), 0 4px 24px color-mix(in srgb, var(--text) 8%, transparent);
+    box-shadow: var(--shadow-nav), 0 2px 12px color-mix(in srgb, var(--text) 5%, transparent);
   }
 }
 </style>

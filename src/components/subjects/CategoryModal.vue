@@ -1,10 +1,10 @@
 ﻿<template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div v-if="show" class="fixed inset-0 z-[110] flex items-end sm:items-center justify-center">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="emit('close')" />
-        <div class="relative w-full max-w-lg modal-panel rounded-t-3xl sm:rounded-akoma-lg p-6 pb-safe-bottom">
-          <div class="flex items-center justify-between mb-6">
+        <div class="modal-sheet modal-panel">
+          <div class="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-4">
             <h2 class="font-display text-lg font-bold text-primary">
               {{ category ? 'Editar categoria' : 'Nova categoria' }}
             </h2>
@@ -15,6 +15,7 @@
             </button>
           </div>
 
+          <div class="modal-scroll">
           <form @submit.prevent="handleSubmit" class="space-y-5">
             <div>
               <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Nome</label>
@@ -72,11 +73,12 @@
             <button
               type="submit"
               :disabled="!form.name.trim() || saving"
-              class="w-full py-3.5 rounded-pill font-bold text-white btn-primary disabled:opacity-50 tap-scale"
+              class="w-full py-3.5 font-bold text-white btn-primary disabled:opacity-50 tap-scale"
             >
               {{ saving ? 'Salvando...' : category ? 'Salvar' : 'Criar categoria' }}
             </button>
           </form>
+          </div>
         </div>
       </div>
     </Transition>

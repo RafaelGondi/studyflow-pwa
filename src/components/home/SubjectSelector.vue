@@ -21,7 +21,7 @@
         class="relative flex flex-col items-start gap-2 p-4 rounded-akoma border transition-all duration-200 tap-scale text-left"
         :class="[
           selected === subject.id
-            ? 'border-transparent scale-[1.02] shadow-akoma-md'
+            ? 'border-transparent scale-[1.01]'
             : 'border-app-border card hover:bg-app-elevated',
         ]"
         :style="selected === subject.id ? {
@@ -32,7 +32,7 @@
         } : {}"
       >
         <div
-          class="w-10 h-10 rounded-akoma flex items-center justify-center text-xl shadow-akoma"
+          class="w-10 h-10 rounded-akoma flex items-center justify-center text-xl"
           :style="{ background: `${subject.color}25` }"
         >
           {{ subject.icon }}

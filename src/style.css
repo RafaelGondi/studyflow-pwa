@@ -54,7 +54,7 @@
   .btn-primary {
     @apply text-white font-semibold px-4 py-2.5 transition-all duration-200;
     background-color: var(--accent);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-md);
   }
 
   .btn-primary:active {
@@ -66,7 +66,7 @@
     @apply px-4 py-3 w-full transition-colors placeholder-faint;
     background: var(--bg-elevated);
     border: 1px solid var(--border-strong);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     color: var(--text);
   }
 
@@ -79,7 +79,7 @@
   .tab-active {
     color: #fff;
     background-color: var(--accent);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-md);
   }
 
   .tab-inactive {
@@ -121,6 +121,13 @@
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-md);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  @media (min-width: 640px) {
+    .modal-panel {
+      border-radius: var(--radius-lg);
+    }
   }
 
   .seg-control {
@@ -163,6 +170,23 @@
 
   .settings-row:active {
     background: var(--bg-soft);
+  }
+
+  .modal-sheet {
+    @apply flex flex-col min-h-0 w-full max-w-lg;
+    max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 24px));
+  }
+
+  @media (min-width: 640px) {
+    .modal-sheet {
+      max-height: 85vh;
+    }
+  }
+
+  .modal-scroll {
+    @apply flex-1 min-h-0 overflow-y-auto overscroll-contain px-6;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    -webkit-overflow-scrolling: touch;
   }
 }
 

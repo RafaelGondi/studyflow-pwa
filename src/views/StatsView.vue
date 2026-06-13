@@ -12,7 +12,7 @@
           v-for="p in periods"
           :key="p.value"
           @click="period = p.value"
-          class="flex-1 py-2 rounded-pill text-sm font-semibold transition-all duration-200 tap-scale"
+          class="flex-1 py-2 rounded-akoma text-sm font-semibold transition-all duration-200 tap-scale"
           :class="period === p.value
             ? 'bg-accent text-white shadow-akoma'
             : 'text-muted'"

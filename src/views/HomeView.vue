@@ -50,7 +50,7 @@
               <button
                 v-if="lastSubjectId"
                 @click="timerStore.startStudy(lastSubjectId!)"
-                class="flex-1 py-3 rounded-pill font-bold text-white text-sm flex items-center justify-center gap-2 tap-scale bg-accent"
+                class="flex-1 py-3 btn-primary text-sm flex items-center justify-center gap-2 tap-scale"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
                 Continuar
