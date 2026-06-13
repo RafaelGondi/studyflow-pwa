@@ -20,6 +20,11 @@ export const useSessionsStore = defineStore('sessions', () => {
     rangeSessions.value = await db.fetchSessionsByDateRange(auth.uid, from, to)
   }
 
+  async function fetchRange(from: string, to: string): Promise<StudySession[]> {
+    if (!auth.uid) return []
+    return db.fetchSessionsByDateRange(auth.uid, from, to)
+  }
+
   async function loadDate(date: string): Promise<StudySession[]> {
     if (!auth.uid) return []
     return db.fetchSessionsByDate(auth.uid, date)
@@ -66,6 +71,6 @@ export const useSessionsStore = defineStore('sessions', () => {
   return {
     todaySessions, rangeSessions,
     todayTotalSeconds, todayBySubject,
-    loadToday, loadRange, loadDate, save, update, remove,
+    loadToday, loadRange, fetchRange, loadDate, save, update, remove,
   }
 })

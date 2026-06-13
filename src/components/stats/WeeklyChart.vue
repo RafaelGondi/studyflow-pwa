@@ -1,7 +1,14 @@
 <template>
   <div class="card p-4">
     <h3 class="text-xs font-bold text-muted uppercase tracking-wider mb-4">Esta semana</h3>
-    <Bar :data="chartData" :options="chartOptions" class="max-h-48" />
+
+    <div v-if="hasData" class="max-h-56">
+      <Bar :data="chartData" :options="chartOptions" />
+    </div>
+
+    <div v-else class="py-8 text-center text-faint text-sm">
+      Nenhuma sessão nesta semana
+    </div>
   </div>
 </template>
 
@@ -15,71 +22,121 @@ import {
 import type { StudySession } from '@/types'
 import { localDateStr } from '@/types'
 import { useThemeStore } from '@/stores/theme'
+import { useSubjectsStore } from '@/stores/subjects'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const theme = useThemeStore()
+const subjectsStore = useSubjectsStore()
 
 const props = defineProps<{ sessions: StudySession[] }>()
 
+function cssVar(name: string, fallback: string) {
+  if (typeof document === 'undefined') return fallback
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+}
+
+function formatHours(hours: number) {
+  const h = Math.floor(hours)
+  const m = Math.round((hours - h) * 60)
+  return h > 0 ? `${h}h ${m}m` : `${m}m`
+}
+
+const hasData = computed(() => props.sessions.length > 0)
+
 const chartData = computed(() => {
-  const days: Record<string, number> = {}
   const today = new Date()
   const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+  const dayKeys: string[] = []
+  const labels: string[] = []
 
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today)
     d.setDate(today.getDate() - i)
-    days[localDateStr(d)] = 0
+    dayKeys.push(localDateStr(d))
+    labels.push(i === 0 ? 'Hoje' : dayNames[d.getDay()])
   }
+
+  const byDaySubject = new Map<string, Map<string, number>>()
+  for (const key of dayKeys) byDaySubject.set(key, new Map())
 
   for (const s of props.sessions) {
-    if (days[s.date] !== undefined) days[s.date] += s.duration
+    const day = byDaySubject.get(s.date)
+    if (!day) continue
+    day.set(s.subjectId, (day.get(s.subjectId) ?? 0) + s.duration)
   }
 
-  const labels = Object.keys(days).map(d => {
-    const date = new Date(d + 'T12:00:00')
-    return dayNames[date.getDay()]
-  })
-  const data = Object.values(days).map(s => +(s / 3600).toFixed(2))
+  const subjectTotals = new Map<string, number>()
+  for (const s of props.sessions) {
+    subjectTotals.set(s.subjectId, (subjectTotals.get(s.subjectId) ?? 0) + s.duration)
+  }
 
-  return {
-    labels,
-    datasets: [{
-      data,
-      backgroundColor: data.map((_, i) => i === 6 ? 'var(--accent-color)' : 'color-mix(in oklch, var(--accent-color) 30%, transparent)'),
-      borderRadius: 8,
+  const sortedSubjects = [...subjectTotals.entries()].sort((a, b) => a[1] - b[1])
+
+  const datasets = sortedSubjects.map(([subjectId], idx, arr) => {
+    const subj = subjectsStore.getSubject(subjectId)
+    const isTop = idx === arr.length - 1
+    return {
+      label: subj?.name ?? 'Desconhecida',
+      data: dayKeys.map(key => {
+        const secs = byDaySubject.get(key)?.get(subjectId) ?? 0
+        return +(secs / 3600).toFixed(2)
+      }),
+      backgroundColor: subj?.color ?? '#8b5cf6',
+      borderRadius: isTop ? { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 } : 0,
       borderSkipped: false,
-    }],
-  }
+      stack: 'study',
+    }
+  })
+
+  return { labels, datasets }
 })
 
 const chartOptions = computed(() => {
-  const tickColor = getComputedStyle(document.documentElement).getPropertyValue('--text-tertiary').trim() || '#a3a29c'
+  const tickColor = cssVar('--text-tertiary', '#a3a29c')
   const gridColor = theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(44,44,42,0.06)'
+
   return {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'index' as const, intersect: false },
     plugins: {
-      legend: { display: false },
+      legend: {
+        display: chartData.value.datasets.length > 0,
+        position: 'bottom' as const,
+        labels: {
+          color: tickColor,
+          boxWidth: 8,
+          boxHeight: 8,
+          padding: 14,
+          font: { size: 11 },
+          usePointStyle: true,
+          pointStyle: 'circle' as const,
+        },
+      },
       tooltip: {
+        filter: (item: TooltipItem<'bar'>) => (item.parsed.y ?? 0) > 0,
         callbacks: {
           label: (ctx: TooltipItem<'bar'>) => {
             const v = ctx.parsed.y ?? 0
-            const h = Math.floor(v)
-            const m = Math.round((v - h) * 60)
-            return h > 0 ? `${h}h ${m}m` : `${m}m`
+            return ` ${ctx.dataset.label}: ${formatHours(v)}`
+          },
+          footer: (items: TooltipItem<'bar'>[]) => {
+            const total = items.reduce((sum, i) => sum + (i.parsed.y ?? 0), 0)
+            return total > 0 ? `Total: ${formatHours(total)}` : ''
           },
         },
       },
     },
     scales: {
       x: {
+        stacked: true,
         grid: { display: false },
         ticks: { color: tickColor, font: { size: 11 } },
         border: { display: false },
       },
       y: {
+        stacked: true,
         grid: { color: gridColor },
         ticks: {
           color: tickColor,

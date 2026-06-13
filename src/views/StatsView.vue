@@ -37,7 +37,7 @@
       </div>
 
       <!-- Weekly chart -->
-      <WeeklyChart :sessions="weekSessions" />
+      <WeeklyChart :sessions="weekChartSessions" />
 
       <!-- Subject donut -->
       <SubjectDonut :sessions="sessions" />
@@ -100,7 +100,7 @@
       :show="!!editingSession"
       :session="editingSession"
       @close="editingSession = null"
-      @saved="loadRange(); editingSession = null"
+      @saved="loadRange(); loadWeekChart(); editingSession = null"
     />
   </div>
 </template>
@@ -142,12 +142,15 @@ const periodLabel = computed(() => {
   return map[period.value]
 })
 
-const weekSessions = computed(() => {
-  const from = new Date()
-  from.setDate(from.getDate() - 6)
-  from.setHours(0, 0, 0, 0)
-  return sessions.value.filter(s => s.startTime >= from.getTime())
-})
+const weekChartSessions = ref<import('@/types').StudySession[]>([])
+
+async function loadWeekChart() {
+  const now = new Date()
+  const to = localDateStr(now)
+  const d = new Date(now)
+  d.setDate(now.getDate() - 6)
+  weekChartSessions.value = await sessionsStore.fetchRange(localDateStr(d), to)
+}
 
 const groupedSessions = computed(() => {
   const map = new Map<string, typeof sessions.value>()
@@ -178,7 +181,7 @@ function formatGroupDate(date: string) {
 async function deleteSession(id: string) {
   if (confirm('Excluir esta sessão?')) {
     await sessionsStore.remove(id)
-    await loadRange()
+    await Promise.all([loadRange(), loadWeekChart()])
   }
 }
 
@@ -201,5 +204,5 @@ async function loadRange() {
 }
 
 watch(period, loadRange)
-onMounted(loadRange)
+onMounted(() => Promise.all([loadRange(), loadWeekChart()]))
 </script>
