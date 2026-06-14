@@ -6,30 +6,24 @@
       Nenhuma sessão neste dia
     </div>
 
-    <div v-else class="relative pl-8 space-y-2">
-      <!-- Dashed line -->
-      <div
-        class="absolute left-3 top-2 bottom-2 w-px border-l border-dashed border-app-border"
-        aria-hidden="true"
-      />
-
+    <div v-else class="space-y-2">
       <template v-for="(entry, i) in entries" :key="entryKey(entry, i)">
         <!-- Gap -->
-        <div v-if="entry.type === 'gap'" class="relative">
-          <span class="absolute -left-5 top-1/2 -translate-y-1/2 text-[9px] text-faint w-10 text-right">
+        <div v-if="entry.type === 'gap'" class="flex gap-3 items-center">
+          <span class="w-12 flex-shrink-0 text-[10px] text-muted text-right tabular-nums">
             {{ formatClockTime(entry.startTime) }}
           </span>
-          <div class="flex items-center gap-2 px-3 py-2 rounded-akoma bg-app-soft text-xs text-muted">
+          <div class="flex-1 min-w-0 flex items-center gap-2 px-3 py-2 rounded-akoma bg-app-soft text-xs text-muted">
             <span class="flex-1 truncate">{{ gapLabel(entry.startTime, entry.endTime) }}</span>
           </div>
         </div>
 
         <!-- Session -->
-        <div v-else class="relative group">
-          <span class="absolute -left-5 top-3 text-[9px] text-faint w-10 text-right">
+        <div v-else class="flex gap-3 items-start group">
+          <span class="w-12 flex-shrink-0 text-[10px] text-muted text-right tabular-nums pt-3">
             {{ formatClockTime(entry.session.startTime) }}
           </span>
-          <div class="card flex items-start gap-3 p-3 border border-app-border">
+          <div class="flex-1 min-w-0 card flex items-start gap-3 p-3 border border-app-border">
             <div
               class="w-1 self-stretch rounded-full flex-shrink-0 min-h-[40px]"
               :style="{ background: getSubject(entry.session.subjectId)?.color ?? 'var(--accent-color)' }"
@@ -45,7 +39,7 @@
                 {{ formatClockTime(entry.session.startTime) }} ~ {{ formatClockTime(entry.session.endTime) }}
               </p>
             </div>
-            <div class="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex flex-col gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
               <button @click="emit('edit', entry.session)" class="w-7 h-7 btn-icon tap-scale">
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>

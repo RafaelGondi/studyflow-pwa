@@ -17,9 +17,9 @@
         <button
           v-else
           @click="emit('select', cell.date)"
-          class="aspect-square rounded-md flex flex-col items-center justify-center text-[11px] font-semibold transition-all tap-scale relative overflow-hidden"
+          class="aspect-square rounded-md flex flex-col items-center justify-center text-[11px] font-semibold transition-all tap-scale"
           :class="cell.date === selectedDate
-            ? 'bg-fill-strong text-white shadow-akoma scale-105 z-10'
+            ? 'bg-accent text-white shadow-akoma ring-2 ring-accent/40'
             : 'text-secondary hover:ring-1 hover:ring-accent/30'"
           :style="cell.date !== selectedDate ? { background: heatBg(cell.seconds) } : undefined"
         >

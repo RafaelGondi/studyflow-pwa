@@ -5,17 +5,17 @@
       <h1 class="page-title">Estatísticas</h1>
     </header>
 
-    <!-- YPT-style period tabs -->
-    <div class="pb-4 reveal reveal-d1 overflow-x-auto">
-      <div class="flex gap-2 min-w-max px-0.5">
+    <!-- Period tabs -->
+    <div class="pb-4 reveal reveal-d1">
+      <div class="flex card p-1 gap-1">
         <button
           v-for="p in periods"
           :key="p.value"
           @click="period = p.value"
-          class="px-4 py-2 rounded-full text-sm font-semibold transition-all tap-scale whitespace-nowrap"
+          class="flex-1 py-2 rounded-akoma text-sm font-semibold transition-all duration-200 tap-scale"
           :class="period === p.value
-            ? 'bg-fill-strong text-white shadow-akoma'
-            : 'card text-muted'"
+            ? 'bg-accent text-white shadow-akoma'
+            : 'text-muted'"
         >
           {{ p.label }}
         </button>
@@ -221,6 +221,9 @@ function setCalendarMonth(year: number, month: number) {
 
 function selectDate(date: string) {
   selectedDate.value = date
+  const d = new Date(date + 'T12:00:00')
+  calYear.value = d.getFullYear()
+  calMonth.value = d.getMonth()
   if (period.value === 'month') period.value = 'day'
 }
 
@@ -261,7 +264,12 @@ watch([calYear, calMonth], loadMonth)
 watch(selectedDate, loadDay)
 watch(period, (p) => {
   if (p === 'week') loadWeek()
-  if (p === 'month' || p === 'day') loadMonth()
+  if (p === 'month' || p === 'day') {
+    const d = new Date(selectedDate.value + 'T12:00:00')
+    calYear.value = d.getFullYear()
+    calMonth.value = d.getMonth()
+    loadMonth()
+  }
 })
 
 onMounted(reload)

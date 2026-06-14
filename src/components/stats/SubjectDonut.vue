@@ -20,12 +20,12 @@
         <!-- List with tab toggle -->
         <div class="flex-1 w-full min-w-0">
           <!-- Tabs -->
-          <div class="seg-control mb-3">
+          <div class="seg-control mb-3 w-full">
             <button
               v-for="t in tabs"
               :key="t.key"
               @click="activeTab = t.key"
-              class="seg-tab"
+              class="seg-tab flex-1 text-center"
               :class="activeTab === t.key ? 'seg-tab-active' : ''"
             >
               {{ t.label }}
