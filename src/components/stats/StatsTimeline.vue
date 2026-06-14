@@ -73,7 +73,7 @@ import { formatDuration } from '@/types'
 import { useSubjectsStore } from '@/stores/subjects'
 import { buildStatsTimeline, formatClockTime, gapLabel, type TimelineEntry } from '@/utils/stats'
 
-const props = defineProps<{ sessions: StudySession[] }>()
+const props = defineProps<{ sessions: StudySession[]; showTitle?: boolean }>()
 const emit = defineEmits<{
   edit: [session: StudySession]
   delete: [id: string]
