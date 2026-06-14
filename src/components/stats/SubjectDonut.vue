@@ -75,7 +75,7 @@ import { Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
 import type { StudySession } from '@/types'
 import { useSubjectsStore } from '@/stores/subjects'
-import { formatDuration } from '@/types'
+import { formatDuration, isStudySession } from '@/types'
 import { useThemeStore } from '@/stores/theme'
 
 ChartJS.register(ArcElement, Tooltip)
@@ -83,6 +83,8 @@ ChartJS.register(ArcElement, Tooltip)
 const props = defineProps<{ sessions: StudySession[] }>()
 const subjectsStore = useSubjectsStore()
 const theme = useThemeStore()
+
+const studySessions = computed(() => props.sessions.filter(isStudySession))
 
 const activeTab = ref<'subjects' | 'categories'>('subjects')
 const tabs = [
@@ -95,7 +97,8 @@ const tabs = [
 /** Seconds per subject */
 const secondsBySubject = computed(() => {
   const map = new Map<string, number>()
-  for (const s of props.sessions) {
+  for (const s of studySessions.value) {
+    if (!s.subjectId) continue
     map.set(s.subjectId, (map.get(s.subjectId) ?? 0) + s.duration)
   }
   return map

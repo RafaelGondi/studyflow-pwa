@@ -20,7 +20,7 @@ import {
   Title, Tooltip, Legend, type TooltipItem,
 } from 'chart.js'
 import type { StudySession } from '@/types'
-import { localDateStr } from '@/types'
+import { localDateStr, isStudySession } from '@/types'
 import { useThemeStore } from '@/stores/theme'
 import { useSubjectsStore } from '@/stores/subjects'
 
@@ -42,7 +42,8 @@ function formatHours(hours: number) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
-const hasData = computed(() => props.sessions.length > 0)
+const studySessions = computed(() => props.sessions.filter(isStudySession))
+const hasData = computed(() => studySessions.value.length > 0)
 
 const chartData = computed(() => {
   const today = new Date()
@@ -60,14 +61,15 @@ const chartData = computed(() => {
   const byDaySubject = new Map<string, Map<string, number>>()
   for (const key of dayKeys) byDaySubject.set(key, new Map())
 
-  for (const s of props.sessions) {
+  for (const s of studySessions.value) {
     const day = byDaySubject.get(s.date)
-    if (!day) continue
+    if (!day || !s.subjectId) continue
     day.set(s.subjectId, (day.get(s.subjectId) ?? 0) + s.duration)
   }
 
   const subjectTotals = new Map<string, number>()
-  for (const s of props.sessions) {
+  for (const s of studySessions.value) {
+    if (!s.subjectId) continue
     subjectTotals.set(s.subjectId, (subjectTotals.get(s.subjectId) ?? 0) + s.duration)
   }
 

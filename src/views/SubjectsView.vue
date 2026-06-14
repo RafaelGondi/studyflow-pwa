@@ -58,8 +58,20 @@
                 {{ getSubjectCategory(subject)?.name ?? 'Sem categoria' }}
               </span>
             </div>
+            <p v-if="todayTime(subject.id)" class="text-[11px] text-secondary mt-1 tabular-nums">
+              Hoje: {{ todayTime(subject.id) }}
+            </p>
           </div>
-          <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div class="flex items-center gap-1.5">
+            <button
+              @click="startStudying(subject.id)"
+              class="w-9 h-9 rounded-akoma flex items-center justify-center tap-scale"
+              :style="{ background: `${subject.color}20`, color: subject.color }"
+              title="Iniciar estudo"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            </button>
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               @click="openEditSubject(subject)"
               class="w-8 h-8 btn-icon tap-scale"
@@ -78,6 +90,7 @@
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
               </svg>
             </button>
+            </div>
           </div>
         </div>
       </div>
@@ -169,14 +182,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSubjectsStore } from '@/stores/subjects'
+import { useSessionsStore } from '@/stores/sessions'
+import { useTimerStore } from '@/stores/timer'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
 import CategoryChip from '@/components/ui/CategoryChip.vue'
+import { formatDuration } from '@/types'
 import type { Subject, Category } from '@/types'
 
+const router = useRouter()
 const subjectsStore = useSubjectsStore()
+const sessionsStore = useSessionsStore()
+const timerStore = useTimerStore()
 const showSubjectModal = ref(false)
 const showCategoryModal = ref(false)
 const editingSubject = ref<Subject | null>(null)
@@ -218,11 +238,30 @@ function countInCategory(catId: string) {
   return n === 1 ? '1 matéria' : `${n} matérias`
 }
 
+function todayTime(subjectId: string) {
+  const secs = sessionsStore.todayBySubject.get(subjectId) ?? 0
+  return secs > 0 ? formatDuration(secs) : ''
+}
+
+async function startStudying(subjectId: string) {
+  if (timerStore.mode !== 'idle' && timerStore.activeSubjectId !== subjectId) {
+    await timerStore.stop()
+    await sessionsStore.loadToday()
+  }
+  if (timerStore.mode === 'idle' || timerStore.mode === 'break') {
+    await timerStore.startStudy(subjectId)
+    await sessionsStore.loadToday()
+  }
+  router.push('/')
+}
+
 async function confirmDeleteCategory(id: string) {
   if (confirm('Excluir esta categoria? As matérias serão mantidas sem categoria.')) {
     await subjectsStore.removeCategory(id)
   }
 }
+
+onMounted(() => sessionsStore.loadToday())
 </script>
 
 <style scoped>

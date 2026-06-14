@@ -9,165 +9,42 @@
       <span class="text-xs font-semibold text-muted">{{ dateLabel }}</span>
     </header>
 
+    <!-- Summary cards -->
     <div class="grid grid-cols-2 gap-3 mb-4 reveal reveal-d1">
       <div class="card p-3 flex flex-col gap-0.5">
         <span class="text-[10px] font-bold text-accent uppercase tracking-wider">Estudo</span>
-        <span class="font-display text-2xl font-bold text-primary tabular-nums">{{ totalStudyFormatted }}</span>
+        <span class="font-display text-2xl font-bold text-primary tabular-nums">{{ studyTotalFormatted }}</span>
         <span class="text-[10px] text-muted">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
       </div>
       <div class="card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--cat-3)">{{ isToday ? 'Pausa' : 'Sessões' }}</span>
-        <span class="font-display text-2xl font-bold text-primary tabular-nums">{{ isToday ? timerStore.breakFormatted : displaySessions.length }}</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--cat-3)">Pausa</span>
+        <span class="font-display text-2xl font-bold text-primary tabular-nums">{{ breakTotalFormatted }}</span>
         <span class="text-[10px] text-muted">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
       </div>
     </div>
 
-    <main class="flex-1 overflow-y-auto pb-4 space-y-3 reveal reveal-d2">
+    <main class="flex-1 overflow-y-auto pb-4 space-y-4 reveal reveal-d2">
 
-      <!-- ── Timer controls: only when viewing today ──────────── -->
-      <Transition name="fade" mode="out-in">
-        <div v-if="isToday" key="today">
-        <Transition name="fade" mode="out-in">
-        <div v-if="timerStore.mode === 'idle'" key="idle">
-          <button
-            @click="sheetOpen = true"
-            class="w-full py-3 btn-primary text-sm flex items-center justify-center gap-2 tap-scale"
-          >
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            Iniciar Estudo
-          </button>
-        </div>
+      <!-- Subject list (Study Checker style) -->
+      <SubjectStudyList
+        v-if="isToday"
+        :active-id="timerStore.activeSubjectId"
+        :extra-seconds="timerStore.mode === 'study' || timerStore.mode === 'paused' ? timerStore.studyElapsedSeconds : 0"
+        :extra-subject-id="timerStore.activeSubjectId"
+        @select="handleSubjectSelect"
+      />
 
-        <!-- ── BREAK mode ─────────────────────────────────────── -->
-        <div v-else-if="timerStore.mode === 'break'" key="break">
-          <div class="card p-5 text-center space-y-4">
-            <div>
-              <p class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider mb-1">☕ Em pausa</p>
-              <span class="font-sans text-5xl font-bold text-primary tabular-nums">{{ timerStore.breakFormatted }}</span>
-            </div>
-            <p class="text-xs text-muted">Descanse um pouco.</p>
-            <div class="flex gap-2">
-              <button
-                v-if="lastSubjectId"
-                @click="timerStore.startStudy(lastSubjectId!)"
-                class="flex-1 py-3 btn-primary text-sm flex items-center justify-center gap-2 tap-scale"
-              >
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-                Continuar
-              </button>
-              <button
-                @click="sheetOpen = true"
-                class="flex-1 py-3 btn-secondary text-sm tap-scale"
-              >
-                Trocar matéria
-              </button>
-              <button
-                @click="timerStore.stop(); loadToday()"
-                class="px-4 py-3 btn-secondary text-muted text-sm tap-scale"
-              >
-                Encerrar
-              </button>
-            </div>
-          </div>
-        </div>
+      <!-- Compact timer bar -->
+      <ActiveTimerBar
+        v-if="isToday && timerStore.mode !== 'idle'"
+        :last-subject-id="lastSubjectId"
+        @stop="handleStop"
+        @break="handleBreak"
+        @continue="handleContinue"
+      />
 
-        <!-- ── STUDY / PAUSED ─────────────────────────────────── -->
-        <div v-else key="active">
-          <div class="card p-4 space-y-4">
-
-            <!-- Subject row -->
-            <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 rounded-akoma flex items-center justify-center text-xl flex-shrink-0"
-                :style="{ background: `${activeSubject?.color ?? 'var(--accent-color)'}18` }"
-              >
-                {{ activeSubject?.icon ?? '📚' }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="font-semibold text-primary truncate">{{ activeSubject?.name ?? 'Estudo' }}</p>
-                <div class="flex items-center gap-1.5 mt-0.5">
-                  <div
-                    class="w-1.5 h-1.5 rounded-full"
-                    :class="timerStore.isRunning ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"
-                  />
-                  <span class="text-xs" :class="timerStore.isRunning ? 'text-emerald-500' : 'text-amber-500'">
-                    {{ timerStore.isRunning ? 'Estudando' : 'Pausado' }}
-                  </span>
-                </div>
-              </div>
-              <button
-                @click="sheetOpen = true"
-                class="text-xs text-muted px-2 py-1 rounded-akoma btn-icon tap-scale"
-              >
-                trocar
-              </button>
-            </div>
-
-            <!-- Timer display -->
-            <div class="text-center py-1">
-              <div
-                class="font-sans text-6xl font-bold tabular-nums leading-none"
-                :style="{ color: activeSubject?.color ?? 'var(--accent-color)' }"
-              >
-                {{ timerStore.studyFormatted }}
-              </div>
-              <div class="flex items-center justify-center gap-2 mt-2">
-                <p class="text-xs text-muted">sessão atual</p>
-                <button
-                  @click="focusMode = true"
-                  class="w-6 h-6 btn-icon tap-scale"
-                  title="Modo foco"
-                >
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Control buttons -->
-            <div class="grid grid-cols-3 gap-2">
-              <button
-                @click="handleStop"
-                class="py-3 btn-secondary flex flex-col items-center gap-1 text-muted tap-scale"
-              >
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
-                <span class="text-[10px] font-semibold">Parar</span>
-              </button>
-
-              <button
-                @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
-                class="py-3 rounded-akoma font-bold text-white flex flex-col items-center gap-1 tap-scale"
-                :style="{ background: timerStore.isRunning ? (activeSubject?.color ?? 'var(--accent-color)') : '#10b981' }"
-              >
-                <svg v-if="timerStore.isRunning" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
-                </svg>
-                <svg v-else class="w-4 h-4 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="5,3 19,12 5,21"/>
-                </svg>
-                <span class="text-[10px] font-semibold">{{ timerStore.isRunning ? 'Pausar' : 'Retomar' }}</span>
-              </button>
-
-              <button
-                @click="handleBreak"
-                class="py-3 btn-secondary flex flex-col items-center gap-1 tap-scale"
-                style="color: var(--cat-3)"
-              >
-                <span class="text-base leading-none">☕</span>
-                <span class="text-[10px] font-semibold">Break</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-        </div>
-        <div v-else key="past" />
-      </Transition>
-
-      <!-- ── Session log ─────────────────────────────────────── -->
-      <div class="pt-5">
-        <!-- Date navigator -->
+      <!-- Timeline -->
+      <div class="pt-1">
         <div class="flex items-center justify-between px-1 mb-3">
           <button
             @click="goPrev"
@@ -178,7 +55,19 @@
             </svg>
           </button>
 
-          <span class="text-xs font-semibold text-muted">{{ dateNavLabel }}</span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-muted">{{ dateNavLabel }}</span>
+            <button
+              v-if="isToday"
+              @click="showAddModal = true"
+              class="w-6 h-6 btn-icon tap-scale"
+              title="Adicionar registro"
+            >
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
 
           <button
             @click="goNext"
@@ -192,65 +81,94 @@
           </button>
         </div>
 
-        <!-- Loading spinner -->
         <div v-if="loadingHistory" class="py-6 flex justify-center">
           <div class="w-5 h-5 rounded-full border-2 border-app-elevated border-t-accent animate-spin" />
         </div>
 
-        <!-- Empty state -->
-        <div v-else-if="displaySessions.length === 0" class="py-8 text-center text-faint text-sm">
-          Nenhuma sessão neste dia
+        <div v-else-if="timeline.length === 0" class="py-8 text-center text-faint text-sm">
+          Nenhum registro neste dia
         </div>
 
-        <!-- Sessions -->
-        <template v-else v-for="(item, index) in sessionLog" :key="item.id ?? item.type + index">
+        <template v-else>
+          <div
+            v-for="(item, index) in timeline"
+            :key="item.type === 'gap' ? `gap-${index}` : item.session.id"
+            class="group"
+          >
+            <!-- Legacy inferred gap -->
+            <div v-if="item.type === 'gap'" class="pl-4 py-1.5">
+              <span class="text-xs text-muted">☕ ~{{ item.label }} de intervalo</span>
+            </div>
 
-          <!-- Break gap -->
-          <div v-if="item.type === 'gap'" class="pl-4 py-1.5">
-            <span class="text-xs text-muted">☕ {{ item.label }} de intervalo</span>
-          </div>
-
-          <!-- Session row -->
-          <div v-else class="flex items-start gap-3 py-2.5 group">
-            <div
-              class="w-1 self-stretch rounded-full mt-1 flex-shrink-0"
-              :style="{ background: getSubject(item.subjectId)?.color ?? 'var(--accent-color)' }"
-            />
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-2">
-                <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.subjectId)?.name ?? 'Matéria' }}</p>
-                <div class="flex items-center gap-1.5 flex-shrink-0">
-                  <span class="text-sm font-semibold" :style="{ color: getSubject(item.subjectId)?.color ?? 'var(--accent-color)' }">
-                    {{ formatDuration(item.duration) }}
-                  </span>
-                  <button
-                    @click="editingSession = item"
-                    class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100"
-                  >
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                  </button>
+            <!-- Break record -->
+            <div v-else-if="item.type === 'break'" class="flex items-start gap-3 py-2.5">
+              <div class="w-1 self-stretch rounded-full mt-1 flex-shrink-0 bg-amber-400/70" />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-semibold text-amber-500">☕ Pausa</p>
+                  <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <span class="text-sm font-semibold text-amber-500">{{ formatDuration(item.session.duration) }}</span>
+                    <button @click="editingSession = item.session" class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button @click="deleteSession(item.session.id)" class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100 hover:text-red-400">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
+                <p class="text-[11px] text-muted mt-0.5">{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</p>
               </div>
-              <div class="text-[11px] text-muted mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5">
-                <template v-if="item.segments?.length > 1">
-                  <template v-for="(seg, i) in item.segments" :key="i">
-                    <span>{{ fmt(seg.start) }} – {{ fmt(seg.end) }}</span>
-                    <span v-if="i < item.segments.length - 1" class="text-amber-400">
-                      ⏸ {{ formatDuration(Math.round((item.segments[i+1].start - seg.end) / 1000)) }}
+            </div>
+
+            <!-- Study record -->
+            <div v-else class="flex items-start gap-3 py-2.5">
+              <div
+                class="w-1 self-stretch rounded-full mt-1 flex-shrink-0"
+                :style="{ background: getSubject(item.session.subjectId)?.color ?? 'var(--accent-color)' }"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.session.subjectId)?.name ?? 'Matéria' }}</p>
+                  <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <span class="text-sm font-semibold" :style="{ color: getSubject(item.session.subjectId)?.color ?? 'var(--accent-color)' }">
+                      {{ formatDuration(item.session.duration) }}
                     </span>
+                    <button @click="editingSession = item.session" class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button @click="deleteSession(item.session.id)" class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100 hover:text-red-400">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="text-[11px] text-muted mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5">
+                  <template v-if="item.session.segments && item.session.segments.length > 1">
+                    <template v-for="(seg, i) in item.session.segments" :key="i">
+                      <span>{{ fmt(seg.start) }} – {{ fmt(seg.end) }}</span>
+                      <span v-if="i < item.session.segments.length - 1" class="text-amber-400">
+                        ⏸ {{ formatDuration(Math.round((item.session.segments[i + 1].start - seg.end) / 1000)) }}
+                      </span>
+                    </template>
                   </template>
-                </template>
-                <span v-else>{{ fmt(item.startTime) }} – {{ fmt(item.endTime) }}</span>
+                  <span v-else>{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</span>
+                </div>
               </div>
             </div>
           </div>
-
         </template>
       </div>
-
     </main>
 
     <FocusMode
@@ -259,17 +177,18 @@
       @close="focusMode = false"
     />
 
-    <SubjectBottomSheet
-      v-model="sheetOpen"
-      :active-id="timerStore.activeSubjectId"
-      @select="handleSheetSelect"
-    />
-
     <SessionEditModal
       :show="!!editingSession"
       :session="editingSession"
       @close="editingSession = null"
-      @saved="editingSession = null"
+      @saved="onSessionSaved"
+    />
+
+    <SessionAddModal
+      :show="showAddModal"
+      :date="viewDate"
+      @close="showAddModal = false"
+      @saved="onSessionSaved"
     />
   </div>
 </template>
@@ -279,11 +198,14 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
-import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
+import SubjectStudyList from '@/components/home/SubjectStudyList.vue'
+import ActiveTimerBar from '@/components/home/ActiveTimerBar.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
+import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
-import { formatDuration, formatTimer, localDateStr, todayDateString } from '@/types'
+import { formatDuration, formatTimer, localDateStr, todayDateString, isStudySession, isBreakSession } from '@/types'
+import { buildTimeline } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
 const timerStore = useTimerStore()
@@ -291,19 +213,15 @@ const sessionsStore = useSessionsStore()
 const subjectsStore = useSubjectsStore()
 
 const lastSubjectId = ref<string | null>(null)
-const sheetOpen = ref(false)
 const focusMode = ref(false)
 const editingSession = ref<StudySession | null>(null)
+const showAddModal = ref(false)
 
-// ── Gesto de foco (giroscópio) ─────────────────────────────────────────────
 const { isFaceDown } = useFaceDownFocus()
 watch(isFaceDown, (faceDown) => {
-  if (faceDown && timerStore.mode !== 'idle') {
-    focusMode.value = true
-  }
+  if (faceDown && timerStore.mode !== 'idle') focusMode.value = true
 })
 
-// ── Date navigation ────────────────────────────────────────────────────────
 const viewDate = ref(todayDateString())
 const viewSessions = ref<StudySession[]>([])
 const loadingHistory = ref(false)
@@ -314,6 +232,8 @@ const displaySessions = computed<StudySession[]>(() =>
   isToday.value ? sessionsStore.todaySessions : viewSessions.value
 )
 
+const timeline = computed(() => buildTimeline(displaySessions.value))
+
 const dateNavLabel = computed(() => {
   if (isToday.value) return 'Hoje'
   const yesterday = new Date()
@@ -321,6 +241,45 @@ const dateNavLabel = computed(() => {
   if (viewDate.value === localDateStr(yesterday)) return 'Ontem'
   const d = new Date(viewDate.value + 'T12:00:00')
   return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
+})
+
+const activeSubject = computed(() => {
+  const id = timerStore.activeSubjectId
+  return id ? subjectsStore.getSubject(id) : null
+})
+
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h < 12) return 'Bom dia'
+  if (h < 18) return 'Boa tarde'
+  return 'Boa noite'
+})
+
+const dateLabel = computed(() =>
+  new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
+)
+
+const studyTotalFormatted = computed(() => {
+  if (isToday.value) {
+    const live = (timerStore.mode === 'study' || timerStore.mode === 'paused')
+      ? timerStore.studyElapsedSeconds : 0
+    return formatTimer(sessionsStore.todayStudyTotalSeconds + live)
+  }
+  const total = displaySessions.value
+    .filter(isStudySession)
+    .reduce((acc, s) => acc + s.duration, 0)
+  return formatTimer(total)
+})
+
+const breakTotalFormatted = computed(() => {
+  if (isToday.value) {
+    const live = timerStore.mode === 'break' ? timerStore.breakElapsedSeconds : 0
+    return formatTimer(sessionsStore.todayBreakTotalSeconds + live)
+  }
+  const total = displaySessions.value
+    .filter(isBreakSession)
+    .reduce((acc, s) => acc + s.duration, 0)
+  return formatTimer(total)
 })
 
 async function fetchViewDate() {
@@ -340,80 +299,42 @@ function goNext() {
   if (isToday.value) return
   const d = new Date(viewDate.value + 'T12:00:00')
   d.setDate(d.getDate() + 1)
-  viewDate.value = localDateStr(d)
+  const today = todayDateString()
+  viewDate.value = localDateStr(d) > today ? today : localDateStr(d)
 }
 
 watch(viewDate, fetchViewDate)
 
-// ── Swipe para navegar entre dias ──────────────────────────────────────────
 let _swipeX = 0
 let _swipeY = 0
-
 function onTouchStart(e: TouchEvent) {
   _swipeX = e.touches[0].clientX
   _swipeY = e.touches[0].clientY
 }
-
 function onTouchEnd(e: TouchEvent) {
   const dx = e.changedTouches[0].clientX - _swipeX
   const dy = e.changedTouches[0].clientY - _swipeY
-  // Ignora se movimento vertical domina ou se não atingiu o limiar
   if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-  if (dx < 0) goNext()  // swipe para a esquerda → dia seguinte
-  else goPrev()          // swipe para a direita  → dia anterior
+  if (dx < 0) goNext()
+  else goPrev()
 }
 
-// ── ─────────────────────────────────────────────────────────────────────────
-
-const activeSubject = computed(() => {
-  const id = timerStore.activeSubjectId
-  return id ? subjectsStore.getSubject(id) : null
-})
-
-const greeting = computed(() => {
-  const h = new Date().getHours()
-  if (h < 12) return 'Bom dia'
-  if (h < 18) return 'Boa tarde'
-  return 'Boa noite'
-})
-
-const dateLabel = computed(() =>
-  new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
-)
-
-const totalStudyFormatted = computed(() => {
-  if (isToday.value) {
-    return formatTimer(sessionsStore.todayTotalSeconds + timerStore.studyElapsedSeconds)
-  }
-  const total = displaySessions.value.reduce((acc, s) => acc + s.duration, 0)
-  return formatTimer(total)
-})
-
-const sessionLog = computed(() => {
-  const sessions = [...displaySessions.value].sort((a, b) => a.startTime - b.startTime)
-  const result: Array<any> = []
-  for (let i = 0; i < sessions.length; i++) {
-    result.push({ type: 'session', ...sessions[i] })
-    if (i < sessions.length - 1) {
-      const gapMs = sessions[i + 1].startTime - sessions[i].endTime
-      if (gapMs > 60_000) {
-        result.push({ type: 'gap', label: formatDuration(Math.floor(gapMs / 1000)) })
-      }
-    }
-  }
-  return result.reverse()
-})
-
-function handleSheetSelect(id: string) {
+async function handleSubjectSelect(id: string) {
   if (timerStore.mode === 'idle' || timerStore.mode === 'break') {
-    timerStore.startStudy(id)
-  } else {
-    switchSubject(id)
+    await timerStore.startStudy(id)
+    lastSubjectId.value = id
+    await sessionsStore.loadToday()
+    return
   }
+  await switchSubject(id)
 }
 
 async function handleStop() {
-  lastSubjectId.value = timerStore.activeSubjectId
+  if (timerStore.mode === 'break') {
+    lastSubjectId.value = timerStore.activeSubjectId ?? lastSubjectId.value
+  } else {
+    lastSubjectId.value = timerStore.activeSubjectId
+  }
   await timerStore.stop()
   await sessionsStore.loadToday()
 }
@@ -424,15 +345,32 @@ async function handleBreak() {
   await sessionsStore.loadToday()
 }
 
-async function switchSubject(id: string) {
-  if (id === timerStore.activeSubjectId) return
-  await timerStore.stop()
+async function handleContinue() {
+  if (!lastSubjectId.value) return
+  await timerStore.startStudy(lastSubjectId.value)
   await sessionsStore.loadToday()
-  timerStore.startStudy(id)
 }
 
-async function loadToday() {
+async function switchSubject(id: string) {
+  if (id === timerStore.activeSubjectId) return
+  lastSubjectId.value = id
+  await timerStore.stop()
   await sessionsStore.loadToday()
+  await timerStore.startStudy(id)
+}
+
+async function deleteSession(id: string) {
+  if (!confirm('Excluir este registro?')) return
+  await sessionsStore.remove(id)
+  if (isToday.value) await sessionsStore.loadToday()
+  else viewSessions.value = await sessionsStore.loadDate(viewDate.value)
+}
+
+async function onSessionSaved() {
+  editingSession.value = null
+  showAddModal.value = false
+  if (isToday.value) await sessionsStore.loadToday()
+  else viewSessions.value = await sessionsStore.loadDate(viewDate.value)
 }
 
 function getSubject(id?: string) {
@@ -449,10 +387,3 @@ onMounted(async () => {
   await sessionsStore.loadToday()
 })
 </script>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-.slide-up-enter-active { transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.slide-up-enter-from { opacity: 0; transform: translateY(10px); }
-</style>

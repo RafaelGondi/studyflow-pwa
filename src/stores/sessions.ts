@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useAuthStore } from './auth'
 import * as db from '@/firebase/db'
 import type { StudySession } from '@/types'
-import { todayDateString, localDateStr } from '@/types'
+import { todayDateString, localDateStr, isStudySession, isBreakSession } from '@/types'
 
 export const useSessionsStore = defineStore('sessions', () => {
   const auth = useAuthStore()
@@ -38,6 +38,25 @@ export const useSessionsStore = defineStore('sessions', () => {
     return session
   }
 
+  async function saveBreak(data: { startTime: number; endTime: number; duration: number }) {
+    return save({
+      kind: 'break',
+      startTime: data.startTime,
+      endTime: data.endTime,
+      duration: data.duration,
+    })
+  }
+
+  async function saveStudy(data: {
+    subjectId: string
+    startTime: number
+    endTime: number
+    duration: number
+    segments?: StudySession['segments']
+  }) {
+    return save({ kind: 'study', ...data })
+  }
+
   async function update(id: string, data: Partial<StudySession>) {
     if (!auth.uid) return
     await db.updateSession(auth.uid, id, data)
@@ -56,21 +75,35 @@ export const useSessionsStore = defineStore('sessions', () => {
     rangeSessions.value = rangeSessions.value.filter(s => s.id !== id)
   }
 
-  const todayTotalSeconds = computed(() =>
-    todaySessions.value.reduce((acc, s) => acc + s.duration, 0)
+  const todayStudySessions = computed(() => todaySessions.value.filter(isStudySession))
+  const todayBreakSessions = computed(() => todaySessions.value.filter(isBreakSession))
+
+  const todayStudyTotalSeconds = computed(() =>
+    todayStudySessions.value.reduce((acc, s) => acc + s.duration, 0)
+  )
+
+  const todayBreakTotalSeconds = computed(() =>
+    todayBreakSessions.value.reduce((acc, s) => acc + s.duration, 0)
   )
 
   const todayBySubject = computed(() => {
     const map = new Map<string, number>()
-    for (const s of todaySessions.value) {
+    for (const s of todayStudySessions.value) {
+      if (!s.subjectId) continue
       map.set(s.subjectId, (map.get(s.subjectId) ?? 0) + s.duration)
     }
     return map
   })
 
+  /** @deprecated use todayStudyTotalSeconds */
+  const todayTotalSeconds = todayStudyTotalSeconds
+
   return {
     todaySessions, rangeSessions,
+    todayStudySessions, todayBreakSessions,
+    todayStudyTotalSeconds, todayBreakTotalSeconds,
     todayTotalSeconds, todayBySubject,
-    loadToday, loadRange, fetchRange, loadDate, save, update, remove,
+    loadToday, loadRange, fetchRange, loadDate,
+    save, saveStudy, saveBreak, update, remove,
   }
 })

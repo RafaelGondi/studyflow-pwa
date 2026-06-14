@@ -16,7 +16,6 @@ interface TimerState {
   accumulatedMs: number
   segments: StudySegment[]
   breakStartedAt: number | null
-  breakAccumulatedMs: number
 }
 
 export const useTimerStore = defineStore('timer', () => {
@@ -30,7 +29,6 @@ export const useTimerStore = defineStore('timer', () => {
     accumulatedMs: 0,
     segments: [],
     breakStartedAt: null,
-    breakAccumulatedMs: 0,
   })
   const now = ref(Date.now())
   let tick: ReturnType<typeof setInterval> | null = null
@@ -39,7 +37,7 @@ export const useTimerStore = defineStore('timer', () => {
     const raw = localStorage.getItem(KEY)
     if (!raw) return
     const parsed = JSON.parse(raw)
-    state.value = { segments: [], ...parsed }
+    state.value = { breakStartedAt: null, segments: [], ...parsed }
     if (state.value.mode === 'study' || state.value.mode === 'break') startTick()
   }
 
@@ -51,7 +49,6 @@ export const useTimerStore = defineStore('timer', () => {
   }
   function stopTick() { if (tick) { clearInterval(tick); tick = null } }
 
-  // ── Study elapsed ──────────────────────────────────────────────────────────
   const studyElapsedMs = computed(() => {
     if (state.value.mode === 'idle' || state.value.mode === 'break') return 0
     if (state.value.mode === 'paused') return state.value.accumulatedMs
@@ -60,13 +57,12 @@ export const useTimerStore = defineStore('timer', () => {
   const studyElapsedSeconds = computed(() => Math.floor(studyElapsedMs.value / 1000))
   const studyFormatted = computed(() => formatTimer(studyElapsedSeconds.value))
 
-  // ── Break elapsed ──────────────────────────────────────────────────────────
   const breakElapsedMs = computed(() => {
     if (state.value.mode !== 'break' || !state.value.breakStartedAt) return 0
     return now.value - state.value.breakStartedAt
   })
-  const breakTotalMs = computed(() => state.value.breakAccumulatedMs + breakElapsedMs.value)
-  const breakFormatted = computed(() => formatTimer(Math.floor(breakTotalMs.value / 1000)))
+  const breakElapsedSeconds = computed(() => Math.floor(breakElapsedMs.value / 1000))
+  const breakFormatted = computed(() => formatTimer(breakElapsedSeconds.value))
 
   const mode = computed(() => state.value.mode)
   const activeSubjectId = computed(() => state.value.subjectId)
@@ -74,12 +70,27 @@ export const useTimerStore = defineStore('timer', () => {
   const isPaused  = computed(() => state.value.mode === 'paused')
   const isBreak   = computed(() => state.value.mode === 'break')
 
-  // ── Actions ────────────────────────────────────────────────────────────────
+  function buildSegments(): StudySegment[] {
+    if (state.value.mode === 'study') {
+      return [...state.value.segments, { start: state.value.startedAt, end: Date.now() }]
+    }
+    return state.value.segments
+  }
 
-  function startStudy(subjectId: string) {
-    if (state.value.mode === 'break' && state.value.breakStartedAt) {
-      state.value.breakAccumulatedMs += Date.now() - state.value.breakStartedAt
-      state.value.breakStartedAt = null
+  async function saveCurrentBreak() {
+    if (!state.value.breakStartedAt) return
+    const startTime = state.value.breakStartedAt
+    const endTime = Date.now()
+    const duration = Math.floor((endTime - startTime) / 1000)
+    state.value.breakStartedAt = null
+    if (duration >= 5) {
+      await sessions.saveBreak({ startTime, endTime, duration })
+    }
+  }
+
+  async function startStudy(subjectId: string) {
+    if (state.value.mode === 'break') {
+      await saveCurrentBreak()
     }
     const now_ = Date.now()
     now.value = now_
@@ -113,39 +124,48 @@ export const useTimerStore = defineStore('timer', () => {
     save()
   }
 
-  function buildSegments(): StudySegment[] {
-    if (state.value.mode === 'study') {
-      return [...state.value.segments, { start: state.value.startedAt, end: Date.now() }]
-    }
-    return state.value.segments
-  }
-
   async function stop() {
     if (state.value.mode === 'idle') return
+
+    if (state.value.mode === 'break') {
+      await saveCurrentBreak()
+      reset()
+      return
+    }
+
     const ms = studyElapsedMs.value
     const subjectId = state.value.subjectId
     const startTime = state.value.originalStartedAt || Date.now() - ms
     const segments = buildSegments()
 
-    if (state.value.mode === 'break' && state.value.breakStartedAt) {
-      state.value.breakAccumulatedMs += Date.now() - state.value.breakStartedAt
-    }
-
     reset()
     if (subjectId && ms >= 5000) {
-      await sessions.save({ subjectId, startTime, endTime: Date.now(), duration: Math.floor(ms / 1000), segments })
+      await sessions.saveStudy({
+        subjectId,
+        startTime,
+        endTime: Date.now(),
+        duration: Math.floor(ms / 1000),
+        segments,
+      })
     }
   }
 
   async function startBreak() {
-    if (state.value.mode === 'idle') return
+    if (state.value.mode === 'idle' || state.value.mode === 'break') return
+
     const ms = studyElapsedMs.value
     const subjectId = state.value.subjectId
     const startTime = state.value.originalStartedAt || Date.now() - ms
     const segments = buildSegments()
 
     if (subjectId && ms >= 5000) {
-      await sessions.save({ subjectId, startTime, endTime: Date.now(), duration: Math.floor(ms / 1000), segments })
+      await sessions.saveStudy({
+        subjectId,
+        startTime,
+        endTime: Date.now(),
+        duration: Math.floor(ms / 1000),
+        segments,
+      })
     }
 
     state.value.mode = 'break'
@@ -167,21 +187,15 @@ export const useTimerStore = defineStore('timer', () => {
       accumulatedMs: 0,
       segments: [],
       breakStartedAt: null,
-      breakAccumulatedMs: state.value.breakAccumulatedMs,
     }
     localStorage.removeItem(KEY)
-  }
-
-  function resetBreakTime() {
-    state.value.breakAccumulatedMs = 0
-    save()
   }
 
   return {
     state, mode, activeSubjectId,
     isRunning, isPaused, isBreak,
     studyElapsedMs, studyElapsedSeconds, studyFormatted,
-    breakElapsedMs, breakTotalMs, breakFormatted,
-    load, startStudy, pause, resume, stop, startBreak, reset, resetBreakTime,
+    breakElapsedMs, breakElapsedSeconds, breakFormatted,
+    load, startStudy, pause, resume, stop, startBreak, reset,
   }
 })

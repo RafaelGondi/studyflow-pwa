@@ -6,7 +6,7 @@
         <div class="modal-sheet modal-panel">
 
           <div class="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-4">
-            <h2 class="font-display text-lg font-bold text-primary">Editar registro</h2>
+            <h2 class="font-display text-lg font-bold text-primary">Adicionar registro</h2>
             <button @click="emit('close')" class="w-8 h-8 rounded-full btn-icon tap-scale">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -15,20 +15,27 @@
           </div>
 
           <div class="modal-scroll">
-            <div v-if="isBreak" class="flex items-center gap-3 p-3 rounded-akoma btn-icon mb-5">
-              <div class="w-8 h-8 rounded-akoma flex items-center justify-center text-lg flex-shrink-0 bg-amber-500/15">☕</div>
-              <span class="text-sm font-semibold text-amber-500">Pausa</span>
-              <span class="text-xs text-muted ml-auto">{{ dateLabel }}</span>
-            </div>
-
-            <div v-else class="space-y-3 mb-5">
-              <label class="text-xs font-semibold text-muted uppercase tracking-wider block">Matéria</label>
-              <select v-model="form.subjectId" class="input">
-                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.icon }} {{ s.name }}</option>
-              </select>
+            <div class="seg-control mb-5">
+              <button
+                v-for="t in kinds"
+                :key="t.value"
+                @click="form.kind = t.value"
+                class="seg-tab"
+                :class="form.kind === t.value ? 'seg-tab-active' : ''"
+              >
+                {{ t.label }}
+              </button>
             </div>
 
             <form @submit.prevent="handleSubmit" class="space-y-4">
+              <div v-if="form.kind === 'study'">
+                <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Matéria</label>
+                <select v-model="form.subjectId" required class="input">
+                  <option value="" disabled>Selecione</option>
+                  <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.icon }} {{ s.name }}</option>
+                </select>
+              </div>
+
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Início</label>
@@ -47,7 +54,7 @@
               </div>
 
               <div class="flex items-center justify-between p-3 rounded-akoma btn-icon">
-                <span class="text-xs text-muted">Duração calculada</span>
+                <span class="text-xs text-muted">Duração</span>
                 <span class="text-sm font-bold" :class="endBeforeStart ? 'text-red-400' : 'text-primary'">
                   {{ endBeforeStart ? 'Fim antes do início' : formatDuration(computedDuration) }}
                 </span>
@@ -55,10 +62,10 @@
 
               <button
                 type="submit"
-                :disabled="endBeforeStart || saving"
+                :disabled="endBeforeStart || saving || (form.kind === 'study' && !form.subjectId)"
                 class="w-full py-3.5 font-bold text-white btn-primary disabled:opacity-50 tap-scale"
               >
-                {{ saving ? 'Salvando...' : 'Salvar alterações' }}
+                {{ saving ? 'Salvando...' : 'Adicionar' }}
               </button>
             </form>
           </div>
@@ -72,78 +79,69 @@
 import { ref, computed, watch } from 'vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
-import { formatDuration, isBreakSession } from '@/types'
-import type { StudySession } from '@/types'
+import { formatDuration } from '@/types'
+import type { SessionKind } from '@/types'
 
-const props = defineProps<{ show: boolean; session: StudySession | null }>()
+const props = defineProps<{ show: boolean; date: string }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
 
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 const saving = ref(false)
 
-const form = ref({ startTime: '', endTime: '', subjectId: '' })
+const kinds = [
+  { value: 'study' as SessionKind, label: 'Estudo' },
+  { value: 'break' as SessionKind, label: 'Pausa' },
+]
 
-const subjects = computed(() => subjectsStore.subjects)
-const isBreak = computed(() => props.session ? isBreakSession(props.session) : false)
-
-const dateLabel = computed(() => {
-  if (!props.session) return ''
-  const d = new Date(props.session.startTime)
-  return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
+const form = ref({
+  kind: 'study' as SessionKind,
+  subjectId: '',
+  startTime: '09:00',
+  endTime: '10:00',
 })
 
-function toTimeInput(ts: number): string {
-  const d = new Date(ts)
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
+const subjects = computed(() => subjectsStore.subjects)
 
-function applyTimeToDate(baseTs: number, timeStr: string): number {
+function applyTimeToDate(dateStr: string, timeStr: string): number {
   const [h, m] = timeStr.split(':').map(Number)
-  const d = new Date(baseTs)
+  const d = new Date(dateStr + 'T12:00:00')
   d.setHours(h, m, 0, 0)
   return d.getTime()
 }
 
 watch(() => props.show, (val) => {
-  if (val && props.session) {
+  if (val) {
     form.value = {
-      startTime: toTimeInput(props.session.startTime),
-      endTime: toTimeInput(props.session.endTime),
-      subjectId: props.session.subjectId ?? subjects.value[0]?.id ?? '',
+      kind: 'study',
+      subjectId: subjects.value[0]?.id ?? '',
+      startTime: '09:00',
+      endTime: '10:00',
     }
   }
 })
 
-const newStartTs = computed(() =>
-  props.session ? applyTimeToDate(props.session.startTime, form.value.startTime) : 0
-)
-const newEndTs = computed(() =>
-  props.session ? applyTimeToDate(props.session.startTime, form.value.endTime) : 0
-)
+const newStartTs = computed(() => applyTimeToDate(props.date, form.value.startTime))
+const newEndTs = computed(() => applyTimeToDate(props.date, form.value.endTime))
 const endBeforeStart = computed(() => newEndTs.value <= newStartTs.value)
 const computedDuration = computed(() =>
   Math.max(0, Math.round((newEndTs.value - newStartTs.value) / 1000))
 )
 
 async function handleSubmit() {
-  if (!props.session || endBeforeStart.value) return
+  if (endBeforeStart.value) return
   saving.value = true
   try {
-    const patch: Partial<StudySession> = {
+    const base = {
       startTime: newStartTs.value,
       endTime: newEndTs.value,
       duration: computedDuration.value,
     }
-    if (!isBreak.value) {
-      patch.subjectId = form.value.subjectId
+    if (form.value.kind === 'break') {
+      await sessionsStore.saveBreak(base)
+    } else {
+      await sessionsStore.saveStudy({ ...base, subjectId: form.value.subjectId })
     }
-    if (props.session.segments?.length) {
-      patch.segments = props.session.segments.map((seg, i, arr) =>
-        i === arr.length - 1 ? { ...seg, end: newEndTs.value } : seg
-      )
-    }
-    await sessionsStore.update(props.session.id, patch)
     emit('saved')
     emit('close')
   } finally {
