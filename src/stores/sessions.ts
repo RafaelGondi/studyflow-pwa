@@ -49,6 +49,11 @@ export const useSessionsStore = defineStore('sessions', () => {
     patch(rangeSessions.value)
   }
 
+  async function fetchBySubject(subjectId: string): Promise<StudySession[]> {
+    if (!auth.uid) return []
+    return db.fetchSessionsBySubject(auth.uid, subjectId)
+  }
+
   async function remove(id: string) {
     if (!auth.uid) return
     await db.deleteSession(auth.uid, id)
@@ -71,6 +76,6 @@ export const useSessionsStore = defineStore('sessions', () => {
   return {
     todaySessions, rangeSessions,
     todayTotalSeconds, todayBySubject,
-    loadToday, loadRange, fetchRange, loadDate, save, update, remove,
+    loadToday, loadRange, fetchRange, fetchBySubject, loadDate, save, update, remove,
   }
 })

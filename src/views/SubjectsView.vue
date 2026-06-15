@@ -39,7 +39,8 @@
         <div
           v-for="subject in filteredSubjects"
           :key="subject.id"
-          class="flex items-center gap-4 p-4 card tap-scale group"
+          @click="openSubjectStats(subject.id)"
+          class="flex items-center gap-4 p-4 card tap-scale group cursor-pointer"
         >
           <div
             class="w-12 h-12 rounded-akoma flex items-center justify-center text-2xl flex-shrink-0"
@@ -59,9 +60,9 @@
               </span>
             </div>
           </div>
-          <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div class="flex items-center gap-1">
             <button
-              @click="openEditSubject(subject)"
+              @click.stop="openEditSubject(subject)"
               class="w-8 h-8 btn-icon tap-scale"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -70,7 +71,7 @@
               </svg>
             </button>
             <button
-              @click="confirmDeleteSubject(subject.id)"
+              @click.stop="confirmDeleteSubject(subject.id)"
               class="w-8 h-8 btn-icon tap-scale hover:text-red-400"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -170,12 +171,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSubjectsStore } from '@/stores/subjects'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
 import CategoryChip from '@/components/ui/CategoryChip.vue'
 import type { Subject, Category } from '@/types'
 
+const router = useRouter()
 const subjectsStore = useSubjectsStore()
 const showSubjectModal = ref(false)
 const showCategoryModal = ref(false)
@@ -187,6 +190,10 @@ const filteredSubjects = computed(() => {
   if (!selectedCategoryFilter.value) return subjectsStore.subjects
   return subjectsStore.subjects.filter(s => s.categoryId === selectedCategoryFilter.value)
 })
+
+function openSubjectStats(id: string) {
+  router.push(`/subjects/${id}`)
+}
 
 function openAddSubject() {
   editingSubject.value = null

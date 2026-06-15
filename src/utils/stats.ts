@@ -156,3 +156,49 @@ export function dayHeaderLabel(dateStr: string): string {
 export function gapLabel(start: number, end: number): string {
   return `${formatClockTime(start)} ~ ${formatClockTime(end)} ${formatDuration(Math.floor((end - start) / 1000))}`
 }
+
+export interface SubjectStatsSummary {
+  totalSeconds: number
+  sessionCount: number
+  daysStudied: number
+  firstStudyDate: string | null
+  lastStudyDate: string | null
+  maxSessionSeconds: number
+  avgSessionSeconds: number
+  avgDaySeconds: number
+}
+
+export function getSubjectStats(sessions: StudySession[]): SubjectStatsSummary {
+  if (sessions.length === 0) {
+    return {
+      totalSeconds: 0,
+      sessionCount: 0,
+      daysStudied: 0,
+      firstStudyDate: null,
+      lastStudyDate: null,
+      maxSessionSeconds: 0,
+      avgSessionSeconds: 0,
+      avgDaySeconds: 0,
+    }
+  }
+
+  const sorted = [...sessions].sort((a, b) => a.startTime - b.startTime)
+  const totalSeconds = sessions.reduce((a, s) => a + s.duration, 0)
+  const uniqueDays = new Set(sessions.map(s => s.date))
+
+  return {
+    totalSeconds,
+    sessionCount: sessions.length,
+    daysStudied: uniqueDays.size,
+    firstStudyDate: sorted[0].date,
+    lastStudyDate: sorted[sorted.length - 1].date,
+    maxSessionSeconds: Math.max(...sessions.map(s => s.duration)),
+    avgSessionSeconds: Math.round(totalSeconds / sessions.length),
+    avgDaySeconds: Math.round(totalSeconds / uniqueDays.size),
+  }
+}
+
+export function formatLongDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}

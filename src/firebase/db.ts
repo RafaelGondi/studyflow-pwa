@@ -71,6 +71,13 @@ export async function fetchSessionsByDateRange(uid: string, from: string, to: st
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as StudySession))
 }
 
+export async function fetchSessionsBySubject(uid: string, subjectId: string): Promise<StudySession[]> {
+  const snap = await getDocs(query(sessionsCol(uid), where('subjectId', '==', subjectId)))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as StudySession))
+    .sort((a, b) => b.startTime - a.startTime)
+}
+
 export async function updateSession(uid: string, id: string, data: Partial<StudySession>): Promise<void> {
   await updateDoc(doc(sessionsCol(uid), id), data)
 }
