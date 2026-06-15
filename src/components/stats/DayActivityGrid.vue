@@ -1,29 +1,39 @@
 <template>
-  <div class="card p-4">
-    <div class="flex gap-4">
-      <div class="flex flex-col items-center justify-center flex-shrink-0 w-16">
-        <span class="text-3xl">📚</span>
-        <span class="text-sm font-bold text-primary tabular-nums mt-2 text-center leading-tight">
-          {{ formatStudyClock(totalSeconds) }}
-        </span>
+  <div class="card p-4 space-y-3">
+    <div class="flex items-center justify-between">
+      <p class="text-xs font-bold text-muted uppercase tracking-wider">Atividade do dia</p>
+      <span class="text-sm font-bold text-primary tabular-nums">{{ formatStudyClock(totalSeconds) }}</span>
+    </div>
+
+    <div v-if="totalSeconds === 0" class="py-6 text-center text-faint text-sm">
+      Nenhuma atividade registrada
+    </div>
+
+    <template v-else>
+      <!-- Faixa horizontal: esquerda = madrugada, direita = noite -->
+      <div class="flex h-10 rounded-md overflow-hidden border border-app-border">
+        <div
+          v-for="slot in 144"
+          :key="slot"
+          class="flex-1 min-w-0"
+          :class="[
+            activeSlots.has(slot - 1) ? 'bg-accent' : 'bg-app-soft',
+            slot % 6 === 1 ? 'border-l border-app-border/50' : '',
+          ]"
+          :title="slotLabel(slot - 1)"
+        />
       </div>
 
-      <div class="flex-1 min-w-0">
-        <div class="flex gap-1">
-          <div class="flex flex-col justify-between flex-shrink-0 w-5">
-            <span v-for="h in [6, 9, 12, 15, 18, 21]" :key="h" class="text-[8px] text-muted leading-none">{{ h }}</span>
-          </div>
-          <div class="grid grid-cols-6 gap-px flex-1" style="grid-template-rows: repeat(24, 6px)">
-            <div
-              v-for="slot in 144"
-              :key="slot"
-              class="rounded-[1px]"
-              :class="activeSlots.has(slot - 1) ? 'bg-accent' : 'bg-app-soft'"
-            />
-          </div>
-        </div>
+      <div class="flex justify-between text-[10px] text-muted tabular-nums">
+        <span>0h</span>
+        <span>6h</span>
+        <span>12h</span>
+        <span>18h</span>
+        <span>24h</span>
       </div>
-    </div>
+
+      <p class="text-[10px] text-faint text-center">Cada bloco = 10 min · teal = estudando</p>
+    </template>
   </div>
 </template>
 
@@ -36,4 +46,13 @@ const props = defineProps<{ sessions: StudySession[] }>()
 
 const activeSlots = computed(() => getActivitySlots(props.sessions))
 const totalSeconds = computed(() => props.sessions.reduce((a, s) => a + s.duration, 0))
+
+function slotLabel(index: number): string {
+  const hour = Math.floor(index / 6)
+  const min = (index % 6) * 10
+  const endMin = min + 10
+  const endHour = endMin >= 60 ? hour + 1 : hour
+  const em = endMin >= 60 ? endMin - 60 : endMin
+  return `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')} – ${String(endHour).padStart(2, '0')}:${String(em).padStart(2, '0')}`
+}
 </script>
