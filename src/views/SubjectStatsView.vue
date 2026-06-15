@@ -48,6 +48,23 @@
         </div>
       </div>
 
+      <StudyCalendar
+        v-if="sessions.length > 0"
+        :year="calYear"
+        :month="calMonth"
+        :selected-date="selectedDate"
+        :daily-totals="dailyTotals"
+        :accent-color="subject?.color"
+        @select="selectDate"
+        @update:month="setCalendarMonth"
+      />
+
+      <DaySummary
+        v-if="daySessions.length > 0"
+        :sessions="daySessions"
+        :date="selectedDate"
+      />
+
       <div class="card p-4 space-y-3">
         <h2 class="text-xs font-bold text-muted uppercase tracking-wider">Histórico</h2>
         <div class="flex justify-between items-start gap-3 py-2 border-b border-app-border">
@@ -67,13 +84,17 @@
       <WeeklyChart v-if="recentSessions.length > 0" :sessions="recentSessions" />
 
       <StatsTimeline
-        v-if="sessions.length > 0"
-        :sessions="recentTimelineSessions"
+        v-if="daySessions.length > 0"
+        :sessions="daySessions"
         @edit="editingSession = $event"
         @delete="deleteSession"
       />
 
-      <div v-if="!loading && sessions.length === 0" class="py-12 text-center text-faint text-sm card">
+      <div v-else-if="sessions.length > 0" class="py-8 text-center text-faint text-sm card">
+        Nenhuma sessão neste dia
+      </div>
+
+      <div v-else class="py-12 text-center text-faint text-sm card">
         Nenhuma sessão registrada para esta matéria
       </div>
     </main>
@@ -92,11 +113,13 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
+import StudyCalendar from '@/components/stats/StudyCalendar.vue'
+import DaySummary from '@/components/stats/DaySummary.vue'
 import WeeklyChart from '@/components/stats/WeeklyChart.vue'
 import StatsTimeline from '@/components/stats/StatsTimeline.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
-import { formatDuration, localDateStr } from '@/types'
-import { getSubjectStats, formatLongDate } from '@/utils/stats'
+import { formatDuration, localDateStr, todayDateString } from '@/types'
+import { getSubjectStats, formatLongDate, aggregateByDate } from '@/utils/stats'
 import type { StudySession } from '@/types'
 
 const route = useRoute()
@@ -108,6 +131,11 @@ const loading = ref(true)
 const sessions = ref<StudySession[]>([])
 const editingSession = ref<StudySession | null>(null)
 
+const now = new Date()
+const selectedDate = ref(todayDateString())
+const calYear = ref(now.getFullYear())
+const calMonth = ref(now.getMonth())
+
 const subjectId = computed(() => route.params.id as string)
 const subject = computed(() => subjectsStore.getSubject(subjectId.value))
 
@@ -118,6 +146,13 @@ const categoryName = computed(() => {
 })
 
 const stats = computed(() => getSubjectStats(sessions.value))
+const dailyTotals = computed(() => aggregateByDate(sessions.value))
+
+const daySessions = computed(() =>
+  sessions.value
+    .filter(s => s.date === selectedDate.value)
+    .sort((a, b) => a.startTime - b.startTime)
+)
 
 const recentSessions = computed(() => {
   const from = new Date()
@@ -126,12 +161,17 @@ const recentSessions = computed(() => {
   return sessions.value.filter(s => s.date >= fromStr)
 })
 
-const recentTimelineSessions = computed(() =>
-  [...sessions.value]
-    .sort((a, b) => b.startTime - a.startTime)
-    .slice(0, 30)
-    .sort((a, b) => a.startTime - b.startTime)
-)
+function setCalendarMonth(year: number, month: number) {
+  calYear.value = year
+  calMonth.value = month
+}
+
+function selectDate(date: string) {
+  selectedDate.value = date
+  const d = new Date(date + 'T12:00:00')
+  calYear.value = d.getFullYear()
+  calMonth.value = d.getMonth()
+}
 
 async function reload() {
   loading.value = true

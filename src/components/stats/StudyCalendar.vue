@@ -19,9 +19,9 @@
           @click="emit('select', cell.date)"
           class="aspect-square rounded-md flex flex-col items-center justify-center text-[11px] font-semibold transition-all tap-scale"
           :class="cell.date === selectedDate
-            ? 'bg-accent text-white shadow-akoma ring-2 ring-accent/40'
+            ? 'text-white shadow-akoma ring-2'
             : 'text-secondary hover:ring-1 hover:ring-accent/30'"
-          :style="cell.date !== selectedDate ? { background: heatBg(cell.seconds) } : undefined"
+          :style="cellStyle(cell)"
         >
           <span>{{ cell.day }}</span>
           <span
@@ -62,6 +62,7 @@ const props = defineProps<{
   month: number
   selectedDate: string
   dailyTotals: Map<string, number>
+  accentColor?: string
 }>()
 
 const emit = defineEmits<{
@@ -111,10 +112,24 @@ const cells = computed(() => {
   return result
 })
 
+function heatColor(): string {
+  return props.accentColor ?? 'var(--accent)'
+}
+
 function heatBg(seconds: number): string {
   const level = getHeatLevel(seconds)
   const opacities = [0.04, 0.15, 0.3, 0.5, 0.75]
-  return `color-mix(in srgb, var(--accent) ${Math.round(opacities[level] * 100)}%, var(--bg-elevated))`
+  return `color-mix(in srgb, ${heatColor()} ${Math.round(opacities[level] * 100)}%, var(--bg-elevated))`
+}
+
+function cellStyle(cell: { date: string; seconds: number }) {
+  if (cell.date === props.selectedDate) {
+    return {
+      background: heatColor(),
+      boxShadow: `0 0 0 2px color-mix(in srgb, ${heatColor()} 40%, transparent)`,
+    }
+  }
+  return { background: heatBg(cell.seconds) }
 }
 
 function levelThreshold(level: number): number {
