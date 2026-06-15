@@ -39,7 +39,7 @@
                 {{ formatClockTime(entry.session.startTime) }} ~ {{ formatClockTime(entry.session.endTime) }}
               </p>
             </div>
-            <div class="flex flex-col gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+            <div class="flex flex-col gap-1">
               <button @click="emit('edit', entry.session)" class="w-7 h-7 btn-icon tap-scale">
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>

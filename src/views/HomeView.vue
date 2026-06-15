@@ -198,57 +198,17 @@
         </div>
 
         <!-- Empty state -->
-        <div v-else-if="displaySessions.length === 0" class="py-8 text-center text-faint text-sm">
+        <div v-else-if="timelineSessions.length === 0" class="py-8 text-center text-faint text-sm card">
           Nenhuma sessão neste dia
         </div>
 
-        <!-- Sessions -->
-        <template v-else v-for="(item, index) in sessionLog" :key="item.id ?? item.type + index">
-
-          <!-- Break gap -->
-          <div v-if="item.type === 'gap'" class="pl-4 py-1.5">
-            <span class="text-xs text-muted">☕ {{ item.label }} de intervalo</span>
-          </div>
-
-          <!-- Session row -->
-          <div v-else class="flex items-start gap-3 py-2.5 group">
-            <div
-              class="w-1 self-stretch rounded-full mt-1 flex-shrink-0"
-              :style="{ background: getSubject(item.subjectId)?.color ?? 'var(--accent-color)' }"
-            />
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-2">
-                <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.subjectId)?.name ?? 'Matéria' }}</p>
-                <div class="flex items-center gap-1.5 flex-shrink-0">
-                  <span class="text-sm font-semibold" :style="{ color: getSubject(item.subjectId)?.color ?? 'var(--accent-color)' }">
-                    {{ formatDuration(item.duration) }}
-                  </span>
-                  <button
-                    @click="editingSession = item"
-                    class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100"
-                  >
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div class="text-[11px] text-muted mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5">
-                <template v-if="item.segments?.length > 1">
-                  <template v-for="(seg, i) in item.segments" :key="i">
-                    <span>{{ fmt(seg.start) }} – {{ fmt(seg.end) }}</span>
-                    <span v-if="i < item.segments.length - 1" class="text-amber-400">
-                      ⏸ {{ formatDuration(Math.round((item.segments[i+1].start - seg.end) / 1000)) }}
-                    </span>
-                  </template>
-                </template>
-                <span v-else>{{ fmt(item.startTime) }} – {{ fmt(item.endTime) }}</span>
-              </div>
-            </div>
-          </div>
-
-        </template>
+        <StatsTimeline
+          v-else
+          :sessions="timelineSessions"
+          :show-title="false"
+          @edit="editingSession = $event"
+          @delete="deleteSession"
+        />
       </div>
 
     </main>
@@ -269,7 +229,7 @@
       :show="!!editingSession"
       :session="editingSession"
       @close="editingSession = null"
-      @saved="editingSession = null"
+      @saved="onSessionSaved"
     />
   </div>
 </template>
@@ -282,8 +242,9 @@ import { useSubjectsStore } from '@/stores/subjects'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
+import StatsTimeline from '@/components/stats/StatsTimeline.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
-import { formatDuration, formatTimer, localDateStr, todayDateString } from '@/types'
+import { formatTimer, localDateStr, todayDateString } from '@/types'
 import type { StudySession } from '@/types'
 
 const timerStore = useTimerStore()
@@ -389,20 +350,22 @@ const totalStudyFormatted = computed(() => {
   return formatTimer(total)
 })
 
-const sessionLog = computed(() => {
-  const sessions = [...displaySessions.value].sort((a, b) => a.startTime - b.startTime)
-  const result: Array<any> = []
-  for (let i = 0; i < sessions.length; i++) {
-    result.push({ type: 'session', ...sessions[i] })
-    if (i < sessions.length - 1) {
-      const gapMs = sessions[i + 1].startTime - sessions[i].endTime
-      if (gapMs > 60_000) {
-        result.push({ type: 'gap', label: formatDuration(Math.floor(gapMs / 1000)) })
-      }
-    }
-  }
-  return result.reverse()
-})
+const timelineSessions = computed(() =>
+  [...displaySessions.value].sort((a, b) => a.startTime - b.startTime)
+)
+
+async function onSessionSaved() {
+  editingSession.value = null
+  if (isToday.value) await sessionsStore.loadToday()
+  else viewSessions.value = await sessionsStore.loadDate(viewDate.value)
+}
+
+async function deleteSession(id: string) {
+  if (!confirm('Excluir esta sessão?')) return
+  await sessionsStore.remove(id)
+  if (isToday.value) await sessionsStore.loadToday()
+  else viewSessions.value = await sessionsStore.loadDate(viewDate.value)
+}
 
 function handleSheetSelect(id: string) {
   if (timerStore.mode === 'idle' || timerStore.mode === 'break') {
@@ -433,14 +396,6 @@ async function switchSubject(id: string) {
 
 async function loadToday() {
   await sessionsStore.loadToday()
-}
-
-function getSubject(id?: string) {
-  return id ? subjectsStore.getSubject(id) : undefined
-}
-
-function fmt(ts: number) {
-  return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
 
 onMounted(async () => {
