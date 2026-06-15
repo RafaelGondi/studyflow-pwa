@@ -14,7 +14,7 @@ export type TimelineEntry =
   | { type: 'gap'; startTime: number; endTime: number; duration: number }
 
 /** Heat levels inspired by YPT, scaled for typical study sessions (hours). */
-const HEAT_THRESHOLDS = [0, 3600, 7200, 14400, 21600] // 0, 1h, 2h, 4h, 6h
+const HEAT_THRESHOLDS = [0, 3600, 7200, 14400, 18000] // 0, 1h, 2h, 4h, 5h
 
 export function getHeatLevel(seconds: number): number {
   for (let i = HEAT_THRESHOLDS.length - 1; i >= 0; i--) {

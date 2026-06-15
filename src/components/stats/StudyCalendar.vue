@@ -43,7 +43,7 @@
           class="w-4 h-3 rounded-sm first:rounded-l last:rounded-r"
           :style="{ background: heatBg(levelThreshold(level - 1)) }"
         />
-        <span class="text-[9px] text-muted ml-1">0+ → 6h+</span>
+        <span class="text-[9px] text-muted ml-1">0+ → 5h+</span>
       </div>
       <span class="text-[10px] font-semibold text-muted tabular-nums">
         {{ monthTitle }}: {{ formatShortDayTotal(monthTotal) }}
