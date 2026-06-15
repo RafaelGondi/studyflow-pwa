@@ -24,7 +24,7 @@ export function getHeatLevel(seconds: number): number {
 }
 
 export function heatLevelLabel(level: number): string {
-  const labels = ['0+', '1h+', '2h+', '4h+', '6h+']
+  const labels = ['0+', '1h+', '2h+', '4h+', '5h+']
   return labels[level] ?? '0+'
 }
 

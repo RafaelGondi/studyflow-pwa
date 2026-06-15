@@ -118,7 +118,7 @@ function heatBg(seconds: number): string {
 }
 
 function levelThreshold(level: number): number {
-  return [0, 3600, 7200, 14400, 21600][level] ?? 0
+  return [0, 3600, 7200, 14400, 18000][level] ?? 0
 }
 
 function shortTime(seconds: number): string {
