@@ -63,7 +63,7 @@
       <section class="section-block">
         <AkSectionHeader title="Categorias">
           <template #action>
-            <AkButton size="sm" variant="ghost" @click="showCategoryModal = true">+ Nova</AkButton>
+        <AkButton size="sm" variant="ghost" @click="showCategoryModal = true">Nova categoria</AkButton>
           </template>
         </AkSectionHeader>
 
@@ -97,7 +97,7 @@
       </section>
     </div>
 
-    <FabButton class="fab" label="Nova" @click="openAddSubject" />
+    <FabButton label="Nova matéria" @click="openAddSubject" />
 
     <SubjectModal
       :show="showSubjectModal"
