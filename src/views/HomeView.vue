@@ -1,31 +1,38 @@
 <template>
   <div class="page akoma-page" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
-    <header class="page-hero reveal">
-      <span class="page-label">{{ greeting }}</span>
-      <h1 class="page-hero__title">StudyFlow</h1>
-      <p class="page-hero__meta">{{ dateLabel }}</p>
-
-      <div v-if="isToday" class="today-summary reveal reveal-d1">
-        <div class="today-summary__item">
-          <span class="today-summary__label">Estudo</span>
-          <span class="today-summary__value numeric">{{ studyTotalFormatted }}</span>
-        </div>
-        <div class="today-summary__item today-summary__item--break">
-          <span class="today-summary__label">Pausa</span>
-          <span class="today-summary__value numeric">{{ breakTotalFormatted }}</span>
-        </div>
+    <header class="page-hero page-hero--with-nav reveal">
+      <div class="page-hero__main">
+        <span class="page-label">{{ greeting }}</span>
+        <h1 class="page-hero__title">StudyFlow</h1>
       </div>
+      <span class="page-hero__date">{{ dateLabel }}</span>
     </header>
 
+    <div v-if="isToday" class="home-stats reveal reveal-d1">
+      <div class="home-stat-card">
+        <span class="home-stat-card__label">Estudo</span>
+        <span class="home-stat-card__value numeric">{{ studyTotalFormatted }}</span>
+        <span class="home-stat-card__hint">hoje</span>
+      </div>
+      <div class="home-stat-card home-stat-card--break">
+        <span class="home-stat-card__label">Pausa</span>
+        <span class="home-stat-card__value numeric">{{ breakTotalFormatted }}</span>
+        <span class="home-stat-card__hint">hoje</span>
+      </div>
+    </div>
+
     <div class="page-body reveal reveal-d2">
-      <template v-if="isToday">
+      <section v-if="isToday" class="home-action">
         <AkButton
           v-if="timerStore.mode === 'idle'"
           variant="primary"
+          size="lg"
           block
           @click="sheetOpen = true"
         >
-          <AkIcon name="play-outline" :size="18" />
+          <template #icon>
+            <AkIcon name="play-outline" :size="18" />
+          </template>
           Iniciar estudo
         </AkButton>
 
@@ -37,25 +44,27 @@
           @continue="handleContinue"
           @change-subject="sheetOpen = true"
         />
-      </template>
+      </section>
 
       <section class="section-block">
-        <div class="date-nav">
-          <AkIconButton class="nav-btn" label="Dia anterior" size="sm" icon="arrow-left-outline" @click="goPrev" />
-          <span class="date-nav__label">{{ dateNavLabel }}</span>
-          <AkIconButton
-            class="nav-btn"
-            label="Próximo dia"
-            size="sm"
-            icon="arrow-right-outline"
-            :disabled="isToday"
-            @click="goNext"
-          />
-        </div>
+        <div class="timeline-header">
+          <div class="date-nav">
+            <AkIconButton class="nav-btn" label="Dia anterior" size="sm" icon="arrow-left-outline" @click="goPrev" />
+            <span class="date-nav__label">{{ dateNavLabel }}</span>
+            <AkIconButton
+              class="nav-btn"
+              label="Próximo dia"
+              size="sm"
+              icon="arrow-right-outline"
+              :disabled="isToday"
+              @click="goNext"
+            />
+          </div>
 
-        <div v-if="isToday" class="flex-row" style="justify-content: flex-end; margin-top: calc(-1 * var(--space-2))">
-          <AkButton size="sm" variant="ghost" @click="showAddModal = true">
-            <AkIcon name="plus-outline" :size="16" />
+          <AkButton v-if="isToday" size="sm" variant="ghost" @click="showAddModal = true">
+            <template #icon>
+              <AkIcon name="plus-outline" :size="16" />
+            </template>
             Adicionar registro
           </AkButton>
         </div>

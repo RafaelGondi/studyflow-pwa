@@ -115,4 +115,9 @@ function colorMix(color: string, pct: number) {
   grid-template-columns: 1fr 1fr 1fr;
   gap: var(--space-2);
 }
+
+.timer-panel__actions--grid .ak-button {
+  min-width: 0;
+  padding-inline: var(--space-2);
+}
 </style>

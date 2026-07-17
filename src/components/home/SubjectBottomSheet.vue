@@ -3,13 +3,18 @@
     <Transition name="modal">
       <div v-if="modelValue" class="modal-overlay">
         <div class="modal-backdrop" @click="emit('update:modelValue', false)" />
-        <AkCard padding="none" class="modal-sheet">
+        <AkCard padding="none" class="modal-sheet sheet-picker">
           <div class="modal-header">
-            <h2 class="modal-title">Selecionar matéria</h2>
+            <div>
+              <h2 class="modal-title">Selecionar matéria</h2>
+              <p v-if="subjects.length" class="sheet-picker__meta">
+                {{ subjects.length }} {{ subjects.length === 1 ? 'matéria' : 'matérias' }}
+              </p>
+            </div>
             <AkIconButton label="Fechar" size="sm" icon="x-outline" @click="emit('update:modelValue', false)" />
           </div>
 
-          <div class="modal-body stack sheet-body">
+          <div class="sheet-picker__scroll">
             <AkEmptyState
               v-if="subjects.length === 0"
               title="Nenhuma matéria"
@@ -18,34 +23,31 @@
               <template #icon>📚</template>
             </AkEmptyState>
 
-            <AkList v-else>
-              <AkListRow
-                v-for="(subject, i) in subjects"
-                :key="subject.id"
-                interactive
-                :divider="i < subjects.length - 1"
-                @click="select(subject.id)"
-              >
-                <template #leading>
+            <ul v-else class="sheet-picker__list">
+              <li v-for="subject in subjects" :key="subject.id">
+                <button
+                  type="button"
+                  class="sheet-picker__item tap-scale"
+                  :class="{ 'sheet-picker__item--active': activeId === subject.id }"
+                  @click="select(subject.id)"
+                >
                   <div
                     class="subject-leading subject-leading--sm"
                     :style="{ background: colorMix(subject.color, 14) }"
                   >
                     {{ subject.icon }}
                   </div>
-                </template>
-                <span class="truncate">{{ subject.name }}</span>
-                <template #subtitle>
-                  <span class="text-xs text-muted truncate">
-                    {{ getCategoryName(subject.categoryId) ?? 'Sem categoria' }}
-                    <template v-if="todayTime(subject.id)"> · {{ todayTime(subject.id) }}</template>
-                  </span>
-                </template>
-                <template #trailing>
-                  <span class="status-dot" :style="{ background: subject.color }" />
-                </template>
-              </AkListRow>
-            </AkList>
+                  <div class="sheet-picker__content">
+                    <span class="sheet-picker__name truncate">{{ subject.name }}</span>
+                    <span class="sheet-picker__meta-line truncate">
+                      {{ getCategoryName(subject.categoryId) ?? 'Sem categoria' }}
+                      <template v-if="todayTime(subject.id)"> · {{ todayTime(subject.id) }}</template>
+                    </span>
+                  </div>
+                  <span class="status-dot shrink-0" :style="{ background: subject.color }" />
+                </button>
+              </li>
+            </ul>
           </div>
         </AkCard>
       </div>
@@ -55,7 +57,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AkCard, AkEmptyState, AkIconButton, AkList, AkListRow } from '@rafael_dias/akoma'
+import { AkCard, AkEmptyState, AkIconButton } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
@@ -96,8 +98,75 @@ function select(id: string) {
 </script>
 
 <style scoped>
-.sheet-body {
-  padding-top: 0;
-  max-height: 55dvh;
+.sheet-picker {
+  max-height: min(85dvh, calc(100dvh - var(--safe-top) - 24px));
+}
+
+.sheet-picker__meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.sheet-picker__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--space-4) calc(var(--space-5) + var(--safe-bottom));
+}
+
+.sheet-picker__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sheet-picker__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.sheet-picker__item:hover {
+  background: var(--bg-soft);
+}
+
+.sheet-picker__item--active {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.sheet-picker__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sheet-picker__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sheet-picker__meta-line {
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 </style>

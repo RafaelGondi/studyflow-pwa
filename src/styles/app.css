@@ -149,6 +149,86 @@
   margin-top: var(--space-1);
 }
 
+.page-hero__date {
+  flex-shrink: 0;
+  max-width: 42%;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: right;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+  padding-top: var(--space-6);
+}
+
+/* ── Home stats cards ───────────────────────────────────── */
+.home-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.home-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(41, 49, 45, 0.06);
+}
+
+.home-stat-card__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.home-stat-card--break .home-stat-card__label {
+  color: var(--warning);
+}
+
+.home-stat-card__value {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 6vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.home-stat-card__hint {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.home-action {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-1);
+}
+
+.timeline-header .date-nav {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+.timeline-header .ak-button {
+  flex-shrink: 0;
+}
+
 /* ── Progress strip (Habitify) ──────────────────────────── */
 .progress-strip {
   display: flex;
