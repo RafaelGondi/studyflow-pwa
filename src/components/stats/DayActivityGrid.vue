@@ -32,7 +32,7 @@
         <span>24h</span>
       </div>
 
-      <p class="text-[10px] text-faint text-center">Cada bloco = 10 min · teal = estudando</p>
+      <p class="text-[10px] text-faint text-center">Cada bloco = 10 min · cor = estudando</p>
     </template>
   </div>
 </template>

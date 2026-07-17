@@ -1,20 +1,17 @@
-/* StudyFlow — domain layout on Akoma 0.7.6 (Habitify-style: bg claro) */
+/* StudyFlow — domain layout on Akoma 0.7.6 */
 
-/* ── Light palette: branco / off-white (como Habitify) ──── */
+/* ── Light palette: off-white neutrals (accent vem do Akoma) ──── */
 [data-mood='app'][data-theme='light'] {
   --bg: #f4f4f2;
   --bg-elevated: #ffffff;
   --bg-soft: #ececea;
   --bg-muted: #e2e2df;
-  --bg-tinted: #f0f3f3;
   --nav-glass: #ffffffeb;
   --border: #29312d1a;
   --border-strong: #29312d2e;
 }
 
-[data-mood='app'][data-theme='light'][data-accent='teal'] {
-  --bg-tinted: #f4f8f8;
-}
+/* bg-tinted e orbs seguem a paleta de accent do Akoma (ocean, violet, etc.) */
 
 /* ── App shell ──────────────────────────────────────────── */
 .app-shell {
@@ -35,10 +32,10 @@
   display: none;
 }
 
-[data-mood='app'][data-theme='dark'][data-accent='teal'] {
-  --orb-1: color-mix(in srgb, #7eb8bf 10%, transparent);
-  --orb-2: color-mix(in srgb, #568269 8%, transparent);
-  --orb-3: color-mix(in srgb, #7eb8bf 6%, transparent);
+[data-mood='app'][data-theme='dark'] {
+  --orb-1: color-mix(in srgb, var(--accent) 10%, transparent);
+  --orb-2: color-mix(in srgb, var(--accent) 7%, transparent);
+  --orb-3: color-mix(in srgb, var(--accent) 5%, transparent);
 }
 
 [data-theme='dark'] .app-shell .ambient__orb {

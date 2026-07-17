@@ -34,7 +34,7 @@ function cssVar(name: string, fallback: string) {
 const points = computed(() => getCumulativeChartPoints(props.sessions))
 
 const chartData = computed(() => {
-  const accent = cssVar('--accent', '#14b8a6')
+  const accent = cssVar('--accent', '#3d6a94')
   return {
     labels: points.value.map(p => p.label),
     datasets: [{

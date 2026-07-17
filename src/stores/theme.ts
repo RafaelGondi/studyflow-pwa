@@ -5,11 +5,11 @@ import { applyAccentPalette, type AccentPalette } from '@rafael_dias/akoma'
 const KEY = 'studyflow_theme'
 const ACCENT_KEY = 'studyflow_accent'
 
-export type AccentPreset = Extract<AccentPalette, 'teal' | 'evergreen'>
+export type AccentPreset = Extract<AccentPalette, 'ocean' | 'evergreen'>
 
 export const useThemeStore = defineStore('theme', () => {
   const isDark = ref(false)
-  const accent = ref<AccentPreset>('teal')
+  const accent = ref<AccentPreset>('ocean')
 
   function init() {
     const saved = localStorage.getItem(KEY)
@@ -18,9 +18,12 @@ export const useThemeStore = defineStore('theme', () => {
     } else {
       isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
     }
-    const savedAccent = localStorage.getItem(ACCENT_KEY) as AccentPreset | null
-    if (savedAccent === 'teal' || savedAccent === 'evergreen') {
+    const savedAccent = localStorage.getItem(ACCENT_KEY)
+    if (savedAccent === 'ocean' || savedAccent === 'evergreen') {
       accent.value = savedAccent
+    } else if (savedAccent === 'teal') {
+      accent.value = 'ocean'
+      localStorage.setItem(ACCENT_KEY, 'ocean')
     }
     apply()
   }
