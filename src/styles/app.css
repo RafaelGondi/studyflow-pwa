@@ -1,73 +1,48 @@
-/* StudyFlow — domain layout on Akoma 0.7.6 tokens */
+/* StudyFlow — domain layout on Akoma 0.7.6 (Habitify-style: bg claro) */
 
-/* ── StudyFlow ambient tuning (teal productivity mood) ──── */
-[data-mood='app'][data-accent='teal'] {
-  --orb-2: color-mix(in srgb, #2e684f 16%, transparent);
-  --orb-3: color-mix(in srgb, #3a7d85 12%, transparent);
+/* ── Light palette: branco / off-white (como Habitify) ──── */
+[data-mood='app'][data-theme='light'] {
+  --bg: #f9f9f7;
+  --bg-elevated: #ffffff;
+  --bg-soft: #f3f3f1;
+  --bg-muted: #ebebea;
+  --bg-tinted: #f5f7f7;
+  --nav-glass: #ffffffeb;
+  --border: #29312d12;
+  --border-strong: #29312d1f;
 }
 
-[data-mood='app'][data-theme='dark'][data-accent='teal'] {
-  --orb-2: color-mix(in srgb, #568269 14%, transparent);
-  --orb-3: color-mix(in srgb, #7eb8bf 10%, transparent);
+[data-mood='app'][data-theme='light'][data-accent='teal'] {
+  --bg-tinted: #f4f8f8;
 }
 
-/* ── App shell + layered background ─────────────────────── */
+/* ── App shell ──────────────────────────────────────────── */
 .app-shell {
   position: relative;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  isolation: isolate;
+  background: var(--bg);
 }
 
-.app-shell::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -8%, var(--bg-tinted), transparent 68%),
-    linear-gradient(
-      180deg,
-      var(--bg) 0%,
-      color-mix(in srgb, var(--bg-tinted) 35%, var(--bg)) 45%,
-      var(--bg) 100%
-    );
+/* Sem gradiente colorido — fundo plano como Habitify */
+[data-theme='light'] .app-shell::before {
+  content: none;
 }
 
-.app-shell .ambient__orb {
-  filter: blur(76px);
-  opacity: 0.52;
+/* Ambient só no escuro, bem sutil */
+[data-theme='light'] .ambient {
+  display: none;
+}
+
+[data-mood='app'][data-theme='dark'][data-accent='teal'] {
+  --orb-1: color-mix(in srgb, #7eb8bf 10%, transparent);
+  --orb-2: color-mix(in srgb, #568269 8%, transparent);
+  --orb-3: color-mix(in srgb, #7eb8bf 6%, transparent);
 }
 
 [data-theme='dark'] .app-shell .ambient__orb {
-  opacity: 0.32;
-}
-
-.app-shell .ambient__orb--1 {
-  width: 300px;
-  height: 300px;
-  top: -72px;
-  right: -48px;
-}
-
-.app-shell .ambient__orb--2 {
-  width: 240px;
-  height: 240px;
-  bottom: 100px;
-  left: -64px;
-}
-
-.app-shell .ambient__orb--3 {
-  width: 180px;
-  height: 180px;
-  top: 38%;
-  right: 6%;
-  opacity: 0.38;
-}
-
-[data-theme='dark'] .app-shell .ambient__orb--3 {
+  filter: blur(80px);
   opacity: 0.22;
 }
 
@@ -79,6 +54,12 @@
   max-width: var(--shell-max);
   margin: 0 auto;
   padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-4));
+}
+
+/* Listas = card branco sobre fundo off-white (Habitify) */
+[data-theme='light'] .ak-list {
+  background: var(--bg-elevated);
+  border-color: var(--border);
 }
 
 .page {
