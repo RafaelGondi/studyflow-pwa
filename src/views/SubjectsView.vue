@@ -1,12 +1,10 @@
 ﻿<template>
   <div class="page akoma-page">
-    <header class="page-hero reveal">
-      <span class="page-label">Organização</span>
-      <h1 class="page-hero__title">Matérias</h1>
-      <p class="page-hero__subtitle">
-        {{ subjectsStore.subjects.length }} matérias · {{ subjectsStore.categories.length }} categorias
-      </p>
-    </header>
+    <PageHeader
+      label="Organização"
+      title="Matérias"
+      :meta="`${subjectsStore.subjects.length} matérias · ${subjectsStore.categories.length} categorias`"
+    />
 
     <div class="chip-scroll reveal reveal-d1">
       <AkChip :active="selectedCategoryFilter === null" @click="selectedCategoryFilter = null">
@@ -41,9 +39,7 @@
             :divider="i < filteredSubjects.length - 1"
           >
             <template #leading>
-              <div class="subject-leading" :style="{ background: colorMix(subject.color, 12) }">
-                {{ subject.icon }}
-              </div>
+              <div class="subject-leading">{{ subject.icon }}</div>
             </template>
 
             <span class="truncate">{{ subject.name }}</span>
@@ -84,7 +80,7 @@
             :divider="i < subjectsStore.categories.length - 1"
           >
             <template #leading>
-              <div class="subject-leading subject-leading--sm" :style="{ background: colorMix(cat.color, 15) }">
+              <div class="subject-leading subject-leading--sm">
                 <span class="status-dot" :style="{ background: cat.color, width: '8px', height: '8px' }" />
               </div>
             </template>
@@ -101,7 +97,7 @@
       </section>
     </div>
 
-    <AkIconButton class="fab" label="Nova matéria" size="lg" icon="plus-outline" @click="openAddSubject" />
+    <FabButton class="fab" label="Nova" @click="openAddSubject" />
 
     <SubjectModal
       :show="showSubjectModal"
@@ -130,6 +126,8 @@ import { useSessionsStore } from '@/stores/sessions'
 import { useTimerStore } from '@/stores/timer'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
+import FabButton from '@/components/ui/FabButton.vue'
 import { formatDuration } from '@/types'
 import type { Subject, Category } from '@/types'
 
@@ -147,10 +145,6 @@ const filteredSubjects = computed(() => {
   if (!selectedCategoryFilter.value) return subjectsStore.subjects
   return subjectsStore.subjects.filter(s => s.categoryId === selectedCategoryFilter.value)
 })
-
-function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg))`
-}
 
 function openAddSubject() {
   editingSubject.value = null
@@ -214,10 +208,5 @@ onMounted(() => sessionsStore.loadToday())
   align-items: center;
   gap: var(--space-1);
   flex-shrink: 0;
-}
-.fab {
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-full);
 }
 </style>

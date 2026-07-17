@@ -8,7 +8,7 @@ const ACCENT_KEY = 'studyflow_accent'
 export type AccentPreset = Extract<AccentPalette, 'teal' | 'evergreen'>
 
 export const useThemeStore = defineStore('theme', () => {
-  const isDark = ref(true)
+  const isDark = ref(false)
   const accent = ref<AccentPreset>('teal')
 
   function init() {

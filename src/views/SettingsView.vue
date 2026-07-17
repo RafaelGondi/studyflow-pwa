@@ -1,9 +1,6 @@
 <template>
   <div class="page akoma-page">
-    <header class="page-hero reveal">
-      <span class="page-label">Preferências</span>
-      <h1 class="page-hero__title">Ajustes</h1>
-    </header>
+    <PageHeader label="Preferências" title="Ajustes" />
 
     <div class="page-body reveal reveal-d1">
       <AkCard v-if="authStore.dataLost" padding="md">
@@ -119,6 +116,7 @@ import { useSessionsStore } from '@/stores/sessions'
 import { usePwaInstall } from '@/composables/usePwaInstall'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
+import PageHeader from '@/components/layout/PageHeader.vue'
 
 const theme = useThemeStore()
 const authStore = useAuthStore()

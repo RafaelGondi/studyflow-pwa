@@ -2,7 +2,7 @@
   <section class="timer-bar">
     <template v-if="timerStore.mode === 'break'">
       <div class="timer-bar__row">
-        <div class="subject-leading" :style="{ background: 'var(--warning-soft)' }">☕</div>
+        <div class="subject-leading">☕</div>
         <div class="min-w-0">
           <p class="text-sm font-semibold">Em pausa</p>
           <p class="text-xs text-muted">Intervalo ativo</p>
@@ -19,12 +19,7 @@
 
     <template v-else>
       <div class="timer-bar__row">
-        <div
-          class="subject-leading"
-          :style="{ background: colorMix(subject?.color ?? 'var(--accent)', 12) }"
-        >
-          {{ subject?.icon ?? '📚' }}
-        </div>
+        <div class="subject-leading">{{ subject?.icon ?? '📚' }}</div>
         <div class="min-w-0 flex-1">
           <p class="text-sm font-semibold truncate">{{ subject?.name ?? 'Estudo' }}</p>
           <p class="text-xs" :class="timerStore.isRunning ? 'text-accent' : 'text-warning'">
@@ -71,8 +66,4 @@ const subject = computed<Subject | null>(() => {
   const id = timerStore.activeSubjectId
   return id ? subjectsStore.getSubject(id) ?? null : null
 })
-
-function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg))`
-}
 </script>

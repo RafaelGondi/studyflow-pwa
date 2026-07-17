@@ -1,10 +1,10 @@
 ﻿<template>
   <div class="page akoma-page">
-    <header class="page-hero reveal">
-      <span class="page-label">Progresso</span>
-      <h1 class="page-hero__title">Estatísticas</h1>
-      <p class="page-hero__subtitle">Estudo e pausas no período</p>
-    </header>
+    <PageHeader
+      label="Progresso"
+      title="Estatísticas"
+      meta="Estudo e pausas no período"
+    />
 
     <div class="chip-scroll reveal reveal-d1">
       <AkChip
@@ -18,7 +18,7 @@
     </div>
 
     <div class="page-body reveal reveal-d2">
-      <div class="today-summary">
+      <div class="today-summary reveal reveal-d1">
         <div class="today-summary__item">
           <span class="today-summary__label">Estudo</span>
           <span class="today-summary__value numeric">{{ formatDuration(studyTotalSeconds) }}</span>
@@ -66,18 +66,8 @@
               :divider="i < group.items.length - 1"
             >
               <template #leading>
-                <div
-                  v-if="item.type === 'break'"
-                  class="subject-leading subject-leading--sm"
-                  :style="{ background: 'var(--warning-soft)' }"
-                >
-                  ☕
-                </div>
-                <div
-                  v-else
-                  class="subject-leading subject-leading--sm"
-                  :style="{ background: colorMix(getSubject(item.session.subjectId)?.color ?? 'var(--accent)', 12) }"
-                >
+                <div v-if="item.type === 'break'" class="subject-leading subject-leading--sm">☕</div>
+                <div v-else class="subject-leading subject-leading--sm">
                   {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
                 </div>
               </template>
@@ -125,6 +115,7 @@ import WeeklyChart from '@/components/stats/WeeklyChart.vue'
 import BreakWeeklyChart from '@/components/stats/BreakWeeklyChart.vue'
 import SubjectDonut from '@/components/stats/SubjectDonut.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
 import { formatDuration, localDateStr, isStudySession, isBreakSession } from '@/types'
 import { buildTimeline } from '@/utils/timeline'
 import type { StudySession } from '@/types'
@@ -170,10 +161,6 @@ const groupedTimeline = computed(() => {
       breakTotal: daySessions.filter(isBreakSession).reduce((a, s) => a + s.duration, 0),
     }))
 })
-
-function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg))`
-}
 
 function getSubject(id?: string) { return id ? subjectsStore.getSubject(id) : undefined }
 function formatTime(ts: number) {

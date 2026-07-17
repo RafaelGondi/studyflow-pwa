@@ -56,11 +56,7 @@
   padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-4));
 }
 
-/* Listas = card branco sobre fundo off-white (Habitify) */
-[data-theme='light'] .ak-list {
-  background: var(--bg-elevated);
-  border-color: var(--border);
-}
+/* Listas = card branco (detalhes abaixo em .ak-list) */
 
 .page {
   min-height: 100%;
@@ -77,7 +73,7 @@
   padding-bottom: var(--space-4);
 }
 
-/* ── Editorial header ─────────────────────────────────────── */
+/* ── Editorial header (Habitify) ─────────────────────────── */
 .page-hero {
   display: flex;
   flex-direction: column;
@@ -85,25 +81,61 @@
   margin-bottom: var(--space-2);
 }
 
+.page-hero--with-nav {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.page-hero__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.page-hero__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  padding-top: var(--space-1);
+}
+
+.nav-btn.ak-icon-button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--bg-soft);
+  color: var(--text-secondary);
+}
+
+.nav-btn.ak-icon-button:hover:not(:disabled) {
+  background: var(--bg-muted);
+  color: var(--text);
+}
+
 .page-label {
-  font-size: 11px;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--accent);
 }
 
 .page-hero__meta {
-  font-size: 13px;
-  color: var(--text-tertiary);
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-transform: capitalize;
 }
 
 .page-hero__title {
   font-family: var(--font-display);
-  font-size: clamp(28px, 7vw, 36px);
-  font-weight: 650;
-  letter-spacing: -0.035em;
-  line-height: 1.1;
+  font-size: clamp(32px, 8vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
   color: var(--text);
 }
 
@@ -113,7 +145,52 @@
   margin-top: var(--space-1);
 }
 
-/* ── Today summary (typography, not cards) ────────────────── */
+/* ── Progress strip (Habitify) ──────────────────────────── */
+.progress-strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+}
+
+.progress-strip__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.progress-strip__meta strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.progress-strip__pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.day-stats {
+  display: flex;
+  gap: var(--space-4);
+  padding-top: var(--space-2);
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.day-stats__value {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.day-stats__value--break {
+  color: var(--warning);
+}
+
+/* ── Today summary (stats pages) ────────────────────────── */
 .today-summary {
   display: flex;
   gap: var(--space-6);
@@ -147,40 +224,78 @@
   color: var(--warning);
 }
 
-/* ── Section blocks ─────────────────────────────────────── */
+/* List row title weight */
+:deep(.ak-list-row__title),
+.ak-list-row .truncate {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* Section headers mais discretos */
 .section-block {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
+.section-block .ak-section-header {
+  margin-bottom: var(--space-2);
+}
+
+/* Listas = card branco sobre fundo off-white (Habitify) */
+[data-theme='light'] .ak-list {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+}
+
+[data-theme='light'] .ak-list-row-item--divider:not(:last-child) {
+  border-bottom-color: var(--border);
+}
+
+/* Chips ativos = cinza suave (Habitify) */
+[data-theme='light'] .ak-chip--active {
+  background: var(--bg-muted);
+  color: var(--text);
+}
+
+.chip-scroll .ak-chip {
+  flex-shrink: 0;
+}
+
 /* ── Subject avatar (leading slot) ──────────────────────── */
 .subject-leading {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
+  background: var(--bg-soft);
 }
 
 .subject-leading--sm {
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
-  border-radius: var(--radius-sm);
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  border-radius: var(--radius-md);
 }
 
-/* ── Timer bar (compact, flat) ──────────────────────────── */
+/* ── Timer bar (card branco) ────────────────────────────── */
 .timer-bar {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-4) 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+[data-theme='dark'] .timer-bar {
+  background: var(--bg-elevated);
 }
 
 .timer-bar__row {
@@ -235,20 +350,26 @@
   box-shadow: 0 0 0 2px var(--nav-glass);
 }
 
-/* ── FAB ────────────────────────────────────────────────── */
+/* ── FAB pill (Habitify) ────────────────────────────────── */
 .fab {
   position: fixed;
   right: var(--space-5);
   bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-3));
   z-index: 40;
-  background: var(--accent) !important;
-  color: var(--accent-contrast) !important;
-  border-radius: var(--radius-full);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
-.fab:hover {
-  background: var(--accent-hover) !important;
+.fab--pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.fab--pill .ak-icon {
+  flex-shrink: 0;
 }
 
 /* ── Modals ─────────────────────────────────────────────── */

@@ -1,11 +1,5 @@
 <template>
   <section class="section-block">
-    <AkSectionHeader title="Matérias">
-      <template v-if="subjects.length === 0" #action>
-        <RouterLink to="/subjects" class="text-xs text-accent">Adicionar</RouterLink>
-      </template>
-    </AkSectionHeader>
-
     <AkEmptyState
       v-if="subjects.length === 0"
       title="Sem matérias"
@@ -21,10 +15,7 @@
         @click="emit('select', item.subjectId)"
       >
         <template #leading>
-          <div
-            class="subject-leading"
-            :style="{ background: colorMix(item.color, 12) }"
-          >
+          <div class="subject-leading">
             {{ item.icon }}
           </div>
         </template>
@@ -52,7 +43,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AkBadge, AkEmptyState, AkList, AkListRow, AkProgress, AkSectionHeader } from '@rafael_dias/akoma'
+import { AkBadge, AkEmptyState, AkList, AkListRow, AkProgress } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
@@ -69,10 +60,6 @@ const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 
 const subjects = computed(() => subjectsStore.subjects)
-
-function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg))`
-}
 
 const items = computed(() => {
   const bySubject = new Map(sessionsStore.todayBySubject)
