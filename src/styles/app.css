@@ -2,14 +2,14 @@
 
 /* ── Light palette: branco / off-white (como Habitify) ──── */
 [data-mood='app'][data-theme='light'] {
-  --bg: #f9f9f7;
+  --bg: #f4f4f2;
   --bg-elevated: #ffffff;
-  --bg-soft: #f3f3f1;
-  --bg-muted: #ebebea;
-  --bg-tinted: #f5f7f7;
+  --bg-soft: #ececea;
+  --bg-muted: #e2e2df;
+  --bg-tinted: #f0f3f3;
   --nav-glass: #ffffffeb;
-  --border: #29312d12;
-  --border-strong: #29312d1f;
+  --border: #29312d1a;
+  --border-strong: #29312d2e;
 }
 
 [data-mood='app'][data-theme='light'][data-accent='teal'] {
@@ -71,6 +71,10 @@
   flex-direction: column;
   gap: var(--space-6);
   padding-bottom: var(--space-4);
+}
+
+.page--with-fab .page-body {
+  padding-bottom: calc(var(--space-16) + var(--space-2));
 }
 
 /* ── Editorial header (Habitify) ─────────────────────────── */
@@ -242,15 +246,38 @@
   margin-bottom: var(--space-2);
 }
 
-/* Listas = card branco sobre fundo off-white (Habitify) */
+/* Listas = card branco sobre fundo off-white */
 [data-theme='light'] .ak-list {
   background: var(--bg-elevated);
-  border-color: var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(41, 49, 45, 0.06);
 }
 
 [data-theme='light'] .ak-list-row-item--divider:not(:last-child) {
-  border-bottom-color: var(--border);
+  border-bottom-color: var(--border-strong);
+}
+
+/* Alinhamento consistente dos ícones/ações à direita */
+:deep(.ak-list-row__trailing) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+:deep(.ak-list-row__content) {
+  min-width: 0;
+}
+
+:deep(.ak-list-row__leading) {
+  align-self: center;
+}
+
+/* Switch dentro de list row ocupa a linha inteira */
+:deep(.ak-list-row .ak-switch) {
+  width: 100%;
 }
 
 /* Chips ativos = cinza suave (Habitify) */

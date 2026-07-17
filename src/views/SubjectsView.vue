@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="page akoma-page">
+  <div class="page akoma-page page--with-fab">
     <PageHeader
       label="Organização"
       title="Matérias"
@@ -53,7 +53,6 @@
             </template>
 
             <template #trailing>
-              <AkIconButton label="Iniciar estudo" size="sm" icon="play-outline" @click.stop="startStudying(subject.id)" />
               <AkIconButton label="Editar" size="sm" icon="edit-outline" @click.stop="openEditSubject(subject)" />
               <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click.stop="confirmDeleteSubject(subject.id)" />
             </template>
@@ -124,7 +123,6 @@ import {
 } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
-import { useTimerStore } from '@/stores/timer'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
@@ -135,7 +133,6 @@ import type { Subject, Category } from '@/types'
 const router = useRouter()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
-const timerStore = useTimerStore()
 const showSubjectModal = ref(false)
 const showCategoryModal = ref(false)
 const editingSubject = ref<Subject | null>(null)
@@ -186,18 +183,6 @@ function todayTime(subjectId: string) {
   return secs > 0 ? formatDuration(secs) : ''
 }
 
-async function startStudying(subjectId: string) {
-  if (timerStore.mode !== 'idle' && timerStore.activeSubjectId !== subjectId) {
-    await timerStore.stop()
-    await sessionsStore.loadToday()
-  }
-  if (timerStore.mode === 'idle' || timerStore.mode === 'break') {
-    await timerStore.startStudy(subjectId)
-    await sessionsStore.loadToday()
-  }
-  router.push('/')
-}
-
 async function confirmDeleteCategory(id: string) {
   if (confirm('Excluir esta categoria? As matérias serão mantidas sem categoria.')) {
     await subjectsStore.removeCategory(id)
@@ -206,12 +191,3 @@ async function confirmDeleteCategory(id: string) {
 
 onMounted(() => sessionsStore.loadToday())
 </script>
-
-<style scoped>
-:deep(.ak-list-row__trailing) {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
-}
-</style>

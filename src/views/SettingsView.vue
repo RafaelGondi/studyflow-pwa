@@ -64,12 +64,16 @@
 
       <section class="section-block">
         <AkSectionHeader title="Comportamento" />
-        <AkSwitch
-          :model-value="faceDown.enabled.value"
-          label="Gesto de foco"
-          :description="faceDown.permissionError.value ? 'Permissão negada' : 'Vire o celular para abrir modo foco'"
-          @update:model-value="handleFaceDownToggle"
-        />
+        <AkList>
+          <AkListRow :divider="false">
+            <AkSwitch
+              :model-value="faceDown.enabled.value"
+              label="Gesto de foco"
+              :description="faceDown.permissionError.value ? 'Permissão negada' : 'Vire o celular para abrir modo foco'"
+              @update:model-value="handleFaceDownToggle"
+            />
+          </AkListRow>
+        </AkList>
       </section>
 
       <section class="section-block">
@@ -93,12 +97,16 @@
 
       <section class="section-block">
         <AkSectionHeader title="Aparência" />
-        <AkSwitch
-          :model-value="theme.isDark"
-          label="Modo escuro"
-          :description="theme.isDark ? 'Tema escuro ativo' : 'Tema claro ativo'"
-          @update:model-value="theme.setDark"
-        />
+        <AkList>
+          <AkListRow :divider="false">
+            <AkSwitch
+              :model-value="theme.isDark"
+              label="Modo escuro"
+              :description="theme.isDark ? 'Tema escuro ativo' : 'Tema claro ativo'"
+              @update:model-value="theme.setDark"
+            />
+          </AkListRow>
+        </AkList>
       </section>
     </div>
   </div>
