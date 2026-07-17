@@ -3,7 +3,7 @@
     <Transition name="modal">
       <div v-if="modelValue" class="modal-overlay">
         <div class="modal-backdrop" @click="emit('update:modelValue', false)" />
-        <AkCard padding="none" class="modal-sheet sheet-picker">
+        <div class="modal-sheet sheet-picker">
           <div class="modal-header">
             <div>
               <h2 class="modal-title">Selecionar matéria</h2>
@@ -49,7 +49,7 @@
               </li>
             </ul>
           </div>
-        </AkCard>
+        </div>
       </div>
     </Transition>
   </Teleport>
@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AkCard, AkEmptyState, AkIconButton } from '@rafael_dias/akoma'
+import { AkEmptyState, AkIconButton } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
@@ -98,10 +98,6 @@ function select(id: string) {
 </script>
 
 <style scoped>
-.sheet-picker {
-  max-height: min(85dvh, calc(100dvh - var(--safe-top) - 24px));
-}
-
 .sheet-picker__meta {
   margin-top: 2px;
   font-size: 12px;
@@ -111,9 +107,11 @@ function select(id: string) {
 .sheet-picker__scroll {
   flex: 1;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 0 var(--space-4) calc(var(--space-5) + var(--safe-bottom));
 }
 
