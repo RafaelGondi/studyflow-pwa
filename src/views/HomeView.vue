@@ -1,29 +1,23 @@
 <template>
   <div class="page akoma-page" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
+    <header class="page-hero reveal">
+      <span class="page-label">{{ greeting }}</span>
+      <h1 class="page-hero__title">StudyFlow</h1>
+      <p class="page-hero__meta">{{ dateLabel }}</p>
 
-    <header class="flex-between page-header reveal">
-      <div>
-        <span class="page-label">{{ greeting }}</span>
-        <h1 class="page-title">StudyFlow</h1>
+      <div class="today-summary reveal reveal-d1">
+        <div class="today-summary__item">
+          <span class="today-summary__label">Estudo</span>
+          <span class="today-summary__value numeric">{{ studyTotalFormatted }}</span>
+        </div>
+        <div class="today-summary__item today-summary__item--break">
+          <span class="today-summary__label">Pausa</span>
+          <span class="today-summary__value numeric">{{ breakTotalFormatted }}</span>
+        </div>
       </div>
-      <span class="page-meta">{{ dateLabel }}</span>
     </header>
 
-    <div class="grid-2 reveal reveal-d1" style="margin-bottom: var(--space-4)">
-      <AkCard padding="sm">
-        <span class="stat-label text-accent">Estudo</span>
-        <span class="stat-value numeric">{{ studyTotalFormatted }}</span>
-        <span class="stat-hint">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
-      </AkCard>
-      <AkCard padding="sm">
-        <span class="stat-label" style="color: var(--cat-3)">Pausa</span>
-        <span class="stat-value numeric">{{ breakTotalFormatted }}</span>
-        <span class="stat-hint">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
-      </AkCard>
-    </div>
-
-    <main class="scroll-main stack reveal reveal-d2">
-
+    <div class="page-body reveal reveal-d2">
       <SubjectStudyList
         v-if="isToday"
         :active-id="timerStore.activeSubjectId"
@@ -40,37 +34,27 @@
         @continue="handleContinue"
       />
 
-      <div>
-        <div class="flex-between" style="padding: 0 var(--space-1); margin-bottom: var(--space-3)">
-          <AkButton size="sm" variant="ghost" @click="goPrev">
-            <template #icon>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-            </template>
-          </AkButton>
-
-          <div class="flex-row" style="gap: var(--space-2)">
-            <span class="text-xs font-semibold text-muted">{{ dateNavLabel }}</span>
-            <AkButton
-              v-if="isToday"
-              size="sm"
-              variant="ghost"
-              title="Adicionar registro"
-              @click="showAddModal = true"
-            >
-              <template #icon>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-              </template>
-            </AkButton>
-          </div>
-
-          <AkButton size="sm" variant="ghost" :disabled="isToday" @click="goNext">
-            <template #icon>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </template>
-          </AkButton>
-        </div>
+      <section class="section-block">
+        <AkSectionHeader :title="dateNavLabel">
+          <template #action>
+            <div class="flex-row" style="gap: var(--space-1)">
+              <AkIconButton label="Dia anterior" size="sm" @click="goPrev">
+                <CuidaIcon name="arrow-left-outline" :size="18" />
+              </AkIconButton>
+              <AkIconButton
+                v-if="isToday"
+                label="Adicionar registro"
+                size="sm"
+                @click="showAddModal = true"
+              >
+                <CuidaIcon name="plus-outline" :size="18" />
+              </AkIconButton>
+              <AkIconButton label="Próximo dia" size="sm" :disabled="isToday" @click="goNext">
+                <CuidaIcon name="arrow-right-outline" :size="18" />
+              </AkIconButton>
+            </div>
+          </template>
+        </AkSectionHeader>
 
         <div v-if="loadingHistory" class="loading-center">
           <AkShimmer width="24px" height="24px" radius="full" />
@@ -82,95 +66,69 @@
           description="Adicione um registro manual ou comece a estudar."
         />
 
-        <template v-else>
-          <div
-            v-for="(item, index) in timeline"
-            :key="item.type === 'gap' ? `gap-${index}` : item.session.id"
-            class="timeline-item"
-          >
-            <div v-if="item.type === 'gap'" style="padding-left: var(--space-4)">
-              <span class="text-xs text-muted">☕ ~{{ item.label }} de intervalo</span>
-            </div>
+        <AkList v-else>
+          <template v-for="(item, index) in timeline" :key="item.type === 'gap' ? `gap-${index}` : item.session.id">
+            <li v-if="item.type === 'gap'" class="text-xs text-muted" style="padding: var(--space-2) var(--space-4)">
+              ☕ ~{{ item.label }} de intervalo
+            </li>
 
-            <template v-else-if="item.type === 'break'">
-              <div class="timeline-bar timeline-bar--break" />
-              <div class="flex-1 min-w-0">
-                <div class="flex-between">
-                  <p class="text-sm font-semibold text-warning">☕ Pausa</p>
-                  <div class="timeline-actions">
-                    <span class="text-sm font-semibold text-warning numeric">{{ formatDuration(item.session.duration) }}</span>
-                    <AkButton size="sm" variant="ghost" @click="editingSession = item.session">
-                      <template #icon>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                      </template>
-                    </AkButton>
-                    <AkButton size="sm" variant="ghost" @click="deleteSession(item.session.id)">
-                      <template #icon>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                        </svg>
-                      </template>
-                    </AkButton>
-                  </div>
+            <AkListRow v-else :divider="index < timeline.length - 1">
+              <template #leading>
+                <div
+                  v-if="item.type === 'break'"
+                  class="subject-leading subject-leading--sm"
+                  :style="{ background: 'var(--warning-soft)' }"
+                >
+                  ☕
                 </div>
-                <p class="text-xs text-muted" style="margin-top: 2px">{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</p>
-              </div>
-            </template>
+                <div
+                  v-else
+                  class="subject-leading subject-leading--sm"
+                  :style="{ background: colorMix(getSubject(item.session.subjectId)?.color ?? 'var(--accent)', 12) }"
+                >
+                  {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
+                </div>
+              </template>
 
-            <template v-else>
-              <div
-                class="timeline-bar"
-                :style="{ background: getSubject(item.session.subjectId)?.color ?? 'var(--accent)' }"
-              />
-              <div class="flex-1 min-w-0">
-                <div class="flex-between">
-                  <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.session.subjectId)?.name ?? 'Matéria' }}</p>
-                  <div class="timeline-actions">
-                    <span
-                      class="text-sm font-semibold numeric"
-                      :style="{ color: getSubject(item.session.subjectId)?.color ?? 'var(--accent)' }"
-                    >
-                      {{ formatDuration(item.session.duration) }}
-                    </span>
-                    <AkButton size="sm" variant="ghost" @click="editingSession = item.session">
-                      <template #icon>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                      </template>
-                    </AkButton>
-                    <AkButton size="sm" variant="ghost" @click="deleteSession(item.session.id)">
-                      <template #icon>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                        </svg>
-                      </template>
-                    </AkButton>
-                  </div>
-                </div>
-                <div class="text-xs text-muted" style="margin-top: 2px; display: flex; flex-wrap: wrap; gap: 4px 6px">
-                  <template v-if="item.session.segments && item.session.segments.length > 1">
+              <span class="truncate" :class="item.type === 'break' ? 'text-warning' : ''">
+                {{ item.type === 'break' ? 'Pausa' : (getSubject(item.session.subjectId)?.name ?? 'Matéria') }}
+              </span>
+
+              <template #subtitle>
+                <span class="text-xs text-muted">
+                  <template v-if="item.type !== 'break' && item.session.segments && item.session.segments.length > 1">
                     <template v-for="(seg, i) in item.session.segments" :key="i">
-                      <span>{{ fmt(seg.start) }} – {{ fmt(seg.end) }}</span>
+                      {{ fmt(seg.start) }}–{{ fmt(seg.end) }}
                       <span v-if="i < item.session.segments.length - 1" class="text-warning">
-                        ⏸ {{ formatDuration(Math.round((item.session.segments[i + 1].start - seg.end) / 1000)) }}
+                        · ⏸ {{ formatDuration(Math.round((item.session.segments[i + 1].start - seg.end) / 1000)) }}
                       </span>
                     </template>
                   </template>
-                  <span v-else>{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</span>
-                </div>
-              </div>
-            </template>
-          </div>
-        </template>
-      </div>
-    </main>
+                  <template v-else>
+                    {{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}
+                  </template>
+                </span>
+              </template>
+
+              <template #trailing>
+                <span
+                  class="numeric text-sm font-semibold shrink-0"
+                  :class="item.type === 'break' ? 'text-warning' : 'text-secondary'"
+                >
+                  {{ formatDuration(item.session.duration) }}
+                </span>
+                <AkIconButton label="Editar" size="sm" @click="editingSession = item.session">
+                  <CuidaIcon name="edit-outline" :size="16" />
+                </AkIconButton>
+                <AkIconButton label="Excluir" size="sm" @click="deleteSession(item.session.id)">
+                  <CuidaIcon name="trash-outline" :size="16" />
+                </AkIconButton>
+              </template>
+            </AkListRow>
+          </template>
+        </AkList>
+      </section>
+    </div>
 
     <FocusMode :active="focusMode" :subject="activeSubject" @close="focusMode = false" />
 
@@ -192,7 +150,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { AkButton, AkCard, AkEmptyState, AkShimmer } from '@rafael_dias/akoma'
+import {
+  AkEmptyState, AkIconButton, AkList, AkListRow, AkSectionHeader, AkShimmer,
+} from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
@@ -201,6 +161,7 @@ import ActiveTimerBar from '@/components/home/ActiveTimerBar.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
+import CuidaIcon from '@/components/ui/CuidaIcon.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { formatDuration, formatTimer, localDateStr, todayDateString, isStudySession, isBreakSession } from '@/types'
 import { buildTimeline } from '@/utils/timeline'
@@ -238,7 +199,7 @@ const dateNavLabel = computed(() => {
   yesterday.setDate(yesterday.getDate() - 1)
   if (viewDate.value === localDateStr(yesterday)) return 'Ontem'
   const d = new Date(viewDate.value + 'T12:00:00')
-  return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })
 })
 
 const activeSubject = computed(() => {
@@ -254,7 +215,7 @@ const greeting = computed(() => {
 })
 
 const dateLabel = computed(() =>
-  new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
+  new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
 )
 
 const studyTotalFormatted = computed(() => {
@@ -263,10 +224,7 @@ const studyTotalFormatted = computed(() => {
       ? timerStore.studyElapsedSeconds : 0
     return formatTimer(sessionsStore.todayStudyTotalSeconds + live)
   }
-  const total = displaySessions.value
-    .filter(isStudySession)
-    .reduce((acc, s) => acc + s.duration, 0)
-  return formatTimer(total)
+  return formatTimer(displaySessions.value.filter(isStudySession).reduce((a, s) => a + s.duration, 0))
 })
 
 const breakTotalFormatted = computed(() => {
@@ -274,11 +232,12 @@ const breakTotalFormatted = computed(() => {
     const live = timerStore.mode === 'break' ? timerStore.breakElapsedSeconds : 0
     return formatTimer(sessionsStore.todayBreakTotalSeconds + live)
   }
-  const total = displaySessions.value
-    .filter(isBreakSession)
-    .reduce((acc, s) => acc + s.duration, 0)
-  return formatTimer(total)
+  return formatTimer(displaySessions.value.filter(isBreakSession).reduce((a, s) => a + s.duration, 0))
 })
+
+function colorMix(color: string, pct: number) {
+  return `color-mix(in srgb, ${color} ${pct}%, var(--bg))`
+}
 
 async function fetchViewDate() {
   if (isToday.value) return
@@ -385,3 +344,15 @@ onMounted(async () => {
   await sessionsStore.loadToday()
 })
 </script>
+
+<style scoped>
+:deep(.ak-list-row__trailing) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+:deep(.ak-list-row__content) {
+  min-width: 0;
+}
+</style>

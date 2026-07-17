@@ -42,7 +42,10 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: { '@': '/src' },
+    alias: {
+      '@': '/src',
+      '@sysvale/cuida-icons': '/node_modules/@sysvale/cuida-icons/dist/index.js',
+    },
   },
   build: {
     rollupOptions: {

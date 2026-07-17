@@ -1,11 +1,10 @@
 <template>
-  <div class="stack-xs">
-    <div class="flex-between" style="padding: 0 var(--space-1)">
-      <h2 class="section-title">Matérias</h2>
-      <RouterLink v-if="subjects.length === 0" to="/subjects" class="text-xs text-accent">
-        Adicionar →
-      </RouterLink>
-    </div>
+  <section class="section-block">
+    <AkSectionHeader title="Matérias">
+      <template v-if="subjects.length === 0" #action>
+        <RouterLink to="/subjects" class="text-xs text-accent">Adicionar</RouterLink>
+      </template>
+    </AkSectionHeader>
 
     <AkEmptyState
       v-if="subjects.length === 0"
@@ -13,41 +12,47 @@
       description="Cadastre matérias para começar a registrar."
     />
 
-    <button
-      v-for="item in items"
-      :key="item.subjectId"
-      @click="emit('select', item.subjectId)"
-      class="list-row list-row--interactive"
-      :class="{ 'list-row--active': activeId === item.subjectId }"
-    >
-      <div
-        class="subject-avatar"
-        :style="{ background: colorMix(item.color, 12) }"
+    <AkList v-else>
+      <AkListRow
+        v-for="item in items"
+        :key="item.subjectId"
+        interactive
+        :divider="item !== items[items.length - 1]"
+        @click="emit('select', item.subjectId)"
       >
-        {{ item.icon }}
-      </div>
-      <div class="flex-1 min-w-0">
-        <div class="flex-between" style="margin-bottom: var(--space-1)">
-          <span class="text-sm font-medium text-primary truncate">{{ item.name }}</span>
-          <span class="text-xs font-semibold text-secondary numeric shrink-0">
+        <template #leading>
+          <div
+            class="subject-leading"
+            :style="{ background: colorMix(item.color, 12) }"
+          >
+            {{ item.icon }}
+          </div>
+        </template>
+
+        <span class="truncate">{{ item.name }}</span>
+
+        <template #subtitle>
+          <AkProgress
+            :value="item.pct"
+            size="sm"
+            :color="item.color"
+          />
+        </template>
+
+        <template #trailing>
+          <span class="numeric text-sm text-secondary shrink-0">
             {{ item.seconds > 0 ? formatDuration(item.seconds) : '—' }}
           </span>
-        </div>
-        <div class="progress-track">
-          <div
-            class="progress-fill"
-            :style="{ width: `${item.pct}%`, background: item.color }"
-          />
-        </div>
-      </div>
-      <AkBadge v-if="activeId === item.subjectId" variant="success" label="●" />
-    </button>
-  </div>
+          <AkBadge v-if="activeId === item.subjectId" variant="success" label="●" />
+        </template>
+      </AkListRow>
+    </AkList>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AkBadge, AkEmptyState } from '@rafael_dias/akoma'
+import { AkBadge, AkEmptyState, AkList, AkListRow, AkProgress, AkSectionHeader } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
@@ -66,7 +71,7 @@ const sessionsStore = useSessionsStore()
 const subjects = computed(() => subjectsStore.subjects)
 
 function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-elevated))`
+  return `color-mix(in srgb, ${color} ${pct}%, var(--bg))`
 }
 
 const items = computed(() => {
@@ -95,3 +100,15 @@ const items = computed(() => {
     .sort((a, b) => b.seconds - a.seconds || a.name.localeCompare(b.name))
 })
 </script>
+
+<style scoped>
+:deep(.ak-list-row__trailing) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+:deep(.ak-list-row__content) {
+  min-width: 0;
+}
+</style>

@@ -6,13 +6,9 @@
         <AkCard padding="none" class="modal-sheet">
           <div class="modal-header">
             <h2 class="modal-title">{{ subject ? 'Editar matéria' : 'Nova matéria' }}</h2>
-            <AkButton size="sm" variant="ghost" @click="emit('close')">
-              <template #icon>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </template>
-            </AkButton>
+            <AkIconButton label="Fechar" size="sm" @click="emit('close')">
+              <CuidaIcon name="x-outline" :size="18" />
+            </AkIconButton>
           </div>
 
           <div class="modal-body stack">
@@ -111,7 +107,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AkButton, AkCard, AkInput } from '@rafael_dias/akoma'
+import { AkButton, AkCard, AkIconButton, AkInput } from '@rafael_dias/akoma'
+import CuidaIcon from '@/components/ui/CuidaIcon.vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import { SUBJECT_COLORS, SUBJECT_ICONS } from '@/types'
 import type { Subject } from '@/types'

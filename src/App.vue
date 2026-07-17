@@ -1,17 +1,17 @@
 <template>
-  <div class="shell">
+  <div class="app-shell">
     <AkAmbientBg />
     <UpdateBanner />
-    <main class="akoma-shell">
+    <main class="app-main">
       <Transition name="page" mode="out-in">
         <RouterView v-if="appReady" :key="route.path" />
         <div v-else class="loading-screen reveal">
-          <AkShimmer width="64px" height="64px" radius="full" />
-          <AkShimmer width="160px" height="14px" radius="md" />
+          <AkShimmer width="48px" height="48px" radius="full" />
+          <AkShimmer width="140px" height="12px" radius="md" />
         </div>
       </Transition>
     </main>
-    <BottomNav v-if="appReady" />
+    <AppTabBar v-if="appReady" />
   </div>
 </template>
 
@@ -23,7 +23,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useThemeStore } from '@/stores/theme'
-import BottomNav from '@/components/layout/BottomNav.vue'
+import AppTabBar from '@/components/layout/AppTabBar.vue'
 import UpdateBanner from '@/components/ui/UpdateBanner.vue'
 
 const route = useRoute()
@@ -53,12 +53,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.shell {
-  position: relative;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
-</style>

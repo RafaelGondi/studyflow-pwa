@@ -1,9 +1,11 @@
 ﻿<template>
   <div class="page akoma-page">
-    <header class="page-header reveal">
+    <header class="page-hero reveal">
       <span class="page-label">Organização</span>
-      <h1 class="page-title">Matérias</h1>
-      <p class="page-subtitle">{{ subjectsStore.subjects.length }} matérias · {{ subjectsStore.categories.length }} categorias</p>
+      <h1 class="page-hero__title">Matérias</h1>
+      <p class="page-hero__subtitle">
+        {{ subjectsStore.subjects.length }} matérias · {{ subjectsStore.categories.length }} categorias
+      </p>
     </header>
 
     <div class="chip-scroll reveal reveal-d1">
@@ -21,123 +23,97 @@
       </AkChip>
     </div>
 
-    <main class="scroll-main stack reveal reveal-d2">
-      <AkEmptyState
-        v-if="filteredSubjects.length === 0"
-        title="Nenhuma matéria encontrada"
-        description="Toque no + para adicionar sua primeira matéria."
-      />
+    <div class="page-body reveal reveal-d2">
+      <section class="section-block">
+        <AkSectionHeader title="Matérias" />
 
-      <div v-else class="stack-sm">
-        <AkCard
-          v-for="subject in filteredSubjects"
-          :key="subject.id"
-          padding="md"
-          class="subject-card"
-        >
-          <div class="flex-row" style="gap: var(--space-4)">
-            <div
-              class="subject-avatar subject-avatar--lg"
-              :style="{ background: colorMix(subject.color, 12) }"
-            >
-              {{ subject.icon }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-semibold text-primary">{{ subject.name }}</p>
-              <div class="flex-row" style="gap: var(--space-2); margin-top: var(--space-1)">
-                <div
-                  class="status-dot"
-                  :style="{ background: getSubjectCategory(subject)?.color ?? subject.color }"
-                />
-                <span class="text-xs text-muted truncate">
-                  {{ getSubjectCategory(subject)?.name ?? 'Sem categoria' }}
-                </span>
+        <AkEmptyState
+          v-if="filteredSubjects.length === 0"
+          title="Nenhuma matéria"
+          description="Toque no + para adicionar."
+        />
+
+        <AkList v-else>
+          <AkListRow
+            v-for="(subject, i) in filteredSubjects"
+            :key="subject.id"
+            interactive
+            :divider="i < filteredSubjects.length - 1"
+          >
+            <template #leading>
+              <div class="subject-leading" :style="{ background: colorMix(subject.color, 12) }">
+                {{ subject.icon }}
               </div>
-              <p v-if="todayTime(subject.id)" class="text-xs text-secondary numeric" style="margin-top: var(--space-1)">
-                Hoje: {{ todayTime(subject.id) }}
-              </p>
-            </div>
-            <div class="flex-row" style="gap: var(--space-2)">
-              <AkButton
-                size="sm"
-                variant="secondary"
-                :style="{ '--ak-chip-active-bg': colorMix(subject.color, 12), color: subject.color }"
-                @click="startStudying(subject.id)"
-              >
-                <template #icon>
-                  <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-                </template>
-              </AkButton>
-              <AkButton size="sm" variant="ghost" @click="openEditSubject(subject)">
-                <template #icon>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </template>
-              </AkButton>
-              <AkButton size="sm" variant="ghost" @click="confirmDeleteSubject(subject.id)">
-                <template #icon>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                  </svg>
-                </template>
-              </AkButton>
-            </div>
-          </div>
-        </AkCard>
-      </div>
+            </template>
 
-      <div class="stack-sm">
-        <div class="flex-between" style="padding: 0 var(--space-1)">
-          <h2 class="section-title">Categorias</h2>
-          <AkButton size="sm" variant="ghost" @click="showCategoryModal = true">+ Adicionar</AkButton>
-        </div>
+            <span class="truncate">{{ subject.name }}</span>
+
+            <template #subtitle>
+              <span class="text-xs text-muted truncate">
+                {{ getSubjectCategory(subject)?.name ?? 'Sem categoria' }}
+                <template v-if="todayTime(subject.id)"> · {{ todayTime(subject.id) }}</template>
+              </span>
+            </template>
+
+            <template #trailing>
+              <AkIconButton label="Iniciar estudo" size="sm" @click="startStudying(subject.id)">
+                <CuidaIcon name="play-outline" :size="16" />
+              </AkIconButton>
+              <AkIconButton label="Editar" size="sm" @click="openEditSubject(subject)">
+                <CuidaIcon name="edit-outline" :size="16" />
+              </AkIconButton>
+              <AkIconButton label="Excluir" size="sm" @click="confirmDeleteSubject(subject.id)">
+                <CuidaIcon name="trash-outline" :size="16" />
+              </AkIconButton>
+            </template>
+          </AkListRow>
+        </AkList>
+      </section>
+
+      <section class="section-block">
+        <AkSectionHeader title="Categorias">
+          <template #action>
+            <AkButton size="sm" variant="ghost" @click="showCategoryModal = true">+ Nova</AkButton>
+          </template>
+        </AkSectionHeader>
 
         <AkEmptyState
           v-if="subjectsStore.categories.length === 0"
-          title="Nenhuma categoria"
-          description="Organize suas matérias em categorias."
+          title="Sem categorias"
+          description="Organize suas matérias em grupos."
         />
 
-        <AkCard
-          v-for="cat in subjectsStore.categories"
-          :key="cat.id"
-          padding="sm"
-        >
-          <div class="flex-row" style="gap: var(--space-3)">
-            <div class="timeline-bar" :style="{ background: cat.color, width: '4px' }" />
-            <span class="text-sm font-semibold flex-1 min-w-0 truncate text-primary">{{ cat.name }}</span>
-            <AkBadge variant="neutral" :label="countInCategory(cat.id)" />
-            <AkButton size="sm" variant="ghost" @click="openEditCategory(cat)">
-              <template #icon>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </template>
-            </AkButton>
-            <AkButton size="sm" variant="ghost" @click="confirmDeleteCategory(cat.id)">
-              <template #icon>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                </svg>
-              </template>
-            </AkButton>
-          </div>
-        </AkCard>
-      </div>
-    </main>
+        <AkList v-else>
+          <AkListRow
+            v-for="(cat, i) in subjectsStore.categories"
+            :key="cat.id"
+            :divider="i < subjectsStore.categories.length - 1"
+          >
+            <template #leading>
+              <div class="subject-leading subject-leading--sm" :style="{ background: colorMix(cat.color, 15) }">
+                <span class="status-dot" :style="{ background: cat.color, width: '8px', height: '8px' }" />
+              </div>
+            </template>
 
-    <AkButton class="fab" variant="primary" @click="openAddSubject">
-      <template #icon>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-      </template>
-    </AkButton>
+            <span class="truncate">{{ cat.name }}</span>
+
+            <template #trailing>
+              <AkBadge variant="neutral" :label="countInCategory(cat.id)" />
+              <AkIconButton label="Editar" size="sm" @click="openEditCategory(cat)">
+                <CuidaIcon name="edit-outline" :size="16" />
+              </AkIconButton>
+              <AkIconButton label="Excluir" size="sm" @click="confirmDeleteCategory(cat.id)">
+                <CuidaIcon name="trash-outline" :size="16" />
+              </AkIconButton>
+            </template>
+          </AkListRow>
+        </AkList>
+      </section>
+    </div>
+
+    <AkIconButton class="fab" label="Nova matéria" variant="primary" @click="openAddSubject">
+      <CuidaIcon name="plus-outline" :size="22" color="var(--accent-contrast)" />
+    </AkIconButton>
 
     <SubjectModal
       :show="showSubjectModal"
@@ -158,12 +134,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { AkBadge, AkButton, AkCard, AkChip, AkEmptyState } from '@rafael_dias/akoma'
+import {
+  AkBadge, AkButton, AkChip, AkEmptyState, AkIconButton, AkList, AkListRow, AkSectionHeader,
+} from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useTimerStore } from '@/stores/timer'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
+import CuidaIcon from '@/components/ui/CuidaIcon.vue'
 import { formatDuration } from '@/types'
 import type { Subject, Category } from '@/types'
 
@@ -183,7 +162,7 @@ const filteredSubjects = computed(() => {
 })
 
 function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-elevated))`
+  return `color-mix(in srgb, ${color} ${pct}%, var(--bg))`
 }
 
 function openAddSubject() {
@@ -213,7 +192,7 @@ function getSubjectCategory(subject: Subject) {
 
 function countInCategory(catId: string) {
   const n = subjectsStore.subjects.filter(s => s.categoryId === catId).length
-  return n === 1 ? '1 matéria' : `${n} matérias`
+  return n === 1 ? '1' : String(n)
 }
 
 function todayTime(subjectId: string) {
@@ -241,3 +220,17 @@ async function confirmDeleteCategory(id: string) {
 
 onMounted(() => sessionsStore.loadToday())
 </script>
+
+<style scoped>
+:deep(.ak-list-row__trailing) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+.fab {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
+}
+</style>

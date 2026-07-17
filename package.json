@@ -9,7 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@rafael_dias/akoma": "^0.3.0",
+    "@rafael_dias/akoma": "^0.4.0",
+    "@sysvale/cuida-icons": "^1.18.0",
     "chart.js": "^4.4.7",
     "firebase": "^11.7.1",
     "pinia": "^2.3.1",
