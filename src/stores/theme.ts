@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { applyAccentPalette, type AccentPalette } from '@rafael_dias/akoma'
 
 const KEY = 'studyflow_theme'
 const ACCENT_KEY = 'studyflow_accent'
 
-export type AccentPreset = 'teal' | 'evergreen'
+export type AccentPreset = Extract<AccentPalette, 'teal' | 'evergreen'>
 
 export const useThemeStore = defineStore('theme', () => {
   const isDark = ref(true)
@@ -39,7 +40,7 @@ export const useThemeStore = defineStore('theme', () => {
     const root = document.documentElement
     root.dataset.mood = 'app'
     root.dataset.theme = isDark.value ? 'dark' : 'light'
-    root.dataset.accent = accent.value
+    applyAccentPalette(root, accent.value)
     root.classList.toggle('dark', isDark.value)
   }
 

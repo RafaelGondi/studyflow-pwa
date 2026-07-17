@@ -1,38 +1,74 @@
-/* StudyFlow — domain layout on Akoma tokens (Habitify-style rhythm) */
+/* StudyFlow — domain layout on Akoma 0.7.6 tokens */
 
-/* ── Accent presets (override App violet) ───────────────── */
-[data-accent='teal'] {
-  --accent: #14b8a6;
-  --accent-hover: #0d9488;
-  --accent-soft: color-mix(in srgb, #14b8a6 12%, var(--bg));
-  --accent-contrast: #ffffff;
-  --focus-ring: 0 0 0 3px color-mix(in srgb, #14b8a6 14%, transparent);
-  --orb-1: color-mix(in srgb, #14b8a6 12%, transparent);
-  --orb-2: color-mix(in srgb, #568269 10%, transparent);
+/* ── StudyFlow ambient tuning (teal productivity mood) ──── */
+[data-mood='app'][data-accent='teal'] {
+  --orb-2: color-mix(in srgb, #2e684f 16%, transparent);
+  --orb-3: color-mix(in srgb, #3a7d85 12%, transparent);
 }
 
-[data-accent='teal'][data-theme='dark'] {
-  --accent: #2dd4bf;
-  --accent-hover: #5eead4;
-  --accent-soft: color-mix(in srgb, #2dd4bf 14%, var(--bg));
-  --accent-contrast: #0f2926;
-  --focus-ring: 0 0 0 3px color-mix(in srgb, #2dd4bf 18%, transparent);
+[data-mood='app'][data-theme='dark'][data-accent='teal'] {
+  --orb-2: color-mix(in srgb, #568269 14%, transparent);
+  --orb-3: color-mix(in srgb, #7eb8bf 10%, transparent);
 }
 
-[data-accent='evergreen'] {
-  --accent: #2e684f;
-  --accent-hover: #245640;
-  --accent-soft: color-mix(in srgb, #2e684f 12%, var(--bg));
-  --accent-contrast: #ffffff;
-  --focus-ring: 0 0 0 3px color-mix(in srgb, #2e684f 14%, transparent);
-}
-
-/* ── App shell ──────────────────────────────────────────── */
+/* ── App shell + layered background ─────────────────────── */
 .app-shell {
   position: relative;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  isolation: isolate;
+}
+
+.app-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -8%, var(--bg-tinted), transparent 68%),
+    linear-gradient(
+      180deg,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg-tinted) 35%, var(--bg)) 45%,
+      var(--bg) 100%
+    );
+}
+
+.app-shell .ambient__orb {
+  filter: blur(76px);
+  opacity: 0.52;
+}
+
+[data-theme='dark'] .app-shell .ambient__orb {
+  opacity: 0.32;
+}
+
+.app-shell .ambient__orb--1 {
+  width: 300px;
+  height: 300px;
+  top: -72px;
+  right: -48px;
+}
+
+.app-shell .ambient__orb--2 {
+  width: 240px;
+  height: 240px;
+  bottom: 100px;
+  left: -64px;
+}
+
+.app-shell .ambient__orb--3 {
+  width: 180px;
+  height: 180px;
+  top: 38%;
+  right: 6%;
+  opacity: 0.38;
+}
+
+[data-theme='dark'] .app-shell .ambient__orb--3 {
+  opacity: 0.22;
 }
 
 .app-main {
@@ -66,6 +102,14 @@
   flex-direction: column;
   gap: var(--space-1);
   margin-bottom: var(--space-2);
+}
+
+.page-label {
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
 }
 
 .page-hero__meta {
@@ -193,58 +237,21 @@
   color: var(--text-secondary);
 }
 
-/* ── Tab bar (AkTabBar-style, tokens only) ──────────────── */
-.app-tab-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  pointer-events: none;
-}
-
-.app-tab-bar__inner {
-  pointer-events: auto;
-  display: flex;
-  max-width: var(--shell-max);
-  margin: 0 auto;
-  padding: var(--space-2) var(--space-4) calc(var(--space-2) + var(--safe-bottom));
-  background: var(--bg-elevated);
-  border-top: 1px solid var(--border);
-}
-
-.app-tab-bar__item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: var(--space-2) var(--space-1);
-  color: var(--text-tertiary);
-  text-decoration: none;
-  transition: color var(--transition);
-  min-width: 0;
+/* ── Tab bar badge (timer active) ───────────────────────── */
+.tab-icon-wrap {
   position: relative;
+  display: inline-flex;
 }
 
-.app-tab-bar__item--active {
-  color: var(--accent);
-}
-
-.app-tab-bar__label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-.app-tab-bar__dot {
+.tab-badge {
   position: absolute;
-  top: 6px;
-  right: calc(50% - 18px);
+  top: -2px;
+  right: -4px;
   width: 6px;
   height: 6px;
   border-radius: var(--radius-full);
   background: var(--accent);
+  box-shadow: 0 0 0 2px var(--nav-glass);
 }
 
 /* ── FAB ────────────────────────────────────────────────── */
@@ -253,6 +260,14 @@
   right: var(--space-5);
   bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-3));
   z-index: 40;
+  background: var(--accent) !important;
+  color: var(--accent-contrast) !important;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.fab:hover {
+  background: var(--accent-hover) !important;
 }
 
 /* ── Modals ─────────────────────────────────────────────── */

@@ -1,38 +1,41 @@
 <template>
-  <nav class="app-tab-bar" aria-label="Navegação principal">
-    <div class="app-tab-bar__inner">
-      <RouterLink
-        v-for="tab in tabs"
-        :key="tab.to"
-        :to="tab.to"
-        class="app-tab-bar__item tap-scale"
-        :class="{ 'app-tab-bar__item--active': isActive(tab.to) }"
-      >
-        <CuidaIcon :name="tab.icon" :size="22" />
-        <span v-if="tab.badge" class="app-tab-bar__dot" aria-label="Timer ativo" />
-        <span class="app-tab-bar__label">{{ tab.label }}</span>
-      </RouterLink>
-    </div>
-  </nav>
+  <AkTabBar v-model="activeTab">
+    <AkTabBarItem value="/" label="Início">
+      <template #icon>
+        <span class="tab-icon-wrap">
+          <AkIcon name="home-outline" :size="20" />
+          <span v-if="timerStore.isRunning" class="tab-badge" aria-label="Timer ativo" />
+        </span>
+      </template>
+    </AkTabBarItem>
+    <AkTabBarItem value="/subjects" label="Matérias" icon="open-book-outline" />
+    <AkTabBarItem value="/stats" label="Stats" icon="chart-column-outline" />
+    <AkTabBarItem value="/settings" label="Ajustes" icon="settings-outline" />
+  </AkTabBar>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { AkIcon, AkTabBar, AkTabBarItem } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
-import CuidaIcon from '@/components/ui/CuidaIcon.vue'
 
 const route = useRoute()
+const router = useRouter()
 const timerStore = useTimerStore()
 
-const tabs = computed(() => [
-  { to: '/', icon: 'home-outline', label: 'Início', badge: timerStore.isRunning },
-  { to: '/subjects', icon: 'open-book-outline', label: 'Matérias', badge: false },
-  { to: '/stats', icon: 'chart-column-outline', label: 'Stats', badge: false },
-  { to: '/settings', icon: 'settings-outline', label: 'Ajustes', badge: false },
-])
+const TAB_PATHS = ['/', '/subjects', '/stats', '/settings'] as const
 
-function isActive(path: string) {
-  return path === '/' ? route.path === '/' : route.path.startsWith(path)
+function pathToTab(path: string): string {
+  if (path === '/') return '/'
+  const match = TAB_PATHS.find(tab => tab !== '/' && path.startsWith(tab))
+  return match ?? '/'
 }
+
+const activeTab = computed({
+  get: () => pathToTab(route.path),
+  set: (value: string) => {
+    if (pathToTab(route.path) !== value) router.push(value)
+  },
+})
 </script>

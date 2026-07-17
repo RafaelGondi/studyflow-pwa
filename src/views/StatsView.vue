@@ -96,12 +96,8 @@
                 <span class="numeric text-sm shrink-0" :class="item.type === 'break' ? 'text-warning' : 'text-secondary'">
                   {{ formatDuration(item.session.duration) }}
                 </span>
-                <AkIconButton label="Editar" size="sm" @click="editingSession = item.session">
-                  <CuidaIcon name="edit-outline" :size="16" />
-                </AkIconButton>
-                <AkIconButton label="Excluir" size="sm" @click="deleteSession(item.session.id)">
-                  <CuidaIcon name="trash-outline" :size="16" />
-                </AkIconButton>
+                <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
+                <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="deleteSession(item.session.id)" />
               </template>
             </AkListRow>
           </AkList>
@@ -129,7 +125,6 @@ import WeeklyChart from '@/components/stats/WeeklyChart.vue'
 import BreakWeeklyChart from '@/components/stats/BreakWeeklyChart.vue'
 import SubjectDonut from '@/components/stats/SubjectDonut.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
-import CuidaIcon from '@/components/ui/CuidaIcon.vue'
 import { formatDuration, localDateStr, isStudySession, isBreakSession } from '@/types'
 import { buildTimeline } from '@/utils/timeline'
 import type { StudySession } from '@/types'

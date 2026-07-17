@@ -56,15 +56,9 @@
             </template>
 
             <template #trailing>
-              <AkIconButton label="Iniciar estudo" size="sm" @click="startStudying(subject.id)">
-                <CuidaIcon name="play-outline" :size="16" />
-              </AkIconButton>
-              <AkIconButton label="Editar" size="sm" @click="openEditSubject(subject)">
-                <CuidaIcon name="edit-outline" :size="16" />
-              </AkIconButton>
-              <AkIconButton label="Excluir" size="sm" @click="confirmDeleteSubject(subject.id)">
-                <CuidaIcon name="trash-outline" :size="16" />
-              </AkIconButton>
+              <AkIconButton label="Iniciar estudo" size="sm" icon="play-outline" @click="startStudying(subject.id)" />
+              <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="openEditSubject(subject)" />
+              <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="confirmDeleteSubject(subject.id)" />
             </template>
           </AkListRow>
         </AkList>
@@ -99,21 +93,15 @@
 
             <template #trailing>
               <AkBadge variant="neutral" :label="countInCategory(cat.id)" />
-              <AkIconButton label="Editar" size="sm" @click="openEditCategory(cat)">
-                <CuidaIcon name="edit-outline" :size="16" />
-              </AkIconButton>
-              <AkIconButton label="Excluir" size="sm" @click="confirmDeleteCategory(cat.id)">
-                <CuidaIcon name="trash-outline" :size="16" />
-              </AkIconButton>
+              <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="openEditCategory(cat)" />
+              <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="confirmDeleteCategory(cat.id)" />
             </template>
           </AkListRow>
         </AkList>
       </section>
     </div>
 
-    <AkIconButton class="fab" label="Nova matéria" variant="primary" @click="openAddSubject">
-      <CuidaIcon name="plus-outline" :size="22" color="var(--accent-contrast)" />
-    </AkIconButton>
+    <AkIconButton class="fab" label="Nova matéria" size="lg" icon="plus-outline" @click="openAddSubject" />
 
     <SubjectModal
       :show="showSubjectModal"
@@ -142,7 +130,6 @@ import { useSessionsStore } from '@/stores/sessions'
 import { useTimerStore } from '@/stores/timer'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
-import CuidaIcon from '@/components/ui/CuidaIcon.vue'
 import { formatDuration } from '@/types'
 import type { Subject, Category } from '@/types'
 

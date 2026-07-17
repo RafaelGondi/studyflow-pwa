@@ -6,9 +6,7 @@
         <AkCard padding="none" class="modal-sheet">
           <div class="modal-header">
             <h2 class="modal-title">{{ category ? 'Editar categoria' : 'Nova categoria' }}</h2>
-            <AkIconButton label="Fechar" size="sm" @click="emit('close')">
-              <CuidaIcon name="x-outline" :size="18" />
-            </AkIconButton>
+            <AkIconButton label="Fechar" size="sm" icon="x-outline" @click="emit('close')" />
           </div>
 
           <div class="modal-body stack">
@@ -67,7 +65,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { AkButton, AkCard, AkIconButton, AkInput } from '@rafael_dias/akoma'
-import CuidaIcon from '@/components/ui/CuidaIcon.vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import { SUBJECT_COLORS } from '@/types'
 import type { Category } from '@/types'

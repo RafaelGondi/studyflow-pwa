@@ -59,7 +59,7 @@
               <span class="text-xs text-muted">Sincronize em qualquer dispositivo</span>
             </template>
             <template #trailing>
-              <CuidaIcon name="arrow-right-outline" :size="18" />
+              <AkIcon name="arrow-right-outline" :size="18" />
             </template>
           </AkListRow>
         </AkList>
@@ -110,7 +110,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import {
-  AkBadge, AkButton, AkCard, AkList, AkListRow, AkSectionHeader, AkSwitch,
+  AkBadge, AkButton, AkCard, AkIcon, AkList, AkListRow, AkSectionHeader, AkSwitch,
 } from '@rafael_dias/akoma'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
@@ -119,7 +119,6 @@ import { useSessionsStore } from '@/stores/sessions'
 import { usePwaInstall } from '@/composables/usePwaInstall'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
-import CuidaIcon from '@/components/ui/CuidaIcon.vue'
 
 const theme = useThemeStore()
 const authStore = useAuthStore()

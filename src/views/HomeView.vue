@@ -38,20 +38,15 @@
         <AkSectionHeader :title="dateNavLabel">
           <template #action>
             <div class="flex-row" style="gap: var(--space-1)">
-              <AkIconButton label="Dia anterior" size="sm" @click="goPrev">
-                <CuidaIcon name="arrow-left-outline" :size="18" />
-              </AkIconButton>
+              <AkIconButton label="Dia anterior" size="sm" icon="arrow-left-outline" @click="goPrev" />
               <AkIconButton
                 v-if="isToday"
                 label="Adicionar registro"
                 size="sm"
+                icon="plus-outline"
                 @click="showAddModal = true"
-              >
-                <CuidaIcon name="plus-outline" :size="18" />
-              </AkIconButton>
-              <AkIconButton label="Próximo dia" size="sm" :disabled="isToday" @click="goNext">
-                <CuidaIcon name="arrow-right-outline" :size="18" />
-              </AkIconButton>
+              />
+              <AkIconButton label="Próximo dia" size="sm" icon="arrow-right-outline" :disabled="isToday" @click="goNext" />
             </div>
           </template>
         </AkSectionHeader>
@@ -117,12 +112,8 @@
                 >
                   {{ formatDuration(item.session.duration) }}
                 </span>
-                <AkIconButton label="Editar" size="sm" @click="editingSession = item.session">
-                  <CuidaIcon name="edit-outline" :size="16" />
-                </AkIconButton>
-                <AkIconButton label="Excluir" size="sm" @click="deleteSession(item.session.id)">
-                  <CuidaIcon name="trash-outline" :size="16" />
-                </AkIconButton>
+                <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
+                <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="deleteSession(item.session.id)" />
               </template>
             </AkListRow>
           </template>
@@ -161,7 +152,6 @@ import ActiveTimerBar from '@/components/home/ActiveTimerBar.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
-import CuidaIcon from '@/components/ui/CuidaIcon.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { formatDuration, formatTimer, localDateStr, todayDateString, isStudySession, isBreakSession } from '@/types'
 import { buildTimeline } from '@/utils/timeline'
