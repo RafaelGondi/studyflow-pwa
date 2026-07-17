@@ -1,6 +1,10 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
+
+const root = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   server: {
@@ -19,8 +23,8 @@ export default defineConfig({
         description: 'Gerenciador de estudos moderno',
         start_url: '/',
         scope: '/',
-        theme_color: '#14b8a6',
-        background_color: '#f6f5f2',
+        theme_color: '#3a7d85',
+        background_color: '#f9f9f7',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
@@ -42,7 +46,10 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: { '@': '/src' },
+    alias: {
+      '@': path.resolve(root, 'src'),
+      '@sysvale/cuida-icons': path.resolve(root, 'node_modules/@sysvale/cuida-icons/dist/index.js'),
+    },
   },
   build: {
     rollupOptions: {

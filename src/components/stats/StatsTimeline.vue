@@ -76,8 +76,8 @@ const emit = defineEmits<{
 const subjectsStore = useSubjectsStore()
 const entries = computed(() => buildStatsTimeline(props.sessions))
 
-function getSubject(id: string) {
-  return subjectsStore.getSubject(id)
+function getSubject(id?: string) {
+  return id ? subjectsStore.getSubject(id) : undefined
 }
 
 function entryKey(entry: TimelineEntry, i: number) {

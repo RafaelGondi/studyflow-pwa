@@ -1,276 +1,217 @@
 ﻿<template>
-  <div class="min-h-screen flex flex-col akoma-page">
-    <header class="mb-4 reveal">
-      <span class="page-label">Progresso</span>
-      <h1 class="page-title">Estatísticas</h1>
-    </header>
+  <div class="page akoma-page">
+    <PageHeader
+      label="Progresso"
+      title="Estatísticas"
+      meta="Estudo e pausas no período"
+    />
 
-    <!-- Period tabs -->
-    <div class="pb-4 reveal reveal-d1">
-      <div class="flex card p-1 gap-1">
-        <button
-          v-for="p in periods"
-          :key="p.value"
-          @click="period = p.value"
-          class="flex-1 py-2 rounded-akoma text-sm font-semibold transition-all duration-200 tap-scale"
-          :class="period === p.value
-            ? 'bg-accent text-white shadow-akoma'
-            : 'text-muted'"
-        >
-          {{ p.label }}
-        </button>
-      </div>
+    <div class="chip-scroll reveal reveal-d1">
+      <AkChip
+        v-for="p in periods"
+        :key="p.value"
+        :active="period === p.value"
+        @click="period = p.value"
+      >
+        {{ p.label }}
+      </AkChip>
     </div>
 
-    <main class="flex-1 overflow-y-auto pb-4 space-y-4 reveal reveal-d2">
+    <div class="page-body reveal reveal-d2">
+      <div class="today-summary reveal reveal-d1">
+        <div class="today-summary__item">
+          <span class="today-summary__label">Estudo</span>
+          <span class="today-summary__value numeric">{{ formatDuration(studyTotalSeconds) }}</span>
+        </div>
+        <div class="today-summary__item today-summary__item--break">
+          <span class="today-summary__label">Pausa</span>
+          <span class="today-summary__value numeric">{{ formatDuration(breakTotalSeconds) }}</span>
+        </div>
+      </div>
 
-      <!-- ── DIA ─────────────────────────────────────────────── -->
-      <template v-if="period === 'day'">
-        <StudyCalendar
-          :year="calYear"
-          :month="calMonth"
-          :selected-date="selectedDate"
-          :daily-totals="dailyTotals"
-          @select="selectDate"
-          @update:month="setCalendarMonth"
+      <div class="chip-row">
+        <AkChip v-for="t in chartTabs" :key="t.key" :active="chartTab === t.key" @click="chartTab = t.key">
+          {{ t.label }}
+        </AkChip>
+      </div>
+
+      <WeeklyChart v-if="chartTab === 'study'" :sessions="weekChartSessions" />
+      <BreakWeeklyChart v-else :sessions="weekChartSessions" />
+
+      <SubjectDonut v-if="chartTab === 'study'" :sessions="sessions" />
+
+      <section class="section-block">
+        <AkSectionHeader title="Histórico" />
+
+        <AkEmptyState
+          v-if="groupedTimeline.length === 0"
+          title="Nenhum registro"
+          description="Nada neste período ainda."
         />
 
-        <DaySummary :sessions="daySessions" :date="selectedDate" />
+        <template v-for="group in groupedTimeline" :key="group.date">
+          <AkSectionHeader :title="formatGroupDate(group.date)">
+            <template #action>
+              <span class="text-xs text-muted numeric">
+                {{ formatDuration(group.studyTotal) }}
+                <span v-if="group.breakTotal > 0" class="text-warning"> · ☕ {{ formatDuration(group.breakTotal) }}</span>
+              </span>
+            </template>
+          </AkSectionHeader>
 
-        <DayActivityGrid :sessions="daySessions" />
+          <AkList>
+            <AkListRow
+              v-for="(item, i) in group.items"
+              :key="item.session.id"
+              :divider="i < group.items.length - 1"
+            >
+              <template #leading>
+                <div v-if="item.type === 'break'" class="subject-leading subject-leading--sm">☕</div>
+                <div v-else class="subject-leading subject-leading--sm">
+                  {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
+                </div>
+              </template>
 
-        <DayActivityChart :sessions="daySessions" />
+              <span class="truncate">
+                {{ item.type === 'break' ? 'Pausa' : (getSubject(item.session.subjectId)?.name ?? 'Matéria') }}
+              </span>
 
-        <SubjectDonut :sessions="daySessions" />
+              <template #subtitle>
+                <span class="text-xs text-muted">
+                  {{ formatTime(item.session.startTime) }} → {{ formatTime(item.session.endTime) }}
+                </span>
+              </template>
 
-        <StatsTimeline
-          :sessions="daySessions"
-          @edit="editingSession = $event"
-          @delete="deleteSession"
-        />
-      </template>
-
-      <!-- ── SEMANA ──────────────────────────────────────────── -->
-      <template v-else-if="period === 'week'">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="card p-4">
-            <p class="text-xs text-muted font-medium uppercase tracking-wider">Total</p>
-            <p class="text-2xl font-bold text-primary mt-1">{{ formatDuration(weekTotal) }}</p>
-            <p class="text-xs text-faint mt-1">nesta semana</p>
-          </div>
-          <div class="card p-4">
-            <p class="text-xs text-muted font-medium uppercase tracking-wider">Sessões</p>
-            <p class="text-2xl font-bold text-primary mt-1">{{ weekSessions.length }}</p>
-            <p class="text-xs text-faint mt-1">~{{ formatDuration(weekAvg) }} / dia</p>
-          </div>
-        </div>
-
-        <WeeklyChart :sessions="weekSessions" />
-        <SubjectDonut :sessions="weekSessions" />
-
-        <div class="space-y-4">
-          <div v-for="group in weekGrouped" :key="group.date" class="space-y-2">
-            <div class="flex items-center justify-between px-1">
-              <span class="text-xs font-semibold text-muted">{{ formatGroupDate(group.date) }}</span>
-              <span class="text-xs text-faint">{{ formatDuration(group.total) }}</span>
-            </div>
-            <StatsTimeline
-              :sessions="group.sessions"
-              :show-title="false"
-              @edit="editingSession = $event"
-              @delete="deleteSession"
-            />
-          </div>
-          <div v-if="weekGrouped.length === 0" class="py-8 text-center text-faint text-sm card">
-            Nenhuma sessão nesta semana
-          </div>
-        </div>
-      </template>
-
-      <!-- ── MÊS ─────────────────────────────────────────────── -->
-      <template v-else>
-        <StudyCalendar
-          :year="calYear"
-          :month="calMonth"
-          :selected-date="selectedDate"
-          :daily-totals="dailyTotals"
-          @select="selectDate"
-          @update:month="setCalendarMonth"
-        />
-
-        <div class="grid grid-cols-2 gap-3">
-          <div class="card p-4">
-            <p class="text-xs text-muted font-medium uppercase tracking-wider">Total do mês</p>
-            <p class="text-2xl font-bold text-primary mt-1">{{ formatShortDayTotal(monthTotal) }}</p>
-            <p class="text-xs text-faint mt-1 capitalize">{{ monthLabel(calYear, calMonth) }}</p>
-          </div>
-          <div class="card p-4">
-            <p class="text-xs text-muted font-medium uppercase tracking-wider">Dias ativos</p>
-            <p class="text-2xl font-bold text-primary mt-1">{{ activeDays }}</p>
-            <p class="text-xs text-faint mt-1">com estudo</p>
-          </div>
-        </div>
-
-        <SubjectDonut :sessions="monthSessions" />
-      </template>
-
-    </main>
+              <template #trailing>
+                <span class="numeric text-sm shrink-0" :class="item.type === 'break' ? 'text-warning' : 'text-secondary'">
+                  {{ formatDuration(item.session.duration) }}
+                </span>
+                <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
+                <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="deleteSession(item.session.id)" />
+              </template>
+            </AkListRow>
+          </AkList>
+        </template>
+      </section>
+    </div>
 
     <SessionEditModal
       :show="!!editingSession"
       :session="editingSession"
       @close="editingSession = null"
-      @saved="reload(); editingSession = null"
+      @saved="reloadAll(); editingSession = null"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import {
+  AkChip, AkEmptyState, AkIconButton, AkList, AkListRow, AkSectionHeader,
+} from '@rafael_dias/akoma'
 import { useSessionsStore } from '@/stores/sessions'
-import StudyCalendar from '@/components/stats/StudyCalendar.vue'
-import DaySummary from '@/components/stats/DaySummary.vue'
-import DayActivityGrid from '@/components/stats/DayActivityGrid.vue'
-import DayActivityChart from '@/components/stats/DayActivityChart.vue'
-import StatsTimeline from '@/components/stats/StatsTimeline.vue'
+import { useSubjectsStore } from '@/stores/subjects'
 import WeeklyChart from '@/components/stats/WeeklyChart.vue'
+import BreakWeeklyChart from '@/components/stats/BreakWeeklyChart.vue'
 import SubjectDonut from '@/components/stats/SubjectDonut.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
-import { formatDuration, localDateStr, todayDateString } from '@/types'
-import { aggregateByDate, formatShortDayTotal, monthLabel } from '@/utils/stats'
+import PageHeader from '@/components/layout/PageHeader.vue'
+import { formatDuration, localDateStr, isStudySession, isBreakSession } from '@/types'
+import { buildTimeline } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
 const sessionsStore = useSessionsStore()
+const subjectsStore = useSubjectsStore()
 const editingSession = ref<StudySession | null>(null)
 
-type Period = 'day' | 'week' | 'month'
-const period = ref<Period>('day')
+type Period = 'today' | 'week' | 'month'
+const period = ref<Period>('today')
+const chartTab = ref<'study' | 'break'>('study')
 
 const periods = [
-  { value: 'day' as Period, label: 'Dia' },
-  { value: 'week' as Period, label: 'Semana' },
+  { value: 'today' as Period, label: 'Hoje' },
+  { value: 'week'  as Period, label: 'Semana' },
   { value: 'month' as Period, label: 'Mês' },
 ]
 
-const now = new Date()
-const selectedDate = ref(todayDateString())
-const calYear = ref(now.getFullYear())
-const calMonth = ref(now.getMonth())
+const chartTabs = [
+  { key: 'study' as const, label: 'Estudo' },
+  { key: 'break' as const, label: 'Pausa' },
+]
 
-const monthSessions = ref<StudySession[]>([])
-const weekSessions = ref<StudySession[]>([])
-const daySessions = ref<StudySession[]>([])
+const sessions = computed(() => sessionsStore.rangeSessions)
+const studySessions = computed(() => sessions.value.filter(isStudySession))
+const breakSessions = computed(() => sessions.value.filter(isBreakSession))
+const studyTotalSeconds = computed(() => studySessions.value.reduce((a, s) => a + s.duration, 0))
+const breakTotalSeconds = computed(() => breakSessions.value.reduce((a, s) => a + s.duration, 0))
+const weekChartSessions = ref<StudySession[]>([])
 
-const dailyTotals = computed(() => aggregateByDate(monthSessions.value))
-
-const weekTotal = computed(() => weekSessions.value.reduce((a, s) => a + s.duration, 0))
-const weekAvg = computed(() => Math.round(weekTotal.value / 7))
-
-const monthTotal = computed(() => {
-  let t = 0
-  for (const [date, secs] of dailyTotals.value) {
-    const d = new Date(date + 'T12:00:00')
-    if (d.getFullYear() === calYear.value && d.getMonth() === calMonth.value) t += secs
-  }
-  return t
-})
-
-const activeDays = computed(() => {
-  let n = 0
-  for (const [date, secs] of dailyTotals.value) {
-    const d = new Date(date + 'T12:00:00')
-    if (d.getFullYear() === calYear.value && d.getMonth() === calMonth.value && secs > 0) n++
-  }
-  return n
-})
-
-const weekGrouped = computed(() => {
+const groupedTimeline = computed(() => {
   const map = new Map<string, StudySession[]>()
-  for (const s of weekSessions.value) {
+  for (const s of sessions.value) {
     if (!map.has(s.date)) map.set(s.date, [])
     map.get(s.date)!.push(s)
   }
   return [...map.entries()]
     .sort(([a], [b]) => b.localeCompare(a))
-    .map(([date, sessions]) => ({
+    .map(([date, daySessions]) => ({
       date,
-      sessions: sessions.sort((a, b) => a.startTime - b.startTime),
-      total: sessions.reduce((a, s) => a + s.duration, 0),
+      items: buildTimeline(daySessions).filter(i => i.type !== 'gap'),
+      studyTotal: daySessions.filter(isStudySession).reduce((a, s) => a + s.duration, 0),
+      breakTotal: daySessions.filter(isBreakSession).reduce((a, s) => a + s.duration, 0),
     }))
 })
 
+function getSubject(id?: string) { return id ? subjectsStore.getSubject(id) : undefined }
+function formatTime(ts: number) {
+  return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
 function formatGroupDate(date: string) {
   const d = new Date(date + 'T12:00:00')
-  if (date === todayDateString()) return 'Hoje'
-  return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
+  if (date === localDateStr()) return 'Hoje'
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })
 }
 
 async function deleteSession(id: string) {
-  if (confirm('Excluir esta sessão?')) await reloadAfterDelete(id)
-}
-
-async function reloadAfterDelete(id: string) {
-  await sessionsStore.remove(id)
-  await reload()
-}
-
-function setCalendarMonth(year: number, month: number) {
-  calYear.value = year
-  calMonth.value = month
-}
-
-function selectDate(date: string) {
-  selectedDate.value = date
-  const d = new Date(date + 'T12:00:00')
-  calYear.value = d.getFullYear()
-  calMonth.value = d.getMonth()
-  if (period.value === 'month') period.value = 'day'
-}
-
-function monthRange(year: number, month: number) {
-  const first = localDateStr(new Date(year, month, 1))
-  const last = localDateStr(new Date(year, month + 1, 0))
-  return { from: first, to: last }
-}
-
-async function loadMonth() {
-  const { from, to } = monthRange(calYear.value, calMonth.value)
-  monthSessions.value = await sessionsStore.fetchRange(from, to)
-  await loadDay()
-}
-
-async function loadDay() {
-  daySessions.value = monthSessions.value
-    .filter(s => s.date === selectedDate.value)
-    .sort((a, b) => a.startTime - b.startTime)
-
-  if (daySessions.value.length === 0) {
-    daySessions.value = await sessionsStore.loadDate(selectedDate.value)
+  if (confirm('Excluir este registro?')) {
+    await sessionsStore.remove(id)
+    await reloadAll()
   }
 }
 
-async function loadWeek() {
-  const end = new Date()
-  const start = new Date()
-  start.setDate(end.getDate() - 6)
-  weekSessions.value = await sessionsStore.fetchRange(localDateStr(start), localDateStr(end))
-}
-
-async function reload() {
-  await Promise.all([loadMonth(), loadWeek()])
-}
-
-watch([calYear, calMonth], loadMonth)
-watch(selectedDate, loadDay)
-watch(period, (p) => {
-  if (p === 'week') loadWeek()
-  if (p === 'month' || p === 'day') {
-    const d = new Date(selectedDate.value + 'T12:00:00')
-    calYear.value = d.getFullYear()
-    calMonth.value = d.getMonth()
-    loadMonth()
+async function loadRange() {
+  const now = new Date()
+  const to = localDateStr(now)
+  let from: string
+  if (period.value === 'today') from = to
+  else if (period.value === 'week') {
+    const d = new Date(now); d.setDate(now.getDate() - 6); from = localDateStr(d)
+  } else {
+    const d = new Date(now); d.setDate(now.getDate() - 29); from = localDateStr(d)
   }
-})
+  await sessionsStore.loadRange(from, to)
+}
 
-onMounted(reload)
+async function loadWeekChart() {
+  const now = new Date()
+  const to = localDateStr(now)
+  const d = new Date(now); d.setDate(now.getDate() - 6)
+  weekChartSessions.value = await sessionsStore.fetchRange(localDateStr(d), to)
+}
+
+async function reloadAll() {
+  await Promise.all([loadRange(), loadWeekChart()])
+}
+
+watch(period, reloadAll)
+onMounted(reloadAll)
 </script>
+
+<style scoped>
+:deep(.ak-list-row__trailing) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+</style>

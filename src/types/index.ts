@@ -21,15 +21,26 @@ export interface StudySegment {
   end: number
 }
 
+export type SessionKind = 'study' | 'break'
+
 export interface StudySession {
   id: string
-  subjectId: string
+  subjectId?: string
   startTime: number
   endTime: number
   duration: number // seconds
   date: string    // YYYY-MM-DD
   userId: string
   segments?: StudySegment[]
+  kind?: SessionKind // ausente = estudo (retrocompatível)
+}
+
+export function isStudySession(s: StudySession): boolean {
+  return s.kind !== 'break'
+}
+
+export function isBreakSession(s: StudySession): boolean {
+  return s.kind === 'break'
 }
 
 export interface ActiveTimer {
