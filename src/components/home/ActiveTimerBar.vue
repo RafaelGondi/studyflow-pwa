@@ -1,93 +1,86 @@
 <template>
-  <div class="card p-3 space-y-3">
-    <!-- Break mode -->
-    <div v-if="timerStore.mode === 'break'" class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-akoma flex items-center justify-center text-lg flex-shrink-0 bg-amber-500/15">
-        ☕
-      </div>
+  <AkCard padding="sm">
+    <div v-if="timerStore.mode === 'break'" class="flex-row" style="gap: var(--space-3)">
+      <div class="subject-avatar" :style="{ background: 'var(--warning-soft)' }">☕</div>
       <div class="flex-1 min-w-0">
         <p class="text-sm font-semibold text-primary">Em pausa</p>
-        <p class="text-2xl font-bold tabular-nums text-amber-500">{{ timerStore.breakFormatted }}</p>
+        <p class="text-2xl font-bold numeric text-warning">{{ timerStore.breakFormatted }}</p>
       </div>
-      <div class="flex items-center gap-1.5">
-        <button
-          v-if="lastSubjectId"
-          @click="emit('continue')"
-          class="px-3 py-2 btn-primary text-xs tap-scale"
-        >
+      <div class="flex-row" style="gap: var(--space-2)">
+        <AkButton v-if="lastSubjectId" size="sm" variant="primary" @click="emit('continue')">
           Continuar
-        </button>
-        <button @click="emit('stop')" class="px-3 py-2 btn-secondary text-xs text-muted tap-scale">
-          Encerrar
-        </button>
+        </AkButton>
+        <AkButton size="sm" variant="secondary" @click="emit('stop')">Encerrar</AkButton>
       </div>
     </div>
 
-    <!-- Study / paused mode -->
-    <div v-else class="space-y-3">
-      <div class="flex items-center gap-3">
+    <div v-else class="stack-sm">
+      <div class="flex-row" style="gap: var(--space-3)">
         <div
-          class="w-9 h-9 rounded-akoma flex items-center justify-center text-lg flex-shrink-0"
-          :style="{ background: `${subject?.color ?? 'var(--accent-color)'}18` }"
+          class="subject-avatar"
+          :style="{ background: colorMix(subject?.color ?? 'var(--accent)', 10) }"
         >
           {{ subject?.icon ?? '📚' }}
         </div>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-semibold text-primary truncate">{{ subject?.name ?? 'Estudo' }}</p>
-          <div class="flex items-center gap-1.5">
+          <div class="flex-row" style="gap: var(--space-2)">
             <div
-              class="w-1.5 h-1.5 rounded-full"
-              :class="timerStore.isRunning ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"
+              class="status-dot"
+              :class="timerStore.isRunning ? 'status-dot--live' : 'status-dot--paused'"
             />
-            <span class="text-[11px]" :class="timerStore.isRunning ? 'text-emerald-500' : 'text-amber-500'">
+            <span class="text-xs" :class="timerStore.isRunning ? 'text-success' : 'text-warning'">
               {{ timerStore.isRunning ? 'Gravando' : 'Pausado' }}
             </span>
           </div>
         </div>
         <span
-          class="text-xl font-bold tabular-nums"
-          :style="{ color: subject?.color ?? 'var(--accent-color)' }"
+          class="text-xl font-bold numeric"
+          :style="{ color: subject?.color ?? 'var(--accent)' }"
         >
           {{ timerStore.studyFormatted }}
         </span>
       </div>
 
-      <div class="grid grid-cols-3 gap-2">
-        <button @click="emit('stop')" class="py-2.5 btn-secondary flex flex-col items-center gap-0.5 text-muted tap-scale">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
-          <span class="text-[10px] font-semibold">Parar</span>
-        </button>
+      <div class="grid-3">
+        <AkButton size="sm" variant="secondary" @click="emit('stop')">
+          <template #icon>
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+          </template>
+          Parar
+        </AkButton>
 
-        <button
+        <AkButton
+          size="sm"
+          variant="primary"
+          :style="!timerStore.isRunning ? { background: 'var(--success)' } : { background: subject?.color ?? 'var(--accent)' }"
           @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
-          class="py-2.5 rounded-akoma font-bold text-white flex flex-col items-center gap-0.5 tap-scale"
-          :style="{ background: timerStore.isRunning ? (subject?.color ?? 'var(--accent-color)') : '#10b981' }"
         >
-          <svg v-if="timerStore.isRunning" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
-          </svg>
-          <svg v-else class="w-4 h-4 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
-            <polygon points="5,3 19,12 5,21"/>
-          </svg>
-          <span class="text-[10px] font-semibold">{{ timerStore.isRunning ? 'Pausar' : 'Retomar' }}</span>
-        </button>
+          <template #icon>
+            <svg v-if="timerStore.isRunning" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          </template>
+          {{ timerStore.isRunning ? 'Pausar' : 'Retomar' }}
+        </AkButton>
 
-        <button @click="emit('break')" class="py-2.5 btn-secondary flex flex-col items-center gap-0.5 tap-scale" style="color: var(--cat-3)">
-          <span class="text-base leading-none">☕</span>
-          <span class="text-[10px] font-semibold">Pausa</span>
-        </button>
+        <AkButton size="sm" variant="secondary" style="color: var(--cat-3)" @click="emit('break')">
+          ☕ Pausa
+        </AkButton>
       </div>
     </div>
-  </div>
+  </AkCard>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { AkButton, AkCard } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSubjectsStore } from '@/stores/subjects'
 import type { Subject } from '@/types'
 
-const props = defineProps<{
+defineProps<{
   lastSubjectId?: string | null
 }>()
 
@@ -104,4 +97,8 @@ const subject = computed<Subject | null>(() => {
   const id = timerStore.activeSubjectId
   return id ? subjectsStore.getSubject(id) ?? null : null
 })
+
+function colorMix(color: string, pct: number) {
+  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-elevated))`
+}
 </script>

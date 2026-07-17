@@ -1,31 +1,29 @@
 <template>
-  <div class="min-h-screen flex flex-col akoma-page" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
+  <div class="page akoma-page" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
 
-    <header class="flex items-center justify-between mb-5 reveal">
+    <header class="flex-between page-header reveal">
       <div>
         <span class="page-label">{{ greeting }}</span>
         <h1 class="page-title">StudyFlow</h1>
       </div>
-      <span class="text-xs font-semibold text-muted">{{ dateLabel }}</span>
+      <span class="page-meta">{{ dateLabel }}</span>
     </header>
 
-    <!-- Summary cards -->
-    <div class="grid grid-cols-2 gap-3 mb-4 reveal reveal-d1">
-      <div class="card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-bold text-accent uppercase tracking-wider">Estudo</span>
-        <span class="font-display text-2xl font-bold text-primary tabular-nums">{{ studyTotalFormatted }}</span>
-        <span class="text-[10px] text-muted">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
-      </div>
-      <div class="card p-3 flex flex-col gap-0.5">
-        <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--cat-3)">Pausa</span>
-        <span class="font-display text-2xl font-bold text-primary tabular-nums">{{ breakTotalFormatted }}</span>
-        <span class="text-[10px] text-muted">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
-      </div>
+    <div class="grid-2 reveal reveal-d1" style="margin-bottom: var(--space-4)">
+      <AkCard padding="sm">
+        <span class="stat-label text-accent">Estudo</span>
+        <span class="stat-value numeric">{{ studyTotalFormatted }}</span>
+        <span class="stat-hint">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
+      </AkCard>
+      <AkCard padding="sm">
+        <span class="stat-label" style="color: var(--cat-3)">Pausa</span>
+        <span class="stat-value numeric">{{ breakTotalFormatted }}</span>
+        <span class="stat-hint">{{ isToday ? 'hoje' : dateNavLabel.toLowerCase() }}</span>
+      </AkCard>
     </div>
 
-    <main class="flex-1 overflow-y-auto pb-4 space-y-4 reveal reveal-d2">
+    <main class="scroll-main stack reveal reveal-d2">
 
-      <!-- Subject list (Study Checker style) -->
       <SubjectStudyList
         v-if="isToday"
         :active-id="timerStore.activeSubjectId"
@@ -34,7 +32,6 @@
         @select="handleSubjectSelect"
       />
 
-      <!-- Compact timer bar -->
       <ActiveTimerBar
         v-if="isToday && timerStore.mode !== 'idle'"
         :last-subject-id="lastSubjectId"
@@ -43,121 +40,125 @@
         @continue="handleContinue"
       />
 
-      <!-- Timeline -->
-      <div class="pt-1">
-        <div class="flex items-center justify-between px-1 mb-3">
-          <button
-            @click="goPrev"
-            class="w-7 h-7 btn-icon tap-scale"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-          </button>
+      <div>
+        <div class="flex-between" style="padding: 0 var(--space-1); margin-bottom: var(--space-3)">
+          <AkButton size="sm" variant="ghost" @click="goPrev">
+            <template #icon>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </template>
+          </AkButton>
 
-          <div class="flex items-center gap-2">
+          <div class="flex-row" style="gap: var(--space-2)">
             <span class="text-xs font-semibold text-muted">{{ dateNavLabel }}</span>
-            <button
+            <AkButton
               v-if="isToday"
-              @click="showAddModal = true"
-              class="w-6 h-6 btn-icon tap-scale"
+              size="sm"
+              variant="ghost"
               title="Adicionar registro"
+              @click="showAddModal = true"
             >
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </button>
+              <template #icon>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </template>
+            </AkButton>
           </div>
 
-          <button
-            @click="goNext"
-            :disabled="isToday"
-            class="w-7 h-7 rounded-md bg-app-elevated flex items-center justify-center transition-all"
-            :class="isToday ? 'text-faint opacity-30 cursor-default' : 'tap-scale'"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
+          <AkButton size="sm" variant="ghost" :disabled="isToday" @click="goNext">
+            <template #icon>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </template>
+          </AkButton>
         </div>
 
-        <div v-if="loadingHistory" class="py-6 flex justify-center">
-          <div class="w-5 h-5 rounded-full border-2 border-app-elevated border-t-accent animate-spin" />
+        <div v-if="loadingHistory" class="loading-center">
+          <AkShimmer width="24px" height="24px" radius="full" />
         </div>
 
-        <div v-else-if="timeline.length === 0" class="py-8 text-center text-faint text-sm">
-          Nenhum registro neste dia
-        </div>
+        <AkEmptyState
+          v-else-if="timeline.length === 0"
+          title="Nenhum registro neste dia"
+          description="Adicione um registro manual ou comece a estudar."
+        />
 
         <template v-else>
           <div
             v-for="(item, index) in timeline"
             :key="item.type === 'gap' ? `gap-${index}` : item.session.id"
-            class="group"
+            class="timeline-item"
           >
-            <!-- Legacy inferred gap -->
-            <div v-if="item.type === 'gap'" class="pl-4 py-1.5">
+            <div v-if="item.type === 'gap'" style="padding-left: var(--space-4)">
               <span class="text-xs text-muted">☕ ~{{ item.label }} de intervalo</span>
             </div>
 
-            <!-- Break record -->
-            <div v-else-if="item.type === 'break'" class="flex items-start gap-3 py-2.5">
-              <div class="w-1 self-stretch rounded-full mt-1 flex-shrink-0 bg-amber-400/70" />
+            <template v-else-if="item.type === 'break'">
+              <div class="timeline-bar timeline-bar--break" />
               <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between gap-2">
-                  <p class="text-sm font-semibold text-amber-500">☕ Pausa</p>
-                  <div class="flex items-center gap-1.5 flex-shrink-0">
-                    <span class="text-sm font-semibold text-amber-500">{{ formatDuration(item.session.duration) }}</span>
-                    <button @click="editingSession = item.session" class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button @click="deleteSession(item.session.id)" class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100 hover:text-red-400">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                      </svg>
-                    </button>
+                <div class="flex-between">
+                  <p class="text-sm font-semibold text-warning">☕ Pausa</p>
+                  <div class="timeline-actions">
+                    <span class="text-sm font-semibold text-warning numeric">{{ formatDuration(item.session.duration) }}</span>
+                    <AkButton size="sm" variant="ghost" @click="editingSession = item.session">
+                      <template #icon>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </template>
+                    </AkButton>
+                    <AkButton size="sm" variant="ghost" @click="deleteSession(item.session.id)">
+                      <template #icon>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        </svg>
+                      </template>
+                    </AkButton>
                   </div>
                 </div>
-                <p class="text-[11px] text-muted mt-0.5">{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</p>
+                <p class="text-xs text-muted" style="margin-top: 2px">{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</p>
               </div>
-            </div>
+            </template>
 
-            <!-- Study record -->
-            <div v-else class="flex items-start gap-3 py-2.5">
+            <template v-else>
               <div
-                class="w-1 self-stretch rounded-full mt-1 flex-shrink-0"
-                :style="{ background: getSubject(item.session.subjectId)?.color ?? 'var(--accent-color)' }"
+                class="timeline-bar"
+                :style="{ background: getSubject(item.session.subjectId)?.color ?? 'var(--accent)' }"
               />
               <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between gap-2">
+                <div class="flex-between">
                   <p class="text-sm font-semibold text-primary truncate">{{ getSubject(item.session.subjectId)?.name ?? 'Matéria' }}</p>
-                  <div class="flex items-center gap-1.5 flex-shrink-0">
-                    <span class="text-sm font-semibold" :style="{ color: getSubject(item.session.subjectId)?.color ?? 'var(--accent-color)' }">
+                  <div class="timeline-actions">
+                    <span
+                      class="text-sm font-semibold numeric"
+                      :style="{ color: getSubject(item.session.subjectId)?.color ?? 'var(--accent)' }"
+                    >
                       {{ formatDuration(item.session.duration) }}
                     </span>
-                    <button @click="editingSession = item.session" class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button @click="deleteSession(item.session.id)" class="w-6 h-6 btn-icon opacity-0 group-hover:opacity-100 hover:text-red-400">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                      </svg>
-                    </button>
+                    <AkButton size="sm" variant="ghost" @click="editingSession = item.session">
+                      <template #icon>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </template>
+                    </AkButton>
+                    <AkButton size="sm" variant="ghost" @click="deleteSession(item.session.id)">
+                      <template #icon>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        </svg>
+                      </template>
+                    </AkButton>
                   </div>
                 </div>
-                <div class="text-[11px] text-muted mt-0.5 flex flex-wrap gap-x-1.5 gap-y-0.5">
+                <div class="text-xs text-muted" style="margin-top: 2px; display: flex; flex-wrap: wrap; gap: 4px 6px">
                   <template v-if="item.session.segments && item.session.segments.length > 1">
                     <template v-for="(seg, i) in item.session.segments" :key="i">
                       <span>{{ fmt(seg.start) }} – {{ fmt(seg.end) }}</span>
-                      <span v-if="i < item.session.segments.length - 1" class="text-amber-400">
+                      <span v-if="i < item.session.segments.length - 1" class="text-warning">
                         ⏸ {{ formatDuration(Math.round((item.session.segments[i + 1].start - seg.end) / 1000)) }}
                       </span>
                     </template>
@@ -165,17 +166,13 @@
                   <span v-else>{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</span>
                 </div>
               </div>
-            </div>
+            </template>
           </div>
         </template>
       </div>
     </main>
 
-    <FocusMode
-      :active="focusMode"
-      :subject="activeSubject"
-      @close="focusMode = false"
-    />
+    <FocusMode :active="focusMode" :subject="activeSubject" @close="focusMode = false" />
 
     <SessionEditModal
       :show="!!editingSession"
@@ -195,6 +192,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { AkButton, AkCard, AkEmptyState, AkShimmer } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'

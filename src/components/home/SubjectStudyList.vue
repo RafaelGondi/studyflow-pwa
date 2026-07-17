@@ -1,59 +1,53 @@
 <template>
-  <div class="space-y-2">
-    <div class="flex items-center justify-between px-1">
-      <h2 class="text-xs font-bold text-muted uppercase tracking-wider">Matérias</h2>
-      <RouterLink
-        v-if="subjects.length === 0"
-        to="/subjects"
-        class="text-xs text-accent"
-      >
+  <div class="stack-xs">
+    <div class="flex-between" style="padding: 0 var(--space-1)">
+      <h2 class="section-title">Matérias</h2>
+      <RouterLink v-if="subjects.length === 0" to="/subjects" class="text-xs text-accent">
         Adicionar →
       </RouterLink>
     </div>
 
-    <div v-if="subjects.length === 0" class="card p-6 text-center text-faint text-sm">
-      Cadastre matérias para começar a registrar
-    </div>
+    <AkEmptyState
+      v-if="subjects.length === 0"
+      title="Sem matérias"
+      description="Cadastre matérias para começar a registrar."
+    />
 
-    <div v-else class="space-y-1.5">
-      <button
-        v-for="item in items"
-        :key="item.subjectId"
-        @click="emit('select', item.subjectId)"
-        class="w-full list-row text-left transition-all tap-scale"
-        :class="activeId === item.subjectId ? 'ring-2 ring-accent/40 bg-accent/5' : ''"
+    <button
+      v-for="item in items"
+      :key="item.subjectId"
+      @click="emit('select', item.subjectId)"
+      class="list-row list-row--interactive"
+      :class="{ 'list-row--active': activeId === item.subjectId }"
+    >
+      <div
+        class="subject-avatar"
+        :style="{ background: colorMix(item.color, 12) }"
       >
-        <div
-          class="w-9 h-9 rounded-akoma flex items-center justify-center text-lg flex-shrink-0"
-          :style="{ background: `${item.color}20` }"
-        >
-          {{ item.icon }}
+        {{ item.icon }}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex-between" style="margin-bottom: var(--space-1)">
+          <span class="text-sm font-medium text-primary truncate">{{ item.name }}</span>
+          <span class="text-xs font-semibold text-secondary numeric shrink-0">
+            {{ item.seconds > 0 ? formatDuration(item.seconds) : '—' }}
+          </span>
         </div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between mb-1 gap-2">
-            <span class="text-sm font-medium text-primary truncate">{{ item.name }}</span>
-            <span class="text-xs font-semibold text-secondary flex-shrink-0 tabular-nums">
-              {{ item.seconds > 0 ? formatDuration(item.seconds) : '—' }}
-            </span>
-          </div>
-          <div class="h-1.5 rounded-full btn-icon overflow-hidden">
-            <div
-              class="h-full rounded-full transition-all duration-500"
-              :style="{ width: `${item.pct}%`, background: item.color }"
-            />
-          </div>
+        <div class="progress-track">
+          <div
+            class="progress-fill"
+            :style="{ width: `${item.pct}%`, background: item.color }"
+          />
         </div>
-        <div
-          v-if="activeId === item.subjectId"
-          class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"
-        />
-      </button>
-    </div>
+      </div>
+      <AkBadge v-if="activeId === item.subjectId" variant="success" label="●" />
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { AkBadge, AkEmptyState } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
@@ -70,6 +64,10 @@ const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 
 const subjects = computed(() => subjectsStore.subjects)
+
+function colorMix(color: string, pct: number) {
+  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-elevated))`
+}
 
 const items = computed(() => {
   const bySubject = new Map(sessionsStore.todayBySubject)

@@ -1,68 +1,63 @@
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="fixed inset-0 z-[110] flex items-end sm:items-center justify-center">
-        <div class="absolute inset-0 z-0 bg-black/70 backdrop-blur-sm" @click="emit('close')" />
-        <div class="modal-sheet modal-panel">
-
-          <div class="flex-shrink-0 flex items-center justify-between px-6 pt-6 pb-4">
-            <h2 class="font-display text-lg font-bold text-primary">Editar registro</h2>
-            <button @click="emit('close')" class="w-8 h-8 rounded-full btn-icon tap-scale">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
+      <div v-if="show" class="modal-overlay">
+        <div class="modal-backdrop" @click="emit('close')" />
+        <AkCard padding="none" class="modal-sheet">
+          <div class="modal-header">
+            <h2 class="modal-title">Editar registro</h2>
+            <AkButton size="sm" variant="ghost" @click="emit('close')">
+              <template #icon>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </template>
+            </AkButton>
           </div>
 
-          <div class="modal-scroll">
-            <div v-if="isBreak" class="flex items-center gap-3 p-3 rounded-akoma btn-icon mb-5">
-              <div class="w-8 h-8 rounded-akoma flex items-center justify-center text-lg flex-shrink-0 bg-amber-500/15">☕</div>
-              <span class="text-sm font-semibold text-amber-500">Pausa</span>
-              <span class="text-xs text-muted ml-auto">{{ dateLabel }}</span>
-            </div>
+          <div class="modal-body stack">
+            <AkCard v-if="isBreak" padding="sm">
+              <div class="flex-row" style="gap: var(--space-3)">
+                <div class="subject-avatar" :style="{ background: 'var(--warning-soft)' }">☕</div>
+                <span class="text-sm font-semibold text-warning">Pausa</span>
+                <span class="text-xs text-muted" style="margin-left: auto">{{ dateLabel }}</span>
+              </div>
+            </AkCard>
 
-            <div v-else class="space-y-3 mb-5">
-              <label class="text-xs font-semibold text-muted uppercase tracking-wider block">Matéria</label>
-              <select v-model="form.subjectId" class="input">
+            <div v-else>
+              <label class="stat-label" style="display: block; margin-bottom: var(--space-2)">Matéria</label>
+              <select v-model="form.subjectId" class="field-select">
                 <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.icon }} {{ s.name }}</option>
               </select>
             </div>
 
-            <form @submit.prevent="handleSubmit" class="space-y-4">
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Início</label>
-                  <input v-model="form.startTime" type="time" required class="input" />
-                </div>
-                <div>
-                  <label class="text-xs font-semibold text-muted uppercase tracking-wider mb-2 block">Fim</label>
-                  <input
-                    v-model="form.endTime"
-                    type="time"
-                    required
-                    class="input"
-                    :class="{ 'border-red-500 ring-1 ring-red-500': endBeforeStart }"
-                  />
-                </div>
+            <form @submit.prevent="handleSubmit" class="stack">
+              <div class="grid-2">
+                <AkInput v-model="form.startTime" label="Início" type="time" required />
+                <AkInput
+                  v-model="form.endTime"
+                  label="Fim"
+                  type="time"
+                  required
+                  :error="endBeforeStart ? 'Fim antes do início' : undefined"
+                />
               </div>
 
-              <div class="flex items-center justify-between p-3 rounded-akoma btn-icon">
-                <span class="text-xs text-muted">Duração calculada</span>
-                <span class="text-sm font-bold" :class="endBeforeStart ? 'text-red-400' : 'text-primary'">
-                  {{ endBeforeStart ? 'Fim antes do início' : formatDuration(computedDuration) }}
-                </span>
-              </div>
+              <AkCard padding="sm">
+                <div class="flex-between">
+                  <span class="text-xs text-muted">Duração calculada</span>
+                  <span class="text-sm font-bold numeric" :class="endBeforeStart ? 'text-danger' : 'text-primary'">
+                    {{ endBeforeStart ? 'Inválida' : formatDuration(computedDuration) }}
+                  </span>
+                </div>
+              </AkCard>
 
-              <button
-                type="submit"
-                :disabled="endBeforeStart || saving"
-                class="w-full py-3.5 font-bold text-white btn-primary disabled:opacity-50 tap-scale"
-              >
-                {{ saving ? 'Salvando...' : 'Salvar alterações' }}
-              </button>
+              <AkButton type="submit" variant="primary" block :loading="saving" :disabled="endBeforeStart">
+                Salvar alterações
+              </AkButton>
             </form>
           </div>
-        </div>
+        </AkCard>
       </div>
     </Transition>
   </Teleport>
@@ -70,6 +65,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { AkButton, AkCard, AkInput } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration, isBreakSession } from '@/types'
@@ -151,9 +147,3 @@ async function handleSubmit() {
   }
 }
 </script>
-
-<style scoped>
-.modal-enter-active { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.modal-leave-active { transition: all 0.2s ease; }
-.modal-enter-from, .modal-leave-to { opacity: 0; transform: translateY(40px); }
-</style>

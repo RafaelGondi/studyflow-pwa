@@ -1,88 +1,83 @@
 <template>
-  <div class="card p-4 space-y-4">
-    <h3 class="text-xs font-bold text-muted uppercase tracking-wider">Por matéria</h3>
+  <AkCard padding="md" class="stack">
+    <h3 class="section-title">Por matéria</h3>
 
-    <div v-if="subjectItems.length === 0" class="py-8 text-center text-faint text-sm">
-      Nenhum dado disponível
-    </div>
+    <AkEmptyState
+      v-if="subjectItems.length === 0"
+      title="Sem dados"
+      description="Nenhum registro de estudo neste período."
+    />
 
-    <div v-else>
-      <!-- Double donut -->
-      <div class="flex flex-col sm:flex-row items-center gap-6">
-        <div class="relative flex-shrink-0" style="width:160px;height:160px">
+    <div v-else class="stack">
+      <div class="flex-row" style="gap: var(--space-6); flex-wrap: wrap; justify-content: center">
+        <div style="position: relative; width: 160px; height: 160px; flex-shrink: 0">
           <Doughnut :data="chartData" :options="chartOptions" />
-          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span class="text-lg font-bold text-primary leading-tight">{{ formatDuration(total) }}</span>
-            <span class="text-[10px] text-muted">total</span>
+          <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none">
+            <span class="text-lg font-bold text-primary numeric">{{ formatDuration(total) }}</span>
+            <span class="text-xs text-muted">total</span>
           </div>
         </div>
 
-        <!-- List with tab toggle -->
-        <div class="flex-1 w-full min-w-0">
-          <!-- Tabs -->
-          <div class="seg-control mb-3">
-            <button
+        <div class="flex-1 min-w-0" style="min-width: 180px">
+          <div class="chip-group" style="margin-bottom: var(--space-3)">
+            <AkChip
               v-for="t in tabs"
               :key="t.key"
+              :active="activeTab === t.key"
               @click="activeTab = t.key"
-              class="seg-tab"
-              :class="activeTab === t.key ? 'seg-tab-active' : ''"
             >
               {{ t.label }}
-            </button>
+            </AkChip>
           </div>
 
-          <!-- Matérias list -->
-          <div v-if="activeTab === 'subjects'" class="space-y-2">
-            <div v-for="item in subjectItems" :key="item.id" class="flex items-center gap-2.5">
-              <div class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: item.color }" />
+          <div v-if="activeTab === 'subjects'" class="stack-xs">
+            <div v-for="item in subjectItems" :key="item.id" class="flex-row" style="gap: var(--space-2)">
+              <div class="status-dot" :style="{ background: item.color }" />
               <span class="text-sm text-secondary flex-1 truncate">{{ item.name }}</span>
-              <span class="text-sm font-semibold text-primary tabular-nums">{{ formatDuration(item.seconds) }}</span>
-              <span class="text-xs text-muted w-8 text-right tabular-nums">{{ item.pct }}%</span>
+              <span class="text-sm font-semibold text-primary numeric">{{ formatDuration(item.seconds) }}</span>
+              <span class="text-xs text-muted numeric" style="width: 2rem; text-align: right">{{ item.pct }}%</span>
             </div>
           </div>
 
-          <!-- Categorias list -->
-          <div v-else class="space-y-2">
-            <div v-for="item in categoryItems" :key="item.id" class="flex items-center gap-2.5">
-              <div class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: item.color }" />
+          <div v-else class="stack-xs">
+            <div v-for="item in categoryItems" :key="item.id" class="flex-row" style="gap: var(--space-2)">
+              <div class="status-dot" :style="{ background: item.color }" />
               <span class="text-sm text-secondary flex-1 truncate">{{ item.name }}</span>
-              <span class="text-sm font-semibold text-primary tabular-nums">{{ formatDuration(item.seconds) }}</span>
-              <span class="text-xs text-muted w-8 text-right tabular-nums">{{ item.pct }}%</span>
+              <span class="text-sm font-semibold text-primary numeric">{{ formatDuration(item.seconds) }}</span>
+              <span class="text-xs text-muted numeric" style="width: 2rem; text-align: right">{{ item.pct }}%</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Legenda dos anéis -->
-      <div class="flex items-center gap-4 pt-1 border-t border-app-border">
-        <div class="flex items-center gap-1.5">
-          <div class="w-5 h-2 rounded-full btn-icon border-2 border-muted/30" />
-          <span class="text-[10px] text-muted">anel externo = matérias</span>
+      <div class="flex-row" style="gap: var(--space-4); padding-top: var(--space-2); border-top: 1px solid var(--border)">
+        <div class="flex-row" style="gap: var(--space-2)">
+          <div style="width: 20px; height: 8px; border-radius: var(--radius-full); border: 2px solid var(--border)" />
+          <span class="text-xs text-muted">anel externo = matérias</span>
         </div>
-        <div class="flex items-center gap-1.5">
-          <div class="w-3 h-2 rounded-full btn-icon border-2 border-muted/30" />
-          <span class="text-[10px] text-muted">anel interno = categorias</span>
+        <div class="flex-row" style="gap: var(--space-2)">
+          <div style="width: 12px; height: 8px; border-radius: var(--radius-full); border: 2px solid var(--border)" />
+          <span class="text-xs text-muted">anel interno = categorias</span>
         </div>
       </div>
     </div>
-  </div>
+  </AkCard>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
+import { AkCard, AkChip, AkEmptyState } from '@rafael_dias/akoma'
 import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
 import type { StudySession } from '@/types'
 import { useSubjectsStore } from '@/stores/subjects'
 import { formatDuration, isStudySession } from '@/types'
-import { useThemeStore } from '@/stores/theme'
+import { chartTheme } from '@/utils/chartTheme'
 
 ChartJS.register(ArcElement, Tooltip)
 
 const props = defineProps<{ sessions: StudySession[] }>()
 const subjectsStore = useSubjectsStore()
-const theme = useThemeStore()
 
 const studySessions = computed(() => props.sessions.filter(isStudySession))
 
@@ -92,9 +87,6 @@ const tabs = [
   { key: 'categories' as const, label: 'Categorias' },
 ]
 
-// ── Aggregation ────────────────────────────────────────────────────────────
-
-/** Seconds per subject */
 const secondsBySubject = computed(() => {
   const map = new Map<string, number>()
   for (const s of studySessions.value) {
@@ -104,7 +96,6 @@ const secondsBySubject = computed(() => {
   return map
 })
 
-/** Seconds per category (null = sem categoria) */
 const secondsByCategory = computed(() => {
   const map = new Map<string | null, number>()
   for (const [subjectId, secs] of secondsBySubject.value) {
@@ -120,8 +111,6 @@ const total = computed(() => {
   return t
 })
 
-// ── Category items (sorted desc) ──────────────────────────────────────────
-
 const categoryItems = computed(() => {
   const t = total.value || 1
   return [...secondsByCategory.value.entries()]
@@ -130,7 +119,7 @@ const categoryItems = computed(() => {
       return {
         id: catId ?? '__none__',
         name: cat?.name ?? 'Sem categoria',
-        color: cat?.color ?? '#64748b',
+        color: cat?.color ?? 'var(--text-tertiary)',
         seconds,
         pct: Math.round((seconds / t) * 100),
       }
@@ -138,26 +127,20 @@ const categoryItems = computed(() => {
     .sort((a, b) => b.seconds - a.seconds)
 })
 
-// ── Subject items — grouped by category order ─────────────────────────────
-// Subjects are sorted so that subjects of the same category appear together,
-// matching the order of the inner (category) ring.
-
 const subjectItems = computed(() => {
   const t = total.value || 1
-  // Build subject rows
   const rows = [...secondsBySubject.value.entries()].map(([subjectId, seconds]) => {
     const subj = subjectsStore.getSubject(subjectId)
     const catId = subj?.categoryId ?? null
     return {
       id: subjectId,
       name: subj?.name ?? 'Desconhecida',
-      color: subj?.color ?? '#8b5cf6',
+      color: subj?.color ?? 'var(--accent)',
       catId,
       seconds,
       pct: Math.round((seconds / t) * 100),
     }
   })
-  // Sort: first by category order (matching categoryItems), then by seconds desc within category
   const catOrder = new Map(categoryItems.value.map((c, i) => [c.id, i]))
   rows.sort((a, b) => {
     const oa = catOrder.get(a.catId ?? '__none__') ?? 99
@@ -168,18 +151,11 @@ const subjectItems = computed(() => {
   return rows
 })
 
-// ── Chart data ────────────────────────────────────────────────────────────
-// datasets[0] = outer ring (subjects)
-// datasets[1] = inner ring (categories)
-
 const chartData = computed(() => {
-  const border = theme.isDark
-    ? getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#1a1917'
-    : getComputedStyle(document.documentElement).getPropertyValue('--bg-elevated').trim() || '#ffffff'
+  const border = chartTheme().bg
   return {
     labels: subjectItems.value.map(i => i.name),
     datasets: [
-      // Outer: subjects
       {
         data: subjectItems.value.map(i => i.seconds),
         backgroundColor: subjectItems.value.map(i => i.color),
@@ -187,7 +163,6 @@ const chartData = computed(() => {
         borderColor: border,
         hoverBorderColor: border,
       },
-      // Inner: categories (same order as categoryItems)
       {
         data: categoryItems.value.map(i => i.seconds),
         backgroundColor: categoryItems.value.map(i => i.color),
@@ -207,7 +182,7 @@ const chartOptions = computed(() => ({
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (ctx: any) => {
+        label: (ctx: { dataset: { data: number[] }; dataIndex: number; parsed: number }) => {
           const label = ctx.dataset.data === chartData.value.datasets[1].data
             ? categoryItems.value[ctx.dataIndex]?.name
             : subjectItems.value[ctx.dataIndex]?.name

@@ -144,7 +144,7 @@ function isActive(path: string) {
   justify-content: center;
   border-radius: var(--radius-full);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast);
   font-size: 8px;
   font-weight: 700;
 }

@@ -1,38 +1,34 @@
 <template>
-  <div class="card p-4">
-    <h3 class="text-xs font-bold text-muted uppercase tracking-wider mb-4">Pausas na semana</h3>
+  <AkCard padding="md">
+    <h3 class="section-title" style="margin-bottom: var(--space-4)">Pausas na semana</h3>
 
-    <div v-if="hasData" class="max-h-48">
+    <div v-if="hasData" style="max-height: 12rem">
       <Bar :data="chartData" :options="chartOptions" />
     </div>
 
-    <div v-else class="py-8 text-center text-faint text-sm">
-      Nenhuma pausa nesta semana
-    </div>
-  </div>
+    <AkEmptyState
+      v-else
+      title="Sem pausas"
+      description="Nenhuma pausa registrada nos últimos 7 dias."
+    />
+  </AkCard>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
+import { AkCard, AkEmptyState } from '@rafael_dias/akoma'
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
   Title, Tooltip, Legend, type TooltipItem,
 } from 'chart.js'
 import type { StudySession } from '@/types'
 import { localDateStr, isBreakSession } from '@/types'
-import { useThemeStore } from '@/stores/theme'
+import { chartTheme, cssVar } from '@/utils/chartTheme'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
-const theme = useThemeStore()
-
 const props = defineProps<{ sessions: StudySession[] }>()
-
-function cssVar(name: string, fallback: string) {
-  if (typeof document === 'undefined') return fallback
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
-}
 
 function formatHours(hours: number) {
   const h = Math.floor(hours)
@@ -46,7 +42,6 @@ const hasData = computed(() => breakSessions.value.length > 0)
 const chartData = computed(() => {
   const today = new Date()
   const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-  const dayKeys: string[] = []
   const labels: string[] = []
   const data: number[] = []
 
@@ -54,7 +49,6 @@ const chartData = computed(() => {
     const d = new Date(today)
     d.setDate(today.getDate() - i)
     const key = localDateStr(d)
-    dayKeys.push(key)
     labels.push(i === 0 ? 'Hoje' : dayNames[d.getDay()])
     const secs = breakSessions.value
       .filter(s => s.date === key)
@@ -62,15 +56,15 @@ const chartData = computed(() => {
     data.push(+(secs / 3600).toFixed(2))
   }
 
-  const accent = cssVar('--cat-3', '#f59e0b')
-  const accentSoft = theme.isDark ? 'rgba(245, 158, 11, 0.35)' : 'rgba(245, 158, 11, 0.45)'
+  const warning = cssVar('--warning')
+  const warningSoft = cssVar('--warning-soft')
 
   return {
     labels,
     datasets: [{
       label: 'Pausa',
       data,
-      backgroundColor: data.map((_, i) => i === 6 ? accent : accentSoft),
+      backgroundColor: data.map((_, i) => i === 6 ? warning : warningSoft),
       borderRadius: 8,
       borderSkipped: false,
     }],
@@ -78,8 +72,7 @@ const chartData = computed(() => {
 })
 
 const chartOptions = computed(() => {
-  const tickColor = cssVar('--text-tertiary', '#a3a29c')
-  const gridColor = theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(44,44,42,0.06)'
+  const { text: tickColor, grid: gridColor } = chartTheme()
 
   return {
     responsive: true,

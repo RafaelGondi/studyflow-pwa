@@ -23,6 +23,7 @@ export const useThemeStore = defineStore('theme', () => {
   }
 
   function apply() {
+    document.documentElement.dataset.mood = 'app'
     document.documentElement.dataset.theme = isDark.value ? 'dark' : 'light'
     document.documentElement.classList.toggle('dark', isDark.value)
   }

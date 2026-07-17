@@ -1,169 +1,143 @@
 ﻿<template>
-  <div class="min-h-screen flex flex-col akoma-page">
-    <header class="mb-5 reveal">
+  <div class="page akoma-page">
+    <header class="page-header reveal">
       <span class="page-label">Organização</span>
       <h1 class="page-title">Matérias</h1>
-      <p class="text-sm text-muted mt-2">{{ subjectsStore.subjects.length }} matérias · {{ subjectsStore.categories.length }} categorias</p>
+      <p class="page-subtitle">{{ subjectsStore.subjects.length }} matérias · {{ subjectsStore.categories.length }} categorias</p>
     </header>
 
-    <div class="pb-3 reveal reveal-d1">
-      <div class="filter-scroll">
-        <CategoryChip
-          accent
-          :active="selectedCategoryFilter === null"
-          @click="selectedCategoryFilter = null"
-        >
-          Todas
-        </CategoryChip>
-        <CategoryChip
-          v-for="cat in subjectsStore.categories"
-          :key="cat.id"
-          :active="selectedCategoryFilter === cat.id"
-          :color="cat.color"
-          @click="selectedCategoryFilter = cat.id"
-        >
-          {{ cat.name }}
-        </CategoryChip>
-      </div>
+    <div class="chip-scroll reveal reveal-d1">
+      <AkChip :active="selectedCategoryFilter === null" @click="selectedCategoryFilter = null">
+        Todas
+      </AkChip>
+      <AkChip
+        v-for="cat in subjectsStore.categories"
+        :key="cat.id"
+        :active="selectedCategoryFilter === cat.id"
+        :color="cat.color"
+        @click="selectedCategoryFilter = cat.id"
+      >
+        {{ cat.name }}
+      </AkChip>
     </div>
 
-    <main class="flex-1 overflow-y-auto pb-4 space-y-6 reveal reveal-d2">
-      <!-- Subjects grid -->
-      <div v-if="filteredSubjects.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
-        <span class="text-5xl mb-4">📚</span>
-        <p class="text-muted font-medium">Nenhuma matéria encontrada</p>
-        <p class="text-faint text-sm mt-1">Toque no + para adicionar</p>
-      </div>
+    <main class="scroll-main stack reveal reveal-d2">
+      <AkEmptyState
+        v-if="filteredSubjects.length === 0"
+        title="Nenhuma matéria encontrada"
+        description="Toque no + para adicionar sua primeira matéria."
+      />
 
-      <div v-else class="grid grid-cols-1 gap-3">
-        <div
+      <div v-else class="stack-sm">
+        <AkCard
           v-for="subject in filteredSubjects"
           :key="subject.id"
-          class="flex items-center gap-4 p-4 card tap-scale group"
+          padding="md"
+          class="subject-card"
         >
-          <div
-            class="w-12 h-12 rounded-akoma flex items-center justify-center text-2xl flex-shrink-0"
-            :style="{ background: `${subject.color}20` }"
-          >
-            {{ subject.icon }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="font-semibold text-primary">{{ subject.name }}</p>
-            <div class="flex items-center gap-2 mt-1">
-              <div
-                class="w-2 h-2 rounded-full flex-shrink-0"
-                :style="{ background: getSubjectCategory(subject)?.color ?? subject.color }"
-              />
-              <span class="text-xs text-muted truncate">
-                {{ getSubjectCategory(subject)?.name ?? 'Sem categoria' }}
-              </span>
+          <div class="flex-row" style="gap: var(--space-4)">
+            <div
+              class="subject-avatar subject-avatar--lg"
+              :style="{ background: colorMix(subject.color, 12) }"
+            >
+              {{ subject.icon }}
             </div>
-            <p v-if="todayTime(subject.id)" class="text-[11px] text-secondary mt-1 tabular-nums">
-              Hoje: {{ todayTime(subject.id) }}
-            </p>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <button
-              @click="startStudying(subject.id)"
-              class="w-9 h-9 rounded-akoma flex items-center justify-center tap-scale"
-              :style="{ background: `${subject.color}20`, color: subject.color }"
-              title="Iniciar estudo"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            </button>
-            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              @click="openEditSubject(subject)"
-              class="w-8 h-8 btn-icon tap-scale"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </button>
-            <button
-              @click="confirmDeleteSubject(subject.id)"
-              class="w-8 h-8 btn-icon tap-scale hover:text-red-400"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-              </svg>
-            </button>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-primary">{{ subject.name }}</p>
+              <div class="flex-row" style="gap: var(--space-2); margin-top: var(--space-1)">
+                <div
+                  class="status-dot"
+                  :style="{ background: getSubjectCategory(subject)?.color ?? subject.color }"
+                />
+                <span class="text-xs text-muted truncate">
+                  {{ getSubjectCategory(subject)?.name ?? 'Sem categoria' }}
+                </span>
+              </div>
+              <p v-if="todayTime(subject.id)" class="text-xs text-secondary numeric" style="margin-top: var(--space-1)">
+                Hoje: {{ todayTime(subject.id) }}
+              </p>
+            </div>
+            <div class="flex-row" style="gap: var(--space-2)">
+              <AkButton
+                size="sm"
+                variant="secondary"
+                :style="{ '--ak-chip-active-bg': colorMix(subject.color, 12), color: subject.color }"
+                @click="startStudying(subject.id)"
+              >
+                <template #icon>
+                  <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                </template>
+              </AkButton>
+              <AkButton size="sm" variant="ghost" @click="openEditSubject(subject)">
+                <template #icon>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </template>
+              </AkButton>
+              <AkButton size="sm" variant="ghost" @click="confirmDeleteSubject(subject.id)">
+                <template #icon>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                  </svg>
+                </template>
+              </AkButton>
             </div>
           </div>
-        </div>
+        </AkCard>
       </div>
 
-      <!-- Categories section -->
-      <div class="space-y-3">
-        <div class="flex items-center justify-between px-1">
-          <h2 class="text-sm font-semibold text-muted uppercase tracking-wider">Categorias</h2>
-          <button
-            @click="showCategoryModal = true"
-            class="text-xs text-accent/80 hover:text-accent/70 transition-colors font-medium"
-          >
-            + Adicionar
-          </button>
+      <div class="stack-sm">
+        <div class="flex-between" style="padding: 0 var(--space-1)">
+          <h2 class="section-title">Categorias</h2>
+          <AkButton size="sm" variant="ghost" @click="showCategoryModal = true">+ Adicionar</AkButton>
         </div>
 
-        <div v-if="subjectsStore.categories.length === 0" class="py-4 text-center text-faint text-sm">
-          Nenhuma categoria criada
-        </div>
+        <AkEmptyState
+          v-if="subjectsStore.categories.length === 0"
+          title="Nenhuma categoria"
+          description="Organize suas matérias em categorias."
+        />
 
-        <div v-else class="space-y-2">
-          <div
-            v-for="cat in subjectsStore.categories"
-            :key="cat.id"
-            class="card flex items-center gap-3 px-3 py-3 transition-all group"
-          >
-            <div
-              class="w-1 self-stretch rounded-full flex-shrink-0 min-h-[28px]"
-              :style="{ background: cat.color }"
-            />
+        <AkCard
+          v-for="cat in subjectsStore.categories"
+          :key="cat.id"
+          padding="sm"
+        >
+          <div class="flex-row" style="gap: var(--space-3)">
+            <div class="timeline-bar" :style="{ background: cat.color, width: '4px' }" />
             <span class="text-sm font-semibold flex-1 min-w-0 truncate text-primary">{{ cat.name }}</span>
-            <span
-              class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm text-white flex-shrink-0"
-              :style="{ background: cat.color }"
-            >
-              {{ countInCategory(cat.id) }}
-            </span>
-            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                @click="openEditCategory(cat)"
-                class="w-7 h-7 rounded-sm flex items-center justify-center text-muted hover:text-primary transition-colors"
-                :style="{ background: `${cat.color}20` }"
-              >
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <AkBadge variant="neutral" :label="countInCategory(cat.id)" />
+            <AkButton size="sm" variant="ghost" @click="openEditCategory(cat)">
+              <template #icon>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
-              </button>
-              <button
-                @click="confirmDeleteCategory(cat.id)"
-                class="w-7 h-7 rounded-sm flex items-center justify-center text-muted hover:text-red-400 transition-colors"
-                :style="{ background: `${cat.color}20` }"
-              >
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              </template>
+            </AkButton>
+            <AkButton size="sm" variant="ghost" @click="confirmDeleteCategory(cat.id)">
+              <template #icon>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <polyline points="3 6 5 6 21 6"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
                 </svg>
-              </button>
-            </div>
+              </template>
+            </AkButton>
           </div>
-        </div>
+        </AkCard>
       </div>
     </main>
 
-    <!-- FAB -->
-    <button
-      @click="openAddSubject"
-      class="fixed right-5 bottom-24 w-14 h-14 rounded-full btn-primary shadow-akoma-md flex items-center justify-center z-40 tap-scale"
-    >
-      <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-    </button>
+    <AkButton class="fab" variant="primary" @click="openAddSubject">
+      <template #icon>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </template>
+    </AkButton>
 
     <SubjectModal
       :show="showSubjectModal"
@@ -184,12 +158,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { AkBadge, AkButton, AkCard, AkChip, AkEmptyState } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useTimerStore } from '@/stores/timer'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
-import CategoryChip from '@/components/ui/CategoryChip.vue'
 import { formatDuration } from '@/types'
 import type { Subject, Category } from '@/types'
 
@@ -207,6 +181,10 @@ const filteredSubjects = computed(() => {
   if (!selectedCategoryFilter.value) return subjectsStore.subjects
   return subjectsStore.subjects.filter(s => s.categoryId === selectedCategoryFilter.value)
 })
+
+function colorMix(color: string, pct: number) {
+  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-elevated))`
+}
 
 function openAddSubject() {
   editingSubject.value = null
@@ -263,20 +241,3 @@ async function confirmDeleteCategory(id: string) {
 
 onMounted(() => sessionsStore.loadToday())
 </script>
-
-<style scoped>
-.filter-scroll {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  overflow-y: visible;
-  margin: 0 calc(-1 * var(--page-pad-x)) 14px;
-  padding: 6px var(--page-pad-x);
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.filter-scroll::-webkit-scrollbar {
-  display: none;
-}
-</style>

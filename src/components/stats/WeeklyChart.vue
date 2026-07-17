@@ -1,40 +1,36 @@
 <template>
-  <div class="card p-4">
-    <h3 class="text-xs font-bold text-muted uppercase tracking-wider mb-4">Esta semana</h3>
+  <AkCard padding="md">
+    <h3 class="section-title" style="margin-bottom: var(--space-4)">Esta semana</h3>
 
-    <div v-if="hasData" class="max-h-56">
+    <div v-if="hasData" style="max-height: 14rem">
       <Bar :data="chartData" :options="chartOptions" />
     </div>
 
-    <div v-else class="py-8 text-center text-faint text-sm">
-      Nenhuma sessão nesta semana
-    </div>
-  </div>
+    <AkEmptyState
+      v-else
+      title="Sem dados esta semana"
+      description="Nenhuma sessão de estudo nos últimos 7 dias."
+    />
+  </AkCard>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
+import { AkCard, AkEmptyState } from '@rafael_dias/akoma'
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
   Title, Tooltip, Legend, type TooltipItem,
 } from 'chart.js'
 import type { StudySession } from '@/types'
 import { localDateStr, isStudySession } from '@/types'
-import { useThemeStore } from '@/stores/theme'
 import { useSubjectsStore } from '@/stores/subjects'
+import { chartTheme } from '@/utils/chartTheme'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
-const theme = useThemeStore()
 const subjectsStore = useSubjectsStore()
-
 const props = defineProps<{ sessions: StudySession[] }>()
-
-function cssVar(name: string, fallback: string) {
-  if (typeof document === 'undefined') return fallback
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
-}
 
 function formatHours(hours: number) {
   const h = Math.floor(hours)
@@ -74,6 +70,7 @@ const chartData = computed(() => {
   }
 
   const sortedSubjects = [...subjectTotals.entries()].sort((a, b) => a[1] - b[1])
+  const theme = chartTheme()
 
   const datasets = sortedSubjects.map(([subjectId], idx, arr) => {
     const subj = subjectsStore.getSubject(subjectId)
@@ -84,7 +81,7 @@ const chartData = computed(() => {
         const secs = byDaySubject.get(key)?.get(subjectId) ?? 0
         return +(secs / 3600).toFixed(2)
       }),
-      backgroundColor: subj?.color ?? '#8b5cf6',
+      backgroundColor: subj?.color ?? theme.accent,
       borderRadius: isTop ? { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 } : 0,
       borderSkipped: false,
       stack: 'study',
@@ -95,8 +92,7 @@ const chartData = computed(() => {
 })
 
 const chartOptions = computed(() => {
-  const tickColor = cssVar('--text-tertiary', '#a3a29c')
-  const gridColor = theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(44,44,42,0.06)'
+  const { text: tickColor, grid: gridColor } = chartTheme()
 
   return {
     responsive: true,

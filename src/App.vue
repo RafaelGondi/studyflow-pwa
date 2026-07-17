@@ -1,13 +1,13 @@
 <template>
   <div class="shell">
-    <AmbientBg />
+    <AkAmbientBg />
     <UpdateBanner />
     <main class="akoma-shell">
       <Transition name="page" mode="out-in">
         <RouterView v-if="appReady" :key="route.path" />
-        <div v-else class="min-h-[70dvh] flex flex-col items-center justify-center gap-4 reveal">
-          <div class="text-5xl animate-pulse-slow">📚</div>
-          <p class="text-muted text-sm font-medium">Carregando StudyFlow...</p>
+        <div v-else class="loading-screen reveal">
+          <AkShimmer width="64px" height="64px" radius="full" />
+          <AkShimmer width="160px" height="14px" radius="md" />
         </div>
       </Transition>
     </main>
@@ -18,11 +18,11 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { AkAmbientBg, AkShimmer } from '@rafael_dias/akoma'
 import { useAuthStore } from '@/stores/auth'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useThemeStore } from '@/stores/theme'
-import AmbientBg from '@/components/layout/AmbientBg.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import UpdateBanner from '@/components/ui/UpdateBanner.vue'
 
