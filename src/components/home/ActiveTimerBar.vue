@@ -9,9 +9,7 @@
       </div>
       <div class="min-w-0 flex-1">
         <p class="text-sm font-semibold truncate">{{ subject?.name ?? 'Estudo' }}</p>
-        <p class="text-xs" :class="timerStore.isRunning ? 'text-accent' : 'text-warning'">
-          {{ timerStore.isRunning ? 'Gravando' : 'Pausado' }}
-        </p>
+        <p v-if="!timerStore.isRunning" class="text-xs text-warning">Pausado</p>
       </div>
       <AkButton size="sm" variant="ghost" @click="emit('change-subject')">Trocar</AkButton>
     </div>
