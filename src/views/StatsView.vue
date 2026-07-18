@@ -1,8 +1,8 @@
 ﻿<template>
   <div class="page akoma-page">
     <PageHeader
-      label="Progresso"
-      title="Estatísticas"
+      label="Sua evolução"
+      title="Progresso"
       meta="Estudo e pausas no período"
     />
 

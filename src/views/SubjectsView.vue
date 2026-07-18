@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="page akoma-page page--with-fab">
     <PageHeader
-      label="Organização"
+      label="Gerenciar"
       title="Matérias"
       :meta="`${subjectsStore.subjects.length} matérias · ${subjectsStore.categories.length} categorias`"
     />
@@ -97,7 +97,7 @@
       </section>
     </div>
 
-    <FabButton label="Nova matéria" @click="openAddSubject" />
+    <FabButton label="Nova" @click="openAddSubject" />
 
     <SubjectModal
       :show="showSubjectModal"

@@ -4,6 +4,7 @@
       <div v-if="modelValue" class="modal-overlay">
         <div class="modal-backdrop" @click="emit('update:modelValue', false)" />
         <div class="modal-sheet sheet-picker">
+          <div class="modal-handle" aria-hidden="true" />
           <div class="modal-header">
             <div>
               <h2 class="modal-title">Selecionar matéria</h2>

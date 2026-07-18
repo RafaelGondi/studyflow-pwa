@@ -4,6 +4,7 @@
       <div v-if="show" class="modal-overlay">
         <div class="modal-backdrop" @click="emit('close')" />
         <div class="modal-sheet modal-form">
+          <div class="modal-handle" aria-hidden="true" />
           <div class="modal-header">
             <h2 class="modal-title">{{ subject ? 'Editar matéria' : 'Nova matéria' }}</h2>
             <AkIconButton label="Fechar" size="sm" icon="x-outline" @click="emit('close')" />

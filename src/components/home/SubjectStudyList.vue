@@ -1,5 +1,7 @@
 <template>
   <section class="section-block">
+    <AkSectionHeader title="Matérias de hoje" />
+
     <AkEmptyState
       v-if="subjects.length === 0"
       title="Sem matérias"
@@ -15,7 +17,10 @@
         @click="emit('select', item.subjectId)"
       >
         <template #leading>
-          <div class="subject-leading">
+          <div
+            class="subject-leading"
+            :style="{ background: colorMix(item.color, 16) }"
+          >
             {{ item.icon }}
           </div>
         </template>
@@ -43,7 +48,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AkBadge, AkEmptyState, AkList, AkListRow, AkProgress } from '@rafael_dias/akoma'
+import { AkBadge, AkEmptyState, AkList, AkListRow, AkProgress, AkSectionHeader } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
@@ -60,6 +65,10 @@ const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 
 const subjects = computed(() => subjectsStore.subjects)
+
+function colorMix(color: string, pct: number) {
+  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-soft))`
+}
 
 const items = computed(() => {
   const bySubject = new Map(sessionsStore.todayBySubject)
@@ -87,15 +96,3 @@ const items = computed(() => {
     .sort((a, b) => b.seconds - a.seconds || a.name.localeCompare(b.name))
 })
 </script>
-
-<style scoped>
-:deep(.ak-list-row__trailing) {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
-}
-:deep(.ak-list-row__content) {
-  min-width: 0;
-}
-</style>

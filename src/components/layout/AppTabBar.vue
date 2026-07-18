@@ -9,7 +9,7 @@
       </template>
     </AkTabBarItem>
     <AkTabBarItem value="/subjects" label="Matérias" icon="open-book-outline" />
-    <AkTabBarItem value="/stats" label="Stats" icon="chart-column-outline" />
+    <AkTabBarItem value="/stats" label="Progresso" icon="chart-column-outline" />
     <AkTabBarItem value="/settings" label="Ajustes" icon="settings-outline" />
   </AkTabBar>
 </template>

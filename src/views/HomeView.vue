@@ -1,33 +1,52 @@
 <template>
   <div class="page akoma-page" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
-    <header class="page-hero page-hero--with-nav reveal">
-      <div class="page-hero__main">
-        <span class="page-label">{{ greeting }}</span>
-        <h1 class="page-hero__title">StudyFlow</h1>
+    <PageHeader
+      :label="pageLabel"
+      :title="pageTitle"
+      :meta="dateLabel"
+    >
+      <div v-if="isToday && subjectsStore.subjects.length" class="progress-strip">
+        <div class="progress-strip__meta">
+          <span><strong>{{ studiedSubjectsCount }}</strong> de {{ subjectsStore.subjects.length }} matérias</span>
+          <span class="progress-strip__pct numeric">{{ studyProgressPct }}%</span>
+        </div>
+        <AkProgress :value="studyProgressPct" size="sm" />
+        <div class="day-stats">
+          <span>Estudo <span class="day-stats__value numeric">{{ studyTotalFormatted }}</span></span>
+          <span>Pausa <span class="day-stats__value day-stats__value--break numeric">{{ breakTotalFormatted }}</span></span>
+        </div>
       </div>
-      <span class="page-hero__date">{{ dateLabel }}</span>
-    </header>
-
-    <div v-if="isToday" class="home-stats reveal reveal-d1">
-      <div class="home-stat-card">
-        <span class="home-stat-card__label">Estudo</span>
-        <span class="home-stat-card__value numeric">{{ studyTotalFormatted }}</span>
-        <span class="home-stat-card__hint">hoje</span>
-      </div>
-      <div class="home-stat-card home-stat-card--break">
-        <span class="home-stat-card__label">Pausa</span>
-        <span class="home-stat-card__value numeric">{{ breakTotalFormatted }}</span>
-        <span class="home-stat-card__hint">hoje</span>
-      </div>
-    </div>
+      <template #nav>
+        <div class="nav-cluster">
+          <AkIconButton class="nav-btn" label="Dia anterior" size="sm" icon="arrow-left-outline" @click="goPrev" />
+          <AkIconButton
+            v-if="isToday"
+            class="nav-btn"
+            label="Adicionar registro"
+            size="sm"
+            icon="plus-outline"
+            @click="showAddModal = true"
+          />
+          <AkIconButton
+            class="nav-btn"
+            label="Próximo dia"
+            size="sm"
+            icon="arrow-right-outline"
+            :disabled="isToday"
+            @click="goNext"
+          />
+        </div>
+      </template>
+    </PageHeader>
 
     <div class="page-body reveal reveal-d2">
-      <section v-if="isToday" class="home-action">
+      <template v-if="isToday">
         <AkButton
           v-if="timerStore.mode === 'idle'"
           variant="primary"
           size="lg"
           block
+          class="home-start-btn"
           @click="sheetOpen = true"
         >
           <template #icon>
@@ -44,42 +63,23 @@
           @continue="handleContinue"
           @change-subject="sheetOpen = true"
         />
-      </section>
 
-      <section class="section-block">
-        <div class="timeline-header">
-          <div class="date-nav">
-            <AkIconButton class="nav-btn" label="Dia anterior" size="sm" icon="arrow-left-outline" @click="goPrev" />
-            <span class="date-nav__label">{{ dateNavLabel }}</span>
-            <AkIconButton
-              class="nav-btn"
-              label="Próximo dia"
-              size="sm"
-              icon="arrow-right-outline"
-              :disabled="isToday"
-              @click="goNext"
-            />
-          </div>
+        <SubjectStudyList
+          :active-id="timerStore.activeSubjectId"
+          :extra-seconds="timerStore.mode === 'study' || timerStore.mode === 'paused' ? timerStore.studyElapsedSeconds : 0"
+          :extra-subject-id="timerStore.activeSubjectId"
+          @select="handleSubjectSelect"
+        />
+      </template>
 
-          <AkButton v-if="isToday" size="sm" variant="ghost" @click="showAddModal = true">
-            <template #icon>
-              <AkIcon name="plus-outline" :size="16" />
-            </template>
-            Adicionar registro
-          </AkButton>
-        </div>
+      <section v-if="!isToday || timeline.length > 0 || loadingHistory" class="section-block">
+        <AkSectionHeader :title="isToday ? 'Registros' : dateNavLabel" />
 
         <div v-if="loadingHistory" class="loading-center">
           <AkShimmer width="24px" height="24px" radius="full" />
         </div>
 
-        <AkEmptyState
-          v-else-if="timeline.length === 0"
-          title="Nenhum registro neste dia"
-          description="Inicie um estudo ou adicione um registro manual."
-        />
-
-        <AkList v-else>
+        <AkList v-else-if="timeline.length > 0">
           <template v-for="(item, index) in timeline" :key="item.type === 'gap' ? `gap-${index}` : item.session.id">
             <li v-if="item.type === 'gap'" class="text-xs text-muted gap-row">
               ☕ ~{{ item.label }} de intervalo
@@ -87,17 +87,8 @@
 
             <AkListRow v-else :divider="index < timeline.length - 1">
               <template #leading>
-                <div
-                  v-if="item.type === 'break'"
-                  class="subject-leading subject-leading--sm"
-                >
-                  ☕
-                </div>
-                <div
-                  v-else
-                  class="subject-leading subject-leading--sm"
-                  :style="{ background: colorMix(getSubject(item.session.subjectId)?.color ?? 'var(--accent)', 14) }"
-                >
+                <div v-if="item.type === 'break'" class="subject-leading subject-leading--sm">☕</div>
+                <div v-else class="subject-leading subject-leading--sm">
                   {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
                 </div>
               </template>
@@ -126,6 +117,12 @@
           </template>
         </AkList>
       </section>
+
+      <AkEmptyState
+        v-else-if="!isToday"
+        title="Nenhum registro neste dia"
+        description="Adicione um registro manual ou volte para hoje."
+      />
     </div>
 
     <FocusMode :active="focusMode" :subject="activeSubject" @close="focusMode = false" />
@@ -155,7 +152,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import {
-  AkButton, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow, AkShimmer,
+  AkButton, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow, AkProgress, AkSectionHeader, AkShimmer,
 } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
@@ -163,8 +160,10 @@ import { useSubjectsStore } from '@/stores/subjects'
 import ActiveTimerBar from '@/components/home/ActiveTimerBar.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
+import SubjectStudyList from '@/components/home/SubjectStudyList.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { formatDuration, formatTimer, localDateStr, todayDateString, isStudySession, isBreakSession } from '@/types'
 import { buildTimeline } from '@/utils/timeline'
@@ -197,7 +196,9 @@ const displaySessions = computed<StudySession[]>(() =>
 
 const timeline = computed(() => buildTimeline(displaySessions.value))
 
-const dateNavLabel = computed(() => {
+const pageLabel = computed(() => (isToday.value ? 'Sua rotina' : 'Histórico'))
+
+const pageTitle = computed(() => {
   if (isToday.value) return 'Hoje'
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
@@ -206,20 +207,36 @@ const dateNavLabel = computed(() => {
   return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })
 })
 
+const dateNavLabel = computed(() => pageTitle.value)
+
+const studiedSubjectsCount = computed(() => {
+  const bySubject = new Map(sessionsStore.todayBySubject)
+  if (timerStore.activeSubjectId && (timerStore.mode === 'study' || timerStore.mode === 'paused')) {
+    bySubject.set(
+      timerStore.activeSubjectId,
+      (bySubject.get(timerStore.activeSubjectId) ?? 0) + timerStore.studyElapsedSeconds
+    )
+  }
+  return [...bySubject.values()].filter(s => s > 0).length
+})
+
+const studyProgressPct = computed(() => {
+  const total = subjectsStore.subjects.length
+  if (!total) return 0
+  return Math.round((studiedSubjectsCount.value / total) * 100)
+})
+
 const activeSubject = computed(() => {
   const id = timerStore.activeSubjectId
   return id ? subjectsStore.getSubject(id) : null
 })
 
-const greeting = computed(() => {
-  const h = new Date().getHours()
-  if (h < 12) return 'Bom dia'
-  if (h < 18) return 'Boa tarde'
-  return 'Boa noite'
-})
-
 const dateLabel = computed(() =>
-  new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+  new Date(viewDate.value + 'T12:00:00').toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
 )
 
 const studyTotalFormatted = computed(() => {
@@ -238,10 +255,6 @@ const breakTotalFormatted = computed(() => {
   }
   return formatTimer(displaySessions.value.filter(isBreakSession).reduce((a, s) => a + s.duration, 0))
 })
-
-function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-soft))`
-}
 
 async function fetchViewDate() {
   if (isToday.value) return
@@ -287,6 +300,16 @@ function handleSheetSelect(id: string) {
   } else {
     switchSubject(id)
   }
+}
+
+async function handleSubjectSelect(id: string) {
+  if (timerStore.mode === 'idle' || timerStore.mode === 'break') {
+    await timerStore.startStudy(id)
+    lastSubjectId.value = id
+    await sessionsStore.loadToday()
+    return
+  }
+  await switchSubject(id)
 }
 
 async function handleStop() {
@@ -345,6 +368,9 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.home-start-btn {
+  margin-bottom: var(--space-1);
+}
 .gap-row {
   padding: var(--space-2) var(--space-4);
 }

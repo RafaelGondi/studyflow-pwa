@@ -83,9 +83,9 @@ function colorMix(color: string, pct: number) {
   gap: var(--space-4);
   padding: var(--space-5);
   background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm, 0 1px 3px rgba(41, 49, 45, 0.06));
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius, 16px);
+  box-shadow: 0 1px 2px rgba(41, 49, 45, 0.04);
 }
 
 .timer-panel__head {
