@@ -10,16 +10,6 @@
           <span class="progress-strip__time numeric">{{ studyTotalFormatted }}</span>
           <span class="progress-strip__caption">de estudo hoje</span>
         </div>
-        <div class="progress-strip__meta">
-          <span>
-            <strong>{{ studiedSubjectsCount }}</strong>
-            {{ studiedSubjectsCount === 1 ? ' matéria' : ' matérias' }}
-          </span>
-          <span v-if="subjectsStore.subjects.length" class="progress-strip__pct numeric">
-            {{ studyProgressPct }}%
-          </span>
-        </div>
-        <AkProgress :value="studyProgressPct" size="sm" />
       </div>
       <template #nav>
         <div class="nav-cluster">
@@ -168,7 +158,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  AkButton, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow, AkProgress, AkSectionHeader, AkShimmer,
+  AkButton, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow, AkSectionHeader, AkShimmer,
 } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
@@ -231,23 +221,6 @@ const pageTitle = computed(() => {
 })
 
 const dateNavLabel = computed(() => pageTitle.value)
-
-const studiedSubjectsCount = computed(() => {
-  const bySubject = new Map(sessionsStore.todayBySubject)
-  if (timerStore.activeSubjectId && (timerStore.mode === 'study' || timerStore.mode === 'paused')) {
-    bySubject.set(
-      timerStore.activeSubjectId,
-      (bySubject.get(timerStore.activeSubjectId) ?? 0) + timerStore.studyElapsedSeconds
-    )
-  }
-  return [...bySubject.values()].filter(s => s > 0).length
-})
-
-const studyProgressPct = computed(() => {
-  const total = subjectsStore.subjects.length
-  if (!total) return 0
-  return Math.round((studiedSubjectsCount.value / total) * 100)
-})
 
 const activeSubject = computed(() => {
   const id = timerStore.activeSubjectId

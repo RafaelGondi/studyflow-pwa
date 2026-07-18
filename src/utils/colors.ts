@@ -1,11 +1,22 @@
-/** Paleta oficial de domínio do Akoma (`--cat-1` … `--cat-6`) */
+/**
+ * Cores de matéria/categoria do Akoma:
+ * tokens --cat-* + acentos oficiais das paletas do DS.
+ */
 export const AKOMA_CAT_COLORS = [
-  { name: 'Mar',    token: '--cat-1', value: '#578eae' },
-  { name: 'Violeta', token: '--cat-2', value: '#896db9' },
-  { name: 'Âmbar',  token: '--cat-3', value: '#bf8230' },
-  { name: 'Verde',  token: '--cat-4', value: '#518768' },
-  { name: 'Rosa',   token: '--cat-5', value: '#bd697c' },
-  { name: 'Pedra',  token: '--cat-6', value: '#827e6c' },
+  { name: 'Mar',       token: '--cat-1', value: '#578eae' },
+  { name: 'Violeta',   token: '--cat-2', value: '#896db9' },
+  { name: 'Âmbar',     token: '--cat-3', value: '#bf8230' },
+  { name: 'Verde',     token: '--cat-4', value: '#518768' },
+  { name: 'Rosa',      token: '--cat-5', value: '#bd697c' },
+  { name: 'Pedra',     token: '--cat-6', value: '#827e6c' },
+  { name: 'Oceano',    token: '--accent-ocean', value: '#5184b1' },
+  { name: 'Teal',      token: '--accent-teal', value: '#4b99a4' },
+  { name: 'Evergreen', token: '--accent-evergreen', value: '#3c8866' },
+  { name: 'Lilás',     token: '--accent-violet', value: '#8375cc' },
+  { name: 'Dourado',   token: '--accent-amber', value: '#bc8a3b' },
+  { name: 'Coral',     token: '--accent-coral', value: '#d07b5f' },
+  { name: 'Slate',     token: '--accent-slate', value: '#5e7894' },
+  { name: 'Rubro',     token: '--accent-rose', value: '#c36d80' },
 ] as const
 
 /** @deprecated use AKOMA_CAT_COLORS */
@@ -21,21 +32,21 @@ const PALETTE_SET = new Set(PALETTE)
 const LEGACY_COLOR_MAP: Record<string, string> = {
   '#ef4444': '#bd697c',
   '#f43f5e': '#bd697c',
-  '#ec4899': '#bd697c',
+  '#ec4899': '#c36d80',
   '#d946ef': '#896db9',
   '#a855f7': '#896db9',
-  '#8b5cf6': '#896db9',
-  '#6366f1': '#896db9',
-  '#3b82f6': '#578eae',
+  '#8b5cf6': '#8375cc',
+  '#6366f1': '#8375cc',
+  '#3b82f6': '#5184b1',
   '#0ea5e9': '#578eae',
-  '#06b6d4': '#578eae',
-  '#14b8a6': '#518768',
+  '#06b6d4': '#4b99a4',
+  '#14b8a6': '#4b99a4',
   '#10b981': '#518768',
   '#84cc16': '#518768',
   '#f59e0b': '#bf8230',
-  '#f97316': '#bf8230',
+  '#f97316': '#d07b5f',
   '#78716c': '#827e6c',
-  '#3d6a94': '#578eae',
+  '#3d6a94': '#5184b1',
 }
 
 function hexToRgb(hex: string): [number, number, number] | null {
