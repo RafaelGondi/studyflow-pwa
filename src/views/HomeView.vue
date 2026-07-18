@@ -11,12 +11,6 @@
       bordered
     >
       <div v-if="isToday && subjectsStore.subjects.length" class="day-header__progress">
-        <AkProgress
-          :value="studiedSubjectsCount"
-          :max="subjectsStore.subjects.length"
-          :label="`${studiedSubjectsCount} de ${subjectsStore.subjects.length} matérias estudadas`"
-          show-value
-        />
         <div class="progress-strip">
           <div class="progress-strip__hero">
             <span class="progress-strip__time numeric">{{ studyTotalFormatted }}</span>
@@ -199,7 +193,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   AkButton, AkChip, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow,
-  AkProgress, AkSectionHeader, AkShimmer,
+  AkSectionHeader, AkShimmer,
 } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
@@ -255,20 +249,6 @@ const showSubjectList = computed(() => timerStore.mode === 'idle')
 const showRecordsSection = computed(() =>
   !isToday.value || subjectsStore.subjects.length > 0 || loadingHistory.value
 )
-
-const studiedSubjectsCount = computed(() => {
-  const ids = new Set<string>()
-  for (const [id, secs] of sessionsStore.todayBySubject) {
-    if (secs > 0) ids.add(id)
-  }
-  if (
-    timerStore.activeSubjectId
-    && (timerStore.mode === 'study' || timerStore.mode === 'paused')
-  ) {
-    ids.add(timerStore.activeSubjectId)
-  }
-  return ids.size
-})
 
 const pageLabel = computed(() => (isToday.value ? 'Sua rotina' : 'Histórico'))
 
