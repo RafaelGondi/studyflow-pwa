@@ -155,14 +155,11 @@
       </Transition>
     </div>
 
-    <div v-if="isToday && subjectsStore.subjects.length > 0" class="fab">
-      <AkButton size="lg" aria-label="Adicionar registro" @click="showAddModal = true">
-        <template #icon>
-          <AkIcon name="plus-outline" :size="18" />
-        </template>
-        Adicionar
-      </AkButton>
-    </div>
+    <FabButton
+      v-if="isToday && subjectsStore.subjects.length > 0"
+      label="Adicionar"
+      @click="showAddModal = true"
+    />
 
     <FocusMode :active="focusMode" :subject="activeSubject" @close="focusMode = false" />
 
@@ -205,6 +202,7 @@ import SubjectStudyList from '@/components/home/SubjectStudyList.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
+import FabButton from '@/components/ui/FabButton.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'

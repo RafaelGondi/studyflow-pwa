@@ -534,40 +534,12 @@
   box-shadow: 0 0 0 2px var(--nav-glass);
 }
 
-/* ── FAB ────────────────────────────────────────────────── */
+/* ── FAB (posicionamento — botão é AkButton size="lg") ─── */
 .fab {
   position: fixed;
-  right: var(--space-5);
-  bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-5));
   z-index: 40;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  height: 48px;
-  min-height: 48px;
-  padding: 0 var(--space-5);
-  border: none;
-  border-radius: var(--radius-full);
-  background: var(--accent);
-  color: var(--accent-contrast);
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 650;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 30%, transparent);
-  transition: transform var(--transition), opacity var(--transition);
-}
-
-.fab:active {
-  transform: scale(0.98);
-}
-
-.fab .ak-icon {
-  flex-shrink: 0;
-  color: inherit;
+  right: var(--page-pad-x);
+  bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-3));
 }
 
 /* ── Modals ─────────────────────────────────────────────── */
