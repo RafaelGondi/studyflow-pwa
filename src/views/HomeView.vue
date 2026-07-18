@@ -14,7 +14,6 @@
           <span>
             <strong>{{ studiedSubjectsCount }}</strong>
             {{ studiedSubjectsCount === 1 ? ' matéria' : ' matérias' }}
-            · Pausa <span class="numeric">{{ breakTotalFormatted }}</span>
           </span>
           <span v-if="subjectsStore.subjects.length" class="progress-strip__pct numeric">
             {{ studyProgressPct }}%
@@ -41,10 +40,7 @@
       <template v-if="isToday">
         <ActiveTimerBar
           v-if="timerStore.mode !== 'idle'"
-          :last-subject-id="lastSubjectId"
           @stop="handleStop"
-          @break="handleBreak"
-          @continue="handleContinue"
           @change-subject="sheetOpen = true"
         />
 
@@ -64,7 +60,7 @@
           :active-id="timerStore.activeSubjectId"
           :extra-seconds="timerStore.mode === 'study' || timerStore.mode === 'paused' ? timerStore.studyElapsedSeconds : 0"
           :extra-subject-id="timerStore.activeSubjectId"
-          :show-play="timerStore.mode === 'idle' || timerStore.mode === 'break'"
+          :show-play="timerStore.mode === 'idle'"
           @select="handleSubjectSelect"
           @browse="sheetOpen = true"
         />
@@ -113,14 +109,13 @@
 
               <AkListRow v-else :divider="index < timeline.length - 1">
                 <template #leading>
-                  <div v-if="item.type === 'break'" class="subject-leading subject-leading--sm">☕</div>
-                  <div v-else class="subject-leading subject-leading--sm">
+                  <div class="subject-leading subject-leading--sm">
                     {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
                   </div>
                 </template>
 
-                <span class="truncate" :class="item.type === 'break' ? 'text-warning' : ''">
-                  {{ item.type === 'break' ? 'Pausa' : (getSubject(item.session.subjectId)?.name ?? 'Matéria') }}
+                <span class="truncate">
+                  {{ getSubject(item.session.subjectId)?.name ?? 'Matéria' }}
                 </span>
 
                 <template #subtitle>
@@ -130,10 +125,7 @@
                 </template>
 
                 <template #trailing>
-                  <span
-                    class="numeric text-sm font-semibold shrink-0 row-duration"
-                    :class="item.type === 'break' ? 'text-warning' : 'text-secondary'"
-                  >
+                  <span class="numeric text-sm font-semibold shrink-0 row-duration text-secondary">
                     {{ formatDuration(item.session.duration) }}
                   </span>
                   <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
@@ -202,7 +194,7 @@ import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
-import { formatDuration, formatTimer, localDateStr, todayDateString, isStudySession, isBreakSession } from '@/types'
+import { formatDuration, formatTimer, localDateStr, todayDateString, isStudySession } from '@/types'
 import { buildTimeline } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
@@ -233,11 +225,9 @@ const displaySessions = computed<StudySession[]>(() =>
   isToday.value ? sessionsStore.todaySessions : viewSessions.value
 )
 
-const timeline = computed(() => buildTimeline(displaySessions.value))
+const timeline = computed(() => buildTimeline(displaySessions.value.filter(isStudySession)))
 
-const showSubjectList = computed(() =>
-  timerStore.mode === 'idle' || timerStore.mode === 'break'
-)
+const showSubjectList = computed(() => timerStore.mode === 'idle')
 
 const showRecordsSection = computed(() =>
   !isToday.value || timeline.value.length > 0 || loadingHistory.value
@@ -295,14 +285,6 @@ const studyTotalFormatted = computed(() => {
   return formatTimer(displaySessions.value.filter(isStudySession).reduce((a, s) => a + s.duration, 0))
 })
 
-const breakTotalFormatted = computed(() => {
-  if (isToday.value) {
-    const live = timerStore.mode === 'break' ? timerStore.breakElapsedSeconds : 0
-    return formatTimer(sessionsStore.todayBreakTotalSeconds + live)
-  }
-  return formatTimer(displaySessions.value.filter(isBreakSession).reduce((a, s) => a + s.duration, 0))
-})
-
 watch(timeline, (items) => {
   if (!isToday.value) {
     recordsOpen.value = true
@@ -350,7 +332,7 @@ function onTouchEnd(e: TouchEvent) {
 }
 
 function handleSheetSelect(id: string) {
-  if (timerStore.mode === 'idle' || timerStore.mode === 'break') {
+  if (timerStore.mode === 'idle') {
     timerStore.startStudy(id)
     lastSubjectId.value = id
   } else {
@@ -359,7 +341,7 @@ function handleSheetSelect(id: string) {
 }
 
 async function handleSubjectSelect(id: string) {
-  if (timerStore.mode === 'idle' || timerStore.mode === 'break') {
+  if (timerStore.mode === 'idle') {
     await timerStore.startStudy(id)
     lastSubjectId.value = id
     await sessionsStore.loadToday()
@@ -371,18 +353,6 @@ async function handleSubjectSelect(id: string) {
 async function handleStop() {
   lastSubjectId.value = timerStore.activeSubjectId ?? lastSubjectId.value
   await timerStore.stop()
-  await sessionsStore.loadToday()
-}
-
-async function handleBreak() {
-  lastSubjectId.value = timerStore.activeSubjectId
-  await timerStore.startBreak()
-  await sessionsStore.loadToday()
-}
-
-async function handleContinue() {
-  if (!lastSubjectId.value) return
-  await timerStore.startStudy(lastSubjectId.value)
   await sessionsStore.loadToday()
 }
 

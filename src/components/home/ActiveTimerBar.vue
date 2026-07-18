@@ -1,54 +1,31 @@
 <template>
   <section class="timer-panel">
-    <template v-if="timerStore.mode === 'break'">
-      <div class="timer-panel__head">
-        <div class="subject-leading">☕</div>
-        <div class="min-w-0 flex-1">
-          <p class="text-sm font-semibold text-warning">Em pausa</p>
-          <p class="text-xs text-muted">Descanse um pouco</p>
-        </div>
-        <span class="timer-panel__time numeric text-warning">{{ timerStore.breakFormatted }}</span>
+    <div class="timer-panel__head">
+      <div
+        class="subject-leading"
+        :style="{ background: colorMix(subject?.color ?? 'var(--accent)', 14) }"
+      >
+        {{ subject?.icon ?? '📚' }}
       </div>
-      <div class="timer-panel__actions">
-        <AkButton v-if="lastSubjectId" variant="primary" block @click="emit('continue')">
-          Continuar estudo
-        </AkButton>
-        <div class="grid-2">
-          <AkButton variant="secondary" block @click="emit('change-subject')">Trocar matéria</AkButton>
-          <AkButton variant="secondary" block @click="emit('stop')">Encerrar</AkButton>
-        </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold truncate">{{ subject?.name ?? 'Estudo' }}</p>
+        <p class="text-xs" :class="timerStore.isRunning ? 'text-accent' : 'text-warning'">
+          {{ timerStore.isRunning ? 'Gravando' : 'Pausado' }}
+        </p>
       </div>
-    </template>
+      <AkButton size="sm" variant="ghost" @click="emit('change-subject')">Trocar</AkButton>
+    </div>
 
-    <template v-else>
-      <div class="timer-panel__head">
-        <div
-          class="subject-leading"
-          :style="{ background: colorMix(subject?.color ?? 'var(--accent)', 14) }"
-        >
-          {{ subject?.icon ?? '📚' }}
-        </div>
-        <div class="min-w-0 flex-1">
-          <p class="text-sm font-semibold truncate">{{ subject?.name ?? 'Estudo' }}</p>
-          <p class="text-xs" :class="timerStore.isRunning ? 'text-accent' : 'text-warning'">
-            {{ timerStore.isRunning ? 'Gravando' : 'Pausado' }}
-          </p>
-        </div>
-        <AkButton size="sm" variant="ghost" @click="emit('change-subject')">Trocar</AkButton>
-      </div>
+    <div class="timer-panel__time numeric" :style="{ color: subject?.color ?? 'var(--accent)' }">
+      {{ timerStore.studyFormatted }}
+    </div>
 
-      <div class="timer-panel__time numeric" :style="{ color: subject?.color ?? 'var(--accent)' }">
-        {{ timerStore.studyFormatted }}
-      </div>
-
-      <div class="timer-panel__actions timer-panel__actions--grid">
-        <AkButton variant="secondary" @click="emit('stop')">Parar</AkButton>
-        <AkButton variant="primary" @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()">
-          {{ timerStore.isRunning ? 'Pausar' : 'Retomar' }}
-        </AkButton>
-        <AkButton variant="ghost" @click="emit('break')">☕ Pausa</AkButton>
-      </div>
-    </template>
+    <div class="timer-panel__actions timer-panel__actions--grid">
+      <AkButton variant="secondary" @click="emit('stop')">Parar</AkButton>
+      <AkButton variant="primary" @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()">
+        {{ timerStore.isRunning ? 'Pausar' : 'Retomar' }}
+      </AkButton>
+    </div>
   </section>
 </template>
 
@@ -59,9 +36,7 @@ import { useTimerStore } from '@/stores/timer'
 import { useSubjectsStore } from '@/stores/subjects'
 import type { Subject } from '@/types'
 
-defineProps<{ lastSubjectId?: string | null }>()
-
-const emit = defineEmits<{ stop: []; break: []; continue: []; 'change-subject': [] }>()
+const emit = defineEmits<{ stop: []; 'change-subject': [] }>()
 
 const timerStore = useTimerStore()
 const subjectsStore = useSubjectsStore()
@@ -112,12 +87,7 @@ function colorMix(color: string, pct: number) {
 
 .timer-panel__actions--grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
-}
-
-.timer-panel__actions--grid .ak-button {
-  min-width: 0;
-  padding-inline: var(--space-2);
 }
 </style>

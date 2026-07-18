@@ -10,19 +10,8 @@
           </div>
 
           <div class="modal-body stack">
-            <div class="chip-group">
-              <AkChip
-                v-for="t in kinds"
-                :key="t.value"
-                :active="form.kind === t.value"
-                @click="form.kind = t.value"
-              >
-                {{ t.label }}
-              </AkChip>
-            </div>
-
             <form @submit.prevent="handleSubmit" class="stack">
-              <div v-if="form.kind === 'study'">
+              <div>
                 <label class="stat-label" style="display: block; margin-bottom: var(--space-2)">Matéria</label>
                 <select v-model="form.subjectId" required class="field-select">
                   <option value="" disabled>Selecione</option>
@@ -55,7 +44,7 @@
                 variant="primary"
                 block
                 :loading="saving"
-                :disabled="endBeforeStart || (form.kind === 'study' && !form.subjectId)"
+                :disabled="endBeforeStart || !form.subjectId"
               >
                 Adicionar
               </AkButton>
@@ -69,11 +58,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AkButton, AkCard, AkChip, AkIconButton, AkInput } from '@rafael_dias/akoma'
+import { AkButton, AkCard, AkIconButton, AkInput } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
-import type { SessionKind } from '@/types'
 
 const props = defineProps<{ show: boolean; date: string }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -82,13 +70,7 @@ const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 const saving = ref(false)
 
-const kinds = [
-  { value: 'study' as SessionKind, label: 'Estudo' },
-  { value: 'break' as SessionKind, label: 'Pausa' },
-]
-
 const form = ref({
-  kind: 'study' as SessionKind,
   subjectId: '',
   startTime: '09:00',
   endTime: '10:00',
@@ -106,7 +88,6 @@ function applyTimeToDate(dateStr: string, timeStr: string): number {
 watch(() => props.show, (val) => {
   if (val) {
     form.value = {
-      kind: 'study',
       subjectId: subjects.value[0]?.id ?? '',
       startTime: '09:00',
       endTime: '10:00',
@@ -125,16 +106,12 @@ async function handleSubmit() {
   if (endBeforeStart.value) return
   saving.value = true
   try {
-    const base = {
+    await sessionsStore.saveStudy({
+      subjectId: form.value.subjectId,
       startTime: newStartTs.value,
       endTime: newEndTs.value,
       duration: computedDuration.value,
-    }
-    if (form.value.kind === 'break') {
-      await sessionsStore.saveBreak(base)
-    } else {
-      await sessionsStore.saveStudy({ ...base, subjectId: form.value.subjectId })
-    }
+    })
     emit('saved')
     emit('close')
   } finally {

@@ -3,7 +3,7 @@
     <PageHeader
       label="Sua evolução"
       title="Progresso"
-      meta="Estudo e pausas no período"
+      meta="Tempo de estudo no período"
     />
 
     <div class="chip-scroll reveal reveal-d1">
@@ -23,22 +23,11 @@
           <span class="today-summary__label">Estudo</span>
           <span class="today-summary__value numeric">{{ formatDuration(studyTotalSeconds) }}</span>
         </div>
-        <div class="today-summary__item today-summary__item--break">
-          <span class="today-summary__label">Pausa</span>
-          <span class="today-summary__value numeric">{{ formatDuration(breakTotalSeconds) }}</span>
-        </div>
       </div>
 
-      <div class="chip-row">
-        <AkChip v-for="t in chartTabs" :key="t.key" :active="chartTab === t.key" @click="chartTab = t.key">
-          {{ t.label }}
-        </AkChip>
-      </div>
+      <WeeklyChart :sessions="weekChartSessions" />
 
-      <WeeklyChart v-if="chartTab === 'study'" :sessions="weekChartSessions" />
-      <BreakWeeklyChart v-else :sessions="weekChartSessions" />
-
-      <SubjectDonut v-if="chartTab === 'study'" :sessions="sessions" />
+      <SubjectDonut :sessions="sessions" />
 
       <section class="section-block">
         <AkSectionHeader title="Histórico" />
@@ -54,7 +43,6 @@
             <template #action>
               <span class="text-xs text-muted numeric">
                 {{ formatDuration(group.studyTotal) }}
-                <span v-if="group.breakTotal > 0" class="text-warning"> · ☕ {{ formatDuration(group.breakTotal) }}</span>
               </span>
             </template>
           </AkSectionHeader>
@@ -66,14 +54,13 @@
               :divider="i < group.items.length - 1"
             >
               <template #leading>
-                <div v-if="item.type === 'break'" class="subject-leading subject-leading--sm">☕</div>
-                <div v-else class="subject-leading subject-leading--sm">
+                <div class="subject-leading subject-leading--sm">
                   {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
                 </div>
               </template>
 
               <span class="truncate">
-                {{ item.type === 'break' ? 'Pausa' : (getSubject(item.session.subjectId)?.name ?? 'Matéria') }}
+                {{ getSubject(item.session.subjectId)?.name ?? 'Matéria' }}
               </span>
 
               <template #subtitle>
@@ -83,7 +70,7 @@
               </template>
 
               <template #trailing>
-                <span class="numeric text-sm shrink-0" :class="item.type === 'break' ? 'text-warning' : 'text-secondary'">
+                <span class="numeric text-sm shrink-0 text-secondary">
                   {{ formatDuration(item.session.duration) }}
                 </span>
                 <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
@@ -112,11 +99,10 @@ import {
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
 import WeeklyChart from '@/components/stats/WeeklyChart.vue'
-import BreakWeeklyChart from '@/components/stats/BreakWeeklyChart.vue'
 import SubjectDonut from '@/components/stats/SubjectDonut.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import { formatDuration, localDateStr, isStudySession, isBreakSession } from '@/types'
+import { formatDuration, localDateStr, isStudySession } from '@/types'
 import { buildTimeline } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
@@ -126,7 +112,6 @@ const editingSession = ref<StudySession | null>(null)
 
 type Period = 'today' | 'week' | 'month'
 const period = ref<Period>('today')
-const chartTab = ref<'study' | 'break'>('study')
 
 const periods = [
   { value: 'today' as Period, label: 'Hoje' },
@@ -134,16 +119,8 @@ const periods = [
   { value: 'month' as Period, label: 'Mês' },
 ]
 
-const chartTabs = [
-  { key: 'study' as const, label: 'Estudo' },
-  { key: 'break' as const, label: 'Pausa' },
-]
-
-const sessions = computed(() => sessionsStore.rangeSessions)
-const studySessions = computed(() => sessions.value.filter(isStudySession))
-const breakSessions = computed(() => sessions.value.filter(isBreakSession))
-const studyTotalSeconds = computed(() => studySessions.value.reduce((a, s) => a + s.duration, 0))
-const breakTotalSeconds = computed(() => breakSessions.value.reduce((a, s) => a + s.duration, 0))
+const sessions = computed(() => sessionsStore.rangeSessions.filter(isStudySession))
+const studyTotalSeconds = computed(() => sessions.value.reduce((a, s) => a + s.duration, 0))
 const weekChartSessions = ref<StudySession[]>([])
 
 const groupedTimeline = computed(() => {
@@ -156,9 +133,8 @@ const groupedTimeline = computed(() => {
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([date, daySessions]) => ({
       date,
-      items: buildTimeline(daySessions).filter(i => i.type !== 'gap'),
-      studyTotal: daySessions.filter(isStudySession).reduce((a, s) => a + s.duration, 0),
-      breakTotal: daySessions.filter(isBreakSession).reduce((a, s) => a + s.duration, 0),
+      items: buildTimeline(daySessions).filter(i => i.type === 'study'),
+      studyTotal: daySessions.reduce((a, s) => a + s.duration, 0),
     }))
 })
 
@@ -196,7 +172,8 @@ async function loadWeekChart() {
   const now = new Date()
   const to = localDateStr(now)
   const d = new Date(now); d.setDate(now.getDate() - 6)
-  weekChartSessions.value = await sessionsStore.fetchRange(localDateStr(d), to)
+  const all = await sessionsStore.fetchRange(localDateStr(d), to)
+  weekChartSessions.value = all.filter(isStudySession)
 }
 
 async function reloadAll() {
