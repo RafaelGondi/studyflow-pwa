@@ -15,7 +15,7 @@
   --surface-shadow-md: 0 -12px 40px color-mix(in srgb, var(--fill-strong) 12%, transparent);
 }
 
-/* bg-tinted e orbs seguem a paleta de accent do Akoma (ocean, violet, etc.) */
+/* bg-tinted e orbs seguem a paleta de accent do Akoma (slate, violet, etc.) */
 
 /* ── App shell ──────────────────────────────────────────── */
 .app-shell {

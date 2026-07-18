@@ -19,8 +19,8 @@ export const AKOMA_CAT_COLORS = [
   { name: 'Rubro',     token: '--accent-rose', value: '#c36d80' },
 ] as const
 
-/** Cor padrão para novas matérias/categorias (accent slate do Akoma) */
-export const DEFAULT_SUBJECT_COLOR = '#5e7894'
+/** Cor padrão para novas matérias/categorias (primeira cor da paleta Akoma) */
+export const DEFAULT_SUBJECT_COLOR = AKOMA_CAT_COLORS[0].value
 
 /** @deprecated use AKOMA_CAT_COLORS */
 export const SUBJECT_COLORS = AKOMA_CAT_COLORS.map(({ name, value }) => ({
