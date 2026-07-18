@@ -58,7 +58,6 @@
         :month="calMonth"
         :selected-date="selectedDate"
         :daily-totals="dailyTotals"
-        :accent-color="subject?.color"
         @select="selectDate"
         @update:month="setCalendarMonth"
       />
