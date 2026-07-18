@@ -69,7 +69,7 @@
 import { watch } from 'vue'
 import { AkButton } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
-import { AKOMA_CAT_COLORS, DEFAULT_SUBJECT_COLOR, subjectBgMix } from '@/utils/colors'
+import { DEFAULT_SUBJECT_COLOR, subjectBgMix } from '@/utils/colors'
 import type { Subject } from '@/types'
 
 const props = defineProps<{
