@@ -6,27 +6,25 @@
       :meta="dateLabel"
     >
       <div v-if="isToday && subjectsStore.subjects.length" class="progress-strip">
+        <div class="progress-strip__hero">
+          <span class="progress-strip__time numeric">{{ studyTotalFormatted }}</span>
+          <span class="progress-strip__caption">de estudo hoje</span>
+        </div>
         <div class="progress-strip__meta">
-          <span><strong>{{ studiedSubjectsCount }}</strong> de {{ subjectsStore.subjects.length }} matérias</span>
-          <span class="progress-strip__pct numeric">{{ studyProgressPct }}%</span>
+          <span>
+            <strong>{{ studiedSubjectsCount }}</strong>
+            {{ studiedSubjectsCount === 1 ? ' matéria' : ' matérias' }}
+            · Pausa <span class="numeric">{{ breakTotalFormatted }}</span>
+          </span>
+          <span v-if="subjectsStore.subjects.length" class="progress-strip__pct numeric">
+            {{ studyProgressPct }}%
+          </span>
         </div>
         <AkProgress :value="studyProgressPct" size="sm" />
-        <div class="day-stats">
-          <span>Estudo <span class="day-stats__value numeric">{{ studyTotalFormatted }}</span></span>
-          <span>Pausa <span class="day-stats__value day-stats__value--break numeric">{{ breakTotalFormatted }}</span></span>
-        </div>
       </div>
       <template #nav>
         <div class="nav-cluster">
           <AkIconButton class="nav-btn" label="Dia anterior" size="sm" icon="arrow-left-outline" @click="goPrev" />
-          <AkIconButton
-            v-if="isToday"
-            class="nav-btn"
-            label="Adicionar registro"
-            size="sm"
-            icon="plus-outline"
-            @click="showAddModal = true"
-          />
           <AkIconButton
             class="nav-btn"
             label="Próximo dia"
@@ -41,22 +39,8 @@
 
     <div class="page-body reveal reveal-d2">
       <template v-if="isToday">
-        <AkButton
-          v-if="timerStore.mode === 'idle'"
-          variant="primary"
-          size="lg"
-          block
-          class="home-start-btn"
-          @click="sheetOpen = true"
-        >
-          <template #icon>
-            <AkIcon name="play-outline" :size="18" />
-          </template>
-          Iniciar estudo
-        </AkButton>
-
         <ActiveTimerBar
-          v-else
+          v-if="timerStore.mode !== 'idle'"
           :last-subject-id="lastSubjectId"
           @stop="handleStop"
           @break="handleBreak"
@@ -64,62 +48,115 @@
           @change-subject="sheetOpen = true"
         />
 
+        <AkEmptyState
+          v-if="subjectsStore.subjects.length === 0"
+          title="Nenhuma matéria cadastrada"
+          description="Adicione matérias para registrar seu estudo."
+        >
+          <template #icon>📚</template>
+          <AkButton variant="primary" @click="router.push('/subjects')">
+            Ir para Matérias
+          </AkButton>
+        </AkEmptyState>
+
         <SubjectStudyList
+          v-else-if="showSubjectList"
           :active-id="timerStore.activeSubjectId"
           :extra-seconds="timerStore.mode === 'study' || timerStore.mode === 'paused' ? timerStore.studyElapsedSeconds : 0"
           :extra-subject-id="timerStore.activeSubjectId"
+          :show-play="timerStore.mode === 'idle' || timerStore.mode === 'break'"
+          :show-browse="subjectsStore.subjects.length > 6"
           @select="handleSubjectSelect"
+          @browse="sheetOpen = true"
         />
       </template>
 
-      <section v-if="!isToday || timeline.length > 0 || loadingHistory" class="section-block">
-        <AkSectionHeader :title="isToday ? 'Registros' : dateNavLabel" />
+      <section
+        v-if="showRecordsSection"
+        class="section-block collapsible-section"
+      >
+        <AkSectionHeader :title="isToday ? 'Registros' : dateNavLabel">
+          <template #action>
+            <div class="collapsible-section__actions">
+              <AkButton v-if="isToday" size="sm" variant="ghost" @click="showAddModal = true">
+                <template #icon>
+                  <AkIcon name="plus-outline" :size="16" />
+                </template>
+                Adicionar
+              </AkButton>
+              <AkIconButton
+                v-if="isToday && timeline.length > 0"
+                :label="recordsOpen ? 'Recolher registros' : 'Expandir registros'"
+                size="sm"
+                :icon="recordsOpen ? 'caret-up-outline' : 'caret-down-outline'"
+                @click="recordsOpen = !recordsOpen"
+              />
+            </div>
+          </template>
+        </AkSectionHeader>
 
-        <div v-if="loadingHistory" class="loading-center">
-          <AkShimmer width="24px" height="24px" radius="full" />
+        <div v-show="recordsOpen || !isToday" class="collapsible-section__body">
+          <div v-if="loadingHistory" class="loading-center">
+            <AkShimmer width="24px" height="24px" radius="full" />
+          </div>
+
+          <AkEmptyState
+            v-else-if="timeline.length === 0 && isToday"
+            title="Nenhum registro ainda"
+            description="Toque em uma matéria acima para começar."
+          />
+
+          <AkList v-else-if="timeline.length > 0">
+            <template v-for="(item, index) in timeline" :key="item.type === 'gap' ? `gap-${index}` : item.session.id">
+              <li v-if="item.type === 'gap'" class="text-xs text-muted gap-row">
+                ☕ ~{{ item.label }} de intervalo
+              </li>
+
+              <AkListRow v-else :divider="index < timeline.length - 1">
+                <template #leading>
+                  <div v-if="item.type === 'break'" class="subject-leading subject-leading--sm">☕</div>
+                  <div v-else class="subject-leading subject-leading--sm">
+                    {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
+                  </div>
+                </template>
+
+                <span class="truncate" :class="item.type === 'break' ? 'text-warning' : ''">
+                  {{ item.type === 'break' ? 'Pausa' : (getSubject(item.session.subjectId)?.name ?? 'Matéria') }}
+                </span>
+
+                <template #subtitle>
+                  <span class="text-xs text-muted">
+                    {{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}
+                  </span>
+                </template>
+
+                <template #trailing>
+                  <span
+                    class="numeric text-sm font-semibold shrink-0 row-duration"
+                    :class="item.type === 'break' ? 'text-warning' : 'text-secondary'"
+                  >
+                    {{ formatDuration(item.session.duration) }}
+                  </span>
+                  <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
+                  <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="deleteSession(item.session.id)" />
+                </template>
+              </AkListRow>
+            </template>
+          </AkList>
         </div>
 
-        <AkList v-else-if="timeline.length > 0">
-          <template v-for="(item, index) in timeline" :key="item.type === 'gap' ? `gap-${index}` : item.session.id">
-            <li v-if="item.type === 'gap'" class="text-xs text-muted gap-row">
-              ☕ ~{{ item.label }} de intervalo
-            </li>
-
-            <AkListRow v-else :divider="index < timeline.length - 1">
-              <template #leading>
-                <div v-if="item.type === 'break'" class="subject-leading subject-leading--sm">☕</div>
-                <div v-else class="subject-leading subject-leading--sm">
-                  {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
-                </div>
-              </template>
-
-              <span class="truncate" :class="item.type === 'break' ? 'text-warning' : ''">
-                {{ item.type === 'break' ? 'Pausa' : (getSubject(item.session.subjectId)?.name ?? 'Matéria') }}
-              </span>
-
-              <template #subtitle>
-                <span class="text-xs text-muted">
-                  {{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}
-                </span>
-              </template>
-
-              <template #trailing>
-                <span
-                  class="numeric text-sm font-semibold shrink-0 row-duration"
-                  :class="item.type === 'break' ? 'text-warning' : 'text-secondary'"
-                >
-                  {{ formatDuration(item.session.duration) }}
-                </span>
-                <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
-                <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="deleteSession(item.session.id)" />
-              </template>
-            </AkListRow>
-          </template>
-        </AkList>
+        <button
+          v-if="isToday && timeline.length > 0 && !recordsOpen"
+          type="button"
+          class="records-collapsed-hint tap-scale"
+          @click="recordsOpen = true"
+        >
+          {{ timeline.length }} {{ timeline.length === 1 ? 'registro' : 'registros' }} hoje — toque para ver
+        </button>
       </section>
 
       <AkEmptyState
-        v-else-if="!isToday"
+        v-else-if="!isToday && !loadingHistory && timeline.length === 0"
         title="Nenhum registro neste dia"
         description="Adicione um registro manual ou volte para hoje."
       />
@@ -151,6 +188,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   AkButton, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow, AkProgress, AkSectionHeader, AkShimmer,
 } from '@rafael_dias/akoma'
@@ -169,6 +207,7 @@ import { formatDuration, formatTimer, localDateStr, todayDateString, isStudySess
 import { buildTimeline } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
+const router = useRouter()
 const timerStore = useTimerStore()
 const sessionsStore = useSessionsStore()
 const subjectsStore = useSubjectsStore()
@@ -178,6 +217,7 @@ const focusMode = ref(false)
 const editingSession = ref<StudySession | null>(null)
 const showAddModal = ref(false)
 const sheetOpen = ref(false)
+const recordsOpen = ref(false)
 
 const { isFaceDown } = useFaceDownFocus()
 watch(isFaceDown, (faceDown) => {
@@ -195,6 +235,14 @@ const displaySessions = computed<StudySession[]>(() =>
 )
 
 const timeline = computed(() => buildTimeline(displaySessions.value))
+
+const showSubjectList = computed(() =>
+  timerStore.mode === 'idle' || timerStore.mode === 'break'
+)
+
+const showRecordsSection = computed(() =>
+  !isToday.value || timeline.value.length > 0 || loadingHistory.value
+)
 
 const pageLabel = computed(() => (isToday.value ? 'Sua rotina' : 'Histórico'))
 
@@ -256,9 +304,18 @@ const breakTotalFormatted = computed(() => {
   return formatTimer(displaySessions.value.filter(isBreakSession).reduce((a, s) => a + s.duration, 0))
 })
 
+watch(timeline, (items) => {
+  if (!isToday.value) {
+    recordsOpen.value = true
+    return
+  }
+  if (items.length === 0) recordsOpen.value = false
+})
+
 async function fetchViewDate() {
   if (isToday.value) return
   loadingHistory.value = true
+  recordsOpen.value = true
   viewSessions.value = await sessionsStore.loadDate(viewDate.value)
   loadingHistory.value = false
 }
@@ -348,8 +405,12 @@ async function deleteSession(id: string) {
 async function onSessionSaved() {
   editingSession.value = null
   showAddModal.value = false
-  if (isToday.value) await sessionsStore.loadToday()
-  else viewSessions.value = await sessionsStore.loadDate(viewDate.value)
+  if (isToday.value) {
+    await sessionsStore.loadToday()
+    recordsOpen.value = true
+  } else {
+    viewSessions.value = await sessionsStore.loadDate(viewDate.value)
+  }
 }
 
 function getSubject(id?: string) {
@@ -368,9 +429,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.home-start-btn {
-  margin-bottom: var(--space-1);
-}
 .gap-row {
   padding: var(--space-2) var(--space-4);
 }

@@ -183,12 +183,64 @@
   margin-top: calc(-1 * var(--space-1));
 }
 
+/* ── Collapsible records (Home) ─────────────────────────── */
+.collapsible-section__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.records-collapsed-hint {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-soft);
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.records-collapsed-hint:hover {
+  background: var(--bg-muted);
+  border-color: var(--border);
+}
+
+:deep(.subject-row--active) {
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
 /* ── Progress strip (Habitify) ──────────────────────────── */
 .progress-strip {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding-top: var(--space-3);
+}
+
+.progress-strip__hero {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.progress-strip__time {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 7vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.progress-strip__caption {
+  font-size: 14px;
+  color: var(--text-secondary);
 }
 
 .progress-strip__meta {
