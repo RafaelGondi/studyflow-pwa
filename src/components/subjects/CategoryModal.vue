@@ -71,7 +71,7 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const subjectsStore = useSubjectsStore()
 const saving = ref(false)
-const form = ref({ name: '', color: SUBJECT_COLORS[0].value })
+const form = ref<{ name: string; color: string }>({ name: '', color: SUBJECT_COLORS[0].value })
 
 watch(() => props.show, (val) => {
   if (val) {

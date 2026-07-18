@@ -52,14 +52,7 @@ export interface ActiveTimer {
 }
 
 /** Paleta de matérias alinhada aos tokens --cat-* do Akoma */
-export const SUBJECT_COLORS = [
-  { name: 'sea',    value: '#578eae' },
-  { name: 'violet', value: '#896db9' },
-  { name: 'amber',  value: '#bf8230' },
-  { name: 'green',  value: '#518768' },
-  { name: 'rose',   value: '#bd697c' },
-  { name: 'stone',  value: '#827e6c' },
-]
+export { AKOMA_CAT_COLORS, SUBJECT_COLORS } from '@/utils/colors'
 
 export const SUBJECT_ICONS = [
   '📚', '🔬', '🧮', '🌍', '💻', '🎨', '🎵', '⚽', '🏛️', '🧬',

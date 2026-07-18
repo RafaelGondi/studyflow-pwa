@@ -26,6 +26,7 @@ import type { StudySession } from '@/types'
 import { localDateStr, isStudySession } from '@/types'
 import { useSubjectsStore } from '@/stores/subjects'
 import { chartTheme } from '@/utils/chartTheme'
+import { normalizeAkomaColor } from '@/utils/colors'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
@@ -81,7 +82,7 @@ const chartData = computed(() => {
         const secs = byDaySubject.get(key)?.get(subjectId) ?? 0
         return +(secs / 3600).toFixed(2)
       }),
-      backgroundColor: subj?.color ?? theme.accent,
+      backgroundColor: normalizeAkomaColor(subj?.color),
       borderRadius: isTop ? { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 } : 0,
       borderSkipped: false,
       stack: 'study',

@@ -27,7 +27,7 @@
             <div class="flex-row" style="gap: var(--space-3); align-items: flex-start">
               <div
                 class="timeline-accent"
-                :style="{ background: getSubject(entry.session.subjectId)?.color ?? 'var(--accent)' }"
+                :style="{ background: normalizeAkomaColor(getSubject(entry.session.subjectId)?.color) }"
               />
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold text-primary truncate">
@@ -59,6 +59,7 @@ import type { StudySession } from '@/types'
 import { formatDuration } from '@/types'
 import { useSubjectsStore } from '@/stores/subjects'
 import { buildStatsTimeline, formatClockTime, gapLabel, type TimelineEntry } from '@/utils/stats'
+import { normalizeAkomaColor } from '@/utils/colors'
 
 const props = defineProps<{ sessions: StudySession[]; showTitle?: boolean }>()
 const emit = defineEmits<{

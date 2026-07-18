@@ -22,7 +22,7 @@
         <div class="focus-subject">
           <div
             class="subject-avatar subject-avatar--lg"
-            :style="{ background: colorMix(subject?.color ?? 'var(--text-inverse)', 10) }"
+            :style="{ background: subjectBgMix(subject?.color ?? AKOMA_CAT_COLORS[0].value, 10) }"
           >
             {{ subject?.icon ?? '📚' }}
           </div>
@@ -69,6 +69,7 @@
 import { watch } from 'vue'
 import { AkButton } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
+import { subjectBgMix, AKOMA_CAT_COLORS } from '@/utils/colors'
 import type { Subject } from '@/types'
 
 const props = defineProps<{
@@ -78,10 +79,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [] }>()
 const timerStore = useTimerStore()
-
-function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, transparent)`
-}
 
 watch(() => props.active, async (val) => {
   if (val) {

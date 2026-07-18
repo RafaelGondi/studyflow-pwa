@@ -3,7 +3,7 @@
     <div class="timer-panel__head">
       <div
         class="subject-leading"
-        :style="{ background: subjectBgMix(subject?.color ?? 'var(--accent)', 14) }"
+        :style="{ background: subjectBgMix(subject?.color, 14) }"
       >
         {{ subject?.icon ?? '📚' }}
       </div>

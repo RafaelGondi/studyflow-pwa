@@ -73,6 +73,7 @@ import type { StudySession } from '@/types'
 import { useSubjectsStore } from '@/stores/subjects'
 import { formatDuration, isStudySession } from '@/types'
 import { chartTheme } from '@/utils/chartTheme'
+import { AKOMA_CAT_COLORS, normalizeAkomaColor } from '@/utils/colors'
 
 ChartJS.register(ArcElement, Tooltip)
 
@@ -119,7 +120,7 @@ const categoryItems = computed(() => {
       return {
         id: catId ?? '__none__',
         name: cat?.name ?? 'Sem categoria',
-        color: cat?.color ?? 'var(--text-tertiary)',
+        color: normalizeAkomaColor(cat?.color ?? AKOMA_CAT_COLORS[5].value),
         seconds,
         pct: Math.round((seconds / t) * 100),
       }
@@ -135,7 +136,7 @@ const subjectItems = computed(() => {
     return {
       id: subjectId,
       name: subj?.name ?? 'Desconhecida',
-      color: subj?.color ?? 'var(--accent)',
+      color: normalizeAkomaColor(subj?.color),
       catId,
       seconds,
       pct: Math.round((seconds / t) * 100),
