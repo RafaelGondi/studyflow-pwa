@@ -6,7 +6,7 @@ const KEY = 'studyflow_theme'
 const ACCENT: Extract<AccentPalette, 'slate'> = 'slate'
 
 const THEME_COLORS = {
-  light: '#f9f9f7',
+  light: '#f8f6f1',
   dark: '#1d211f',
 } as const
 

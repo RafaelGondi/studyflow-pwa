@@ -18,12 +18,45 @@
     </div>
 
     <div class="page-body reveal reveal-d2">
-      <div class="today-summary reveal reveal-d1">
-        <div class="today-summary__item">
-          <span class="today-summary__label">Estudo</span>
-          <span class="today-summary__value numeric">{{ formatDuration(studyTotalSeconds) }}</span>
+      <section
+        v-if="periodDates.length"
+        class="history-overview reveal reveal-d1"
+        aria-labelledby="consistency-title"
+      >
+        <div class="history-overview__heading">
+          <div>
+            <span id="consistency-title" class="history-overview__eyebrow">Consistência</span>
+            <div class="history-overview__score">{{ consistency }}%</div>
+          </div>
+          <AkBadge
+            :variant="trend.delta > 0 ? 'accent' : 'neutral'"
+            :label="trend.label"
+          />
         </div>
-      </div>
+
+        <AkProgress
+          :value="activeDayCount"
+          :max="periodDates.length || 1"
+          size="md"
+        />
+
+        <p class="history-overview__message">{{ trend.message }}</p>
+
+        <div class="history-metrics">
+          <div class="history-metric">
+            <strong>{{ activeDayCount }}</strong>
+            <span>dias ativos</span>
+          </div>
+          <div class="history-metric">
+            <strong>{{ sessions.length }}</strong>
+            <span>sessões</span>
+          </div>
+          <div class="history-metric">
+            <strong>{{ formatDuration(studyTotalSeconds) }}</strong>
+            <span>tempo total</span>
+          </div>
+        </div>
+      </section>
 
       <WeeklyChart :sessions="weekChartSessions" />
 
@@ -106,7 +139,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import {
-  AkChip, AkEmptyState, AkIconButton, AkList, AkListRow, AkSectionHeader,
+  AkBadge, AkChip, AkEmptyState, AkIconButton, AkList, AkListRow,
+  AkProgress, AkSectionHeader,
 } from '@rafael_dias/akoma'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
@@ -118,6 +152,13 @@ import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration, localDateStr, isStudySession } from '@/types'
 import { buildTimeline, formatSessionTimeRange } from '@/utils/timeline'
+import {
+  activeDayRate,
+  computeStudyTrend,
+  enumerateDates,
+  getActiveStudyDays,
+  getPeriodRange,
+} from '@/utils/studyProgress'
 import type { StudySession } from '@/types'
 
 const sessionsStore = useSessionsStore()
@@ -138,6 +179,15 @@ const periods = [
 const sessions = computed(() => sessionsStore.rangeSessions.filter(isStudySession))
 const studyTotalSeconds = computed(() => sessions.value.reduce((a, s) => a + s.duration, 0))
 const weekChartSessions = ref<StudySession[]>([])
+
+const periodRange = computed(() => getPeriodRange(period.value))
+const periodDates = computed(() => enumerateDates(periodRange.value.from, periodRange.value.to))
+const activeDayCount = computed(() => {
+  const active = getActiveStudyDays(sessionsStore.rangeSessions)
+  return periodDates.value.filter(date => active.has(date)).length
+})
+const consistency = computed(() => activeDayRate(sessionsStore.rangeSessions, periodDates.value))
+const trend = computed(() => computeStudyTrend(sessionsStore.rangeSessions, periodDates.value))
 
 const groupedTimeline = computed(() => {
   const map = new Map<string, StudySession[]>()
@@ -177,15 +227,7 @@ async function deleteSession(id: string) {
 }
 
 async function loadRange() {
-  const now = new Date()
-  const to = localDateStr(now)
-  let from: string
-  if (period.value === 'today') from = to
-  else if (period.value === 'week') {
-    const d = new Date(now); d.setDate(now.getDate() - 6); from = localDateStr(d)
-  } else {
-    const d = new Date(now); d.setDate(now.getDate() - 29); from = localDateStr(d)
-  }
+  const { from, to } = periodRange.value
   await sessionsStore.loadRange(from, to)
 }
 

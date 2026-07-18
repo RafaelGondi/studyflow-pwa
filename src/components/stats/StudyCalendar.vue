@@ -20,15 +20,14 @@
           v-else
           type="button"
           class="calendar-cell tap-scale"
-          :class="{ 'calendar-cell--selected': cell.date === selectedDate }"
-          :style="cellStyle(cell)"
+          :class="cellClasses(cell)"
           @click="emit('select', cell.date)"
         >
           <span>{{ cell.day }}</span>
           <span
             v-if="cell.seconds > 0"
             class="calendar-cell__sub numeric"
-            :class="cell.date === selectedDate ? 'text-on-accent' : 'text-muted'"
+            :class="cellSubClass(cell)"
           >
             {{ shortTime(cell.seconds) }}
           </span>
@@ -36,15 +35,15 @@
       </template>
     </div>
 
-    <div class="flex-between" style="padding-top: var(--space-2); border-top: 1px solid var(--border)">
-      <div class="flex-row" style="gap: var(--space-1)">
+    <div class="flex-between calendar-legend">
+      <div class="flex-row calendar-legend__swatches">
         <div
           v-for="level in 5"
           :key="level"
           class="heat-swatch"
-          :style="{ background: heatBg(levelThreshold(level - 1)) }"
+          :class="completionShadeClass(heatLevelToShade(level - 1))"
         />
-        <span class="text-xs text-muted" style="margin-left: var(--space-1)">0+ → 5h+</span>
+        <span class="text-xs text-muted calendar-legend__label">0+ → 5h+</span>
       </div>
       <span class="text-xs font-semibold text-muted numeric">
         {{ monthTitle }}: {{ formatShortDayTotal(monthTotal) }}
@@ -57,6 +56,11 @@
 import { computed } from 'vue'
 import { AkCard, AkIconButton } from '@rafael_dias/akoma'
 import { localDateStr } from '@/types'
+import {
+  completionShadeClass,
+  completionShadeNeedsContrast,
+  heatLevelToShade,
+} from '@/utils/completionShade'
 import { getHeatLevel, formatShortDayTotal, monthLabel } from '@/utils/stats'
 
 const props = defineProps<{
@@ -64,7 +68,6 @@ const props = defineProps<{
   month: number
   selectedDate: string
   dailyTotals: Map<string, number>
-  accentColor?: string
 }>()
 
 const emit = defineEmits<{
@@ -113,32 +116,17 @@ const cells = computed(() => {
   return result
 })
 
-function heatColor(): string {
-  return props.accentColor ?? 'var(--accent)'
-}
-
-function heatBg(seconds: number): string {
-  const level = getHeatLevel(seconds)
-  const opacities = [0.04, 0.15, 0.3, 0.5, 0.75]
-  return `color-mix(in srgb, ${heatColor()} ${Math.round(opacities[level] * 100)}%, var(--bg-elevated))`
-}
-
-function cellStyle(cell: { date: string; seconds: number }) {
+function cellClasses(cell: { date: string; seconds: number }) {
   if (cell.date === props.selectedDate) {
-    return {
-      background: heatColor(),
-      color: 'var(--accent-contrast)',
-      boxShadow: `0 0 0 2px color-mix(in srgb, ${heatColor()} 40%, transparent)`,
-    }
+    return ['calendar-cell--selected']
   }
-  return {
-    background: heatBg(cell.seconds),
-    color: 'var(--text-secondary)',
-  }
+  return [completionShadeClass(heatLevelToShade(getHeatLevel(cell.seconds)))]
 }
 
-function levelThreshold(level: number): number {
-  return [0, 3600, 7200, 14400, 18000][level] ?? 0
+function cellSubClass(cell: { date: string; seconds: number }) {
+  if (cell.date === props.selectedDate) return 'text-on-accent'
+  const shade = heatLevelToShade(getHeatLevel(cell.seconds))
+  return completionShadeNeedsContrast(shade) ? 'text-on-accent' : 'text-muted'
 }
 
 function shortTime(seconds: number): string {
@@ -186,6 +174,12 @@ function nextMonth() {
   transition: box-shadow var(--transition);
 }
 
+.calendar-cell--selected {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
 .calendar-cell:hover:not(.calendar-cell--selected) {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
 }
@@ -200,6 +194,20 @@ function nextMonth() {
   margin-top: 2px;
 }
 
+.calendar-legend {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.calendar-legend__swatches {
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.calendar-legend__label {
+  margin-left: var(--space-1);
+}
+
 .heat-swatch {
   width: 16px;
   height: 12px;
@@ -211,7 +219,7 @@ function nextMonth() {
   border-bottom-left-radius: var(--radius-sm);
 }
 
-.heat-swatch:last-child {
+.heat-swatch:last-of-type {
   border-top-right-radius: var(--radius-sm);
   border-bottom-right-radius: var(--radius-sm);
 }

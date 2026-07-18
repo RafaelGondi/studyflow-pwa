@@ -1,6 +1,10 @@
 <template>
-  <div class="page akoma-page" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
-    <PageHeader
+  <div
+    class="page akoma-page app-page"
+    :class="{ 'app-page--with-fab': isToday && subjectsStore.subjects.length > 0 }"
+  >
+    <div class="app-page__header">
+      <PageHeader
       :label="pageLabel"
       :title="pageTitle"
       :meta="dateLabel"
@@ -35,16 +39,21 @@
       </template>
     </PageHeader>
 
-    <Transition name="fade">
-      <div v-if="!isToday" class="chip-row page-chip-row">
-        <AkChip @click="goToToday">
-          <AkIcon name="home-outline" :size="14" />
-          Ir para hoje
-        </AkChip>
-      </div>
-    </Transition>
+      <Transition name="fade">
+        <div v-if="!isToday" class="chip-row page-chip-row">
+          <AkChip @click="goToToday">
+            <AkIcon name="home-outline" :size="14" />
+            Ir para hoje
+          </AkChip>
+        </div>
+      </Transition>
+    </div>
 
-    <div class="day-content">
+    <div
+      class="app-scroll"
+      @touchstart.passive="onTouchStart"
+      @touchend.passive="onTouchEnd"
+    >
       <Transition :name="slideDir === 'left' ? 'slide-left' : 'slide-right'" mode="out-in">
         <div :key="viewDate" class="page-body reveal reveal-d2">
           <template v-if="isToday">
@@ -150,6 +159,15 @@
           />
         </div>
       </Transition>
+    </div>
+
+    <div v-if="isToday && subjectsStore.subjects.length > 0" class="fab">
+      <AkButton size="lg" aria-label="Adicionar registro" @click="showAddModal = true">
+        <template #icon>
+          <AkIcon name="plus-outline" :size="18" />
+        </template>
+        Adicionar
+      </AkButton>
     </div>
 
     <FocusMode :active="focusMode" :subject="activeSubject" @close="focusMode = false" />
@@ -422,10 +440,5 @@ onMounted(async () => {
 .row-duration {
   min-width: 3rem;
   text-align: right;
-}
-
-.day-content {
-  position: relative;
-  overflow: hidden;
 }
 </style>

@@ -1,26 +1,51 @@
-/* StudyFlow — domain layout on Akoma 0.8.4 (Habitify-inspired) */
+/* StudyFlow — layout shell. Visual language lives in @rafael_dias/akoma tokens. */
 
-/* ── Light palette: warm off-white (habitify-pwa / StudyFlow) ──── */
-[data-mood='app'][data-theme='light'] {
-  --bg: #f9f9f7;
-  --bg-elevated: #ffffff;
-  --bg-soft: #f3f3f1;
-  --bg-muted: #e8e8e5;
-  --bg-tinted: #f3f3f1;
-  --nav-glass: #ffffffeb;
-  --border: color-mix(in srgb, var(--fill-strong) 8%, transparent);
-  --border-strong: color-mix(in srgb, var(--fill-strong) 13%, transparent);
-  --card-radius: 16px;
-  --card-shadow: 0 1px 2px color-mix(in srgb, var(--fill-strong) 4%, transparent);
+/*
+ * Indicadores de intensidade usam as 5 tonalidades cromáticas do Akoma:
+ * --accent-lighter → --accent-darker
+ */
+.completion-shade--none {
+  background: var(--bg-muted);
+  color: var(--text-tertiary);
+}
+
+.completion-shade--lighter {
+  background: var(--accent-lighter);
+  color: var(--text);
+}
+
+.completion-shade--light {
+  background: var(--accent-light);
+  color: var(--text);
+}
+
+.completion-shade--base {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.completion-shade--dark {
+  background: var(--accent-dark);
+  color: var(--accent-contrast);
+}
+
+.completion-shade--darker {
+  background: var(--accent-darker);
+  color: var(--accent-contrast);
+}
+
+/* Modal/sheet shadow — único override além dos tokens Akoma */
+[data-mood='app'] {
   --surface-shadow-md: 0 -12px 40px color-mix(in srgb, var(--fill-strong) 12%, transparent);
 }
 
-/* bg-tinted e orbs seguem a paleta de accent do Akoma (slate, violet, etc.) */
-
-/* ── App shell ──────────────────────────────────────────── */
+/* ── App shell (Habitify layout) ─────────────────────────── */
 .app-shell {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -51,19 +76,54 @@
   position: relative;
   z-index: 1;
   flex: 1;
+  min-height: 0;
   width: 100%;
-  max-width: var(--shell-max);
-  margin: 0 auto;
+  overflow: hidden;
+}
+
+.app-main > * {
+  height: 100%;
+}
+
+.page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page.akoma-page:not(.app-page) {
+  overflow-y: auto;
   padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-4));
 }
 
-/* Listas = card branco (detalhes abaixo em .ak-list) */
+.app-page {
+  padding: 0;
+  overflow: hidden;
+}
 
-.page {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: visible;
+.app-page__header {
+  flex-shrink: 0;
+  padding:
+    calc(var(--page-pad-top) + var(--safe-top))
+    var(--page-pad-x)
+    0;
+}
+
+.app-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding:
+    0
+    var(--page-pad-x)
+    calc(var(--nav-height) + var(--safe-bottom) + var(--space-6));
+}
+
+.app-page--with-fab .app-scroll {
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 3.25rem + var(--space-8));
 }
 
 .page-body {
@@ -184,7 +244,7 @@
 }
 
 .page-chip-row {
-  padding: 0 var(--page-pad-x) var(--space-3);
+  padding: 0 0 var(--space-3);
 }
 
 :deep(.subject-row--active) {
@@ -274,6 +334,80 @@
   color: var(--warning);
 }
 
+/* ── Progress overview (Stats / Habitify history) ─────── */
+.history-overview {
+  padding: var(--space-5);
+  border-radius: var(--card-radius);
+  background: var(--bg-tinted);
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border));
+}
+
+.history-overview__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.history-overview__eyebrow {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.history-overview__score {
+  margin-top: 2px;
+  color: var(--text);
+  font-size: clamp(38px, 10vw, 48px);
+  font-weight: 650;
+  letter-spacing: -0.055em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-overview__message {
+  margin-top: var(--space-4);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.history-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 12%, var(--border));
+}
+
+.history-metric {
+  min-width: 0;
+  padding: 0 var(--space-2);
+  text-align: center;
+}
+
+.history-metric:not(:last-child) {
+  border-right: 1px solid color-mix(in srgb, var(--accent) 12%, var(--border));
+}
+
+.history-metric strong,
+.history-metric span {
+  display: block;
+}
+
+.history-metric strong {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-metric span {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.25;
+}
+
 /* List row title weight */
 :deep(.ak-list-row__title),
 .ak-list-row .truncate {
@@ -292,19 +426,19 @@
   margin-bottom: var(--space-2);
 }
 
-/* Listas = card branco sobre fundo off-white */
-[data-theme='light'] .ak-list {
+/* Listas elevadas (light + dark) */
+.ak-list {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--card-radius, var(--radius-lg));
   box-shadow: var(--card-shadow);
 }
 
-[data-theme='light'] .ak-list-row-item--divider:not(:last-child) {
+.ak-list-row-item--divider:not(:last-child) {
   border-bottom-color: var(--border);
 }
 
-[data-theme='light'] .ak-list-row {
+.ak-list-row {
   min-height: 56px;
 }
 
@@ -339,7 +473,7 @@
 }
 
 /* Chips ativos = cinza suave (Habitify) */
-[data-theme='light'] .ak-chip--active {
+.ak-chip--active {
   background: var(--bg-muted);
   color: var(--text);
 }
