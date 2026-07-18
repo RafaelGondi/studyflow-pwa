@@ -12,6 +12,27 @@ function hasBreakBetween(sessions: StudySession[], from: number, to: number) {
   )
 }
 
+export function formatSessionTimeRange(
+  session: StudySession,
+  fmt: (ts: number) => string,
+): string {
+  const segments = session.segments
+  if (!segments || segments.length <= 1) {
+    return `${fmt(session.startTime)} – ${fmt(session.endTime)}`
+  }
+
+  const parts: string[] = []
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i]
+    parts.push(`${fmt(seg.start)} – ${fmt(seg.end)}`)
+    if (i < segments.length - 1) {
+      const pauseSec = Math.round((segments[i + 1].start - seg.end) / 1000)
+      if (pauseSec > 0) parts.push(`⏸ ${formatDuration(pauseSec)}`)
+    }
+  }
+  return parts.join(' · ')
+}
+
 export function buildTimeline(sessions: StudySession[]): TimelineItem[] {
   const sorted = [...sessions].sort((a, b) => a.startTime - b.startTime)
   const result: TimelineItem[] = []

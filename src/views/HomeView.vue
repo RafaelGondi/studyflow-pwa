@@ -68,29 +68,20 @@
 
       <section
         v-if="showRecordsSection"
-        class="section-block collapsible-section"
+        class="section-block"
       >
         <AkSectionHeader :title="isToday ? 'Registros' : dateNavLabel">
           <template #action>
-            <div class="collapsible-section__actions">
-              <AkButton v-if="isToday" size="sm" variant="ghost" @click="showAddModal = true">
-                <template #icon>
-                  <AkIcon name="plus-outline" :size="16" />
-                </template>
-                Adicionar
-              </AkButton>
-              <AkIconButton
-                v-if="isToday && timeline.length > 0"
-                :label="recordsOpen ? 'Recolher registros' : 'Expandir registros'"
-                size="sm"
-                :icon="recordsOpen ? 'caret-up-outline' : 'caret-down-outline'"
-                @click="recordsOpen = !recordsOpen"
-              />
-            </div>
+            <AkButton v-if="isToday" size="sm" variant="ghost" @click="showAddModal = true">
+              <template #icon>
+                <AkIcon name="plus-outline" :size="16" />
+              </template>
+              Adicionar
+            </AkButton>
           </template>
         </AkSectionHeader>
 
-        <div v-show="recordsOpen || !isToday" class="collapsible-section__body">
+        <div class="collapsible-section__body">
           <div v-if="loadingHistory" class="loading-center">
             <AkShimmer width="24px" height="24px" radius="full" />
           </div>
@@ -104,7 +95,12 @@
           <AkList v-else-if="timeline.length > 0">
             <template v-for="(item, index) in timeline" :key="item.type === 'gap' ? `gap-${index}` : item.session.id">
               <li v-if="item.type === 'gap'" class="text-xs text-muted gap-row">
-                ☕ ~{{ item.label }} de intervalo
+                ↕ ~{{ item.label }} entre sessões
+              </li>
+
+              <li v-else-if="item.type === 'break'" class="text-xs text-muted gap-row">
+                ↕ ~{{ formatDuration(item.session.duration) }} de intervalo
+                <span class="gap-row__times">{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</span>
               </li>
 
               <AkListRow v-else :divider="index < timeline.length - 1">
@@ -119,8 +115,8 @@
                 </span>
 
                 <template #subtitle>
-                  <span class="text-xs text-muted">
-                    {{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}
+                  <span class="text-xs text-muted session-times">
+                    {{ formatSessionTimeRange(item.session, fmt) }}
                   </span>
                 </template>
 
@@ -135,15 +131,6 @@
             </template>
           </AkList>
         </div>
-
-        <button
-          v-if="isToday && timeline.length > 0 && !recordsOpen"
-          type="button"
-          class="records-collapsed-hint tap-scale"
-          @click="recordsOpen = true"
-        >
-          {{ timeline.length }} {{ timeline.length === 1 ? 'registro' : 'registros' }} hoje — toque para ver
-        </button>
       </section>
 
       <AkEmptyState
@@ -195,7 +182,7 @@ import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { formatDuration, formatTimer, localDateStr, todayDateString, isStudySession } from '@/types'
-import { buildTimeline } from '@/utils/timeline'
+import { buildTimeline, formatSessionTimeRange } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
 const router = useRouter()
@@ -208,7 +195,6 @@ const focusMode = ref(false)
 const editingSession = ref<StudySession | null>(null)
 const showAddModal = ref(false)
 const sheetOpen = ref(false)
-const recordsOpen = ref(false)
 
 const { isFaceDown } = useFaceDownFocus()
 watch(isFaceDown, (faceDown) => {
@@ -225,12 +211,12 @@ const displaySessions = computed<StudySession[]>(() =>
   isToday.value ? sessionsStore.todaySessions : viewSessions.value
 )
 
-const timeline = computed(() => buildTimeline(displaySessions.value.filter(isStudySession)))
+const timeline = computed(() => buildTimeline(displaySessions.value))
 
 const showSubjectList = computed(() => timerStore.mode === 'idle')
 
 const showRecordsSection = computed(() =>
-  !isToday.value || timeline.value.length > 0 || loadingHistory.value
+  !isToday.value || subjectsStore.subjects.length > 0 || loadingHistory.value
 )
 
 const pageLabel = computed(() => (isToday.value ? 'Sua rotina' : 'Histórico'))
@@ -285,18 +271,9 @@ const studyTotalFormatted = computed(() => {
   return formatTimer(displaySessions.value.filter(isStudySession).reduce((a, s) => a + s.duration, 0))
 })
 
-watch(timeline, (items) => {
-  if (!isToday.value) {
-    recordsOpen.value = true
-    return
-  }
-  if (items.length === 0) recordsOpen.value = false
-})
-
 async function fetchViewDate() {
   if (isToday.value) return
   loadingHistory.value = true
-  recordsOpen.value = true
   viewSessions.value = await sessionsStore.loadDate(viewDate.value)
   loadingHistory.value = false
 }
@@ -376,7 +353,6 @@ async function onSessionSaved() {
   showAddModal.value = false
   if (isToday.value) {
     await sessionsStore.loadToday()
-    recordsOpen.value = true
   } else {
     viewSessions.value = await sessionsStore.loadDate(viewDate.value)
   }
@@ -400,7 +376,21 @@ onMounted(async () => {
 <style scoped>
 .gap-row {
   padding: var(--space-2) var(--space-4);
+  line-height: 1.4;
 }
+
+.gap-row__times {
+  display: block;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+.session-times {
+  display: block;
+  line-height: 1.45;
+  white-space: normal;
+}
+
 .row-duration {
   min-width: 3rem;
   text-align: right;

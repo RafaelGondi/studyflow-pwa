@@ -48,35 +48,47 @@
           </AkSectionHeader>
 
           <AkList>
-            <AkListRow
-              v-for="(item, i) in group.items"
-              :key="item.session.id"
-              :divider="i < group.items.length - 1"
-            >
-              <template #leading>
-                <div class="subject-leading subject-leading--sm">
-                  {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
-                </div>
-              </template>
+            <template v-for="(item, i) in group.items" :key="item.type === 'gap' ? `gap-${group.date}-${i}` : item.session.id">
+              <li v-if="item.type === 'gap'" class="text-xs text-muted gap-row">
+                ↕ ~{{ item.label }} entre sessões
+              </li>
 
-              <span class="truncate">
-                {{ getSubject(item.session.subjectId)?.name ?? 'Matéria' }}
-              </span>
-
-              <template #subtitle>
-                <span class="text-xs text-muted">
-                  {{ formatTime(item.session.startTime) }} → {{ formatTime(item.session.endTime) }}
+              <li v-else-if="item.type === 'break'" class="text-xs text-muted gap-row">
+                ↕ ~{{ formatDuration(item.session.duration) }} de intervalo
+                <span class="gap-row__times">
+                  {{ formatTime(item.session.startTime) }} – {{ formatTime(item.session.endTime) }}
                 </span>
-              </template>
+              </li>
 
-              <template #trailing>
-                <span class="numeric text-sm shrink-0 text-secondary">
-                  {{ formatDuration(item.session.duration) }}
+              <AkListRow
+                v-else
+                :divider="i < group.items.length - 1"
+              >
+                <template #leading>
+                  <div class="subject-leading subject-leading--sm">
+                    {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
+                  </div>
+                </template>
+
+                <span class="truncate">
+                  {{ getSubject(item.session.subjectId)?.name ?? 'Matéria' }}
                 </span>
-                <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
-                <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="deleteSession(item.session.id)" />
-              </template>
-            </AkListRow>
+
+                <template #subtitle>
+                  <span class="text-xs text-muted session-times">
+                    {{ formatSessionTimeRange(item.session, formatTime) }}
+                  </span>
+                </template>
+
+                <template #trailing>
+                  <span class="numeric text-sm shrink-0 text-secondary">
+                    {{ formatDuration(item.session.duration) }}
+                  </span>
+                  <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
+                  <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="deleteSession(item.session.id)" />
+                </template>
+              </AkListRow>
+            </template>
           </AkList>
         </template>
       </section>
@@ -103,7 +115,7 @@ import SubjectDonut from '@/components/stats/SubjectDonut.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import { formatDuration, localDateStr, isStudySession } from '@/types'
-import { buildTimeline } from '@/utils/timeline'
+import { buildTimeline, formatSessionTimeRange } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
 const sessionsStore = useSessionsStore()
@@ -125,7 +137,7 @@ const weekChartSessions = ref<StudySession[]>([])
 
 const groupedTimeline = computed(() => {
   const map = new Map<string, StudySession[]>()
-  for (const s of sessions.value) {
+  for (const s of sessionsStore.rangeSessions) {
     if (!map.has(s.date)) map.set(s.date, [])
     map.get(s.date)!.push(s)
   }
@@ -133,9 +145,10 @@ const groupedTimeline = computed(() => {
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([date, daySessions]) => ({
       date,
-      items: buildTimeline(daySessions).filter(i => i.type === 'study'),
-      studyTotal: daySessions.reduce((a, s) => a + s.duration, 0),
+      items: buildTimeline(daySessions),
+      studyTotal: daySessions.filter(isStudySession).reduce((a, s) => a + s.duration, 0),
     }))
+    .filter(group => group.items.some(i => i.type === 'study'))
 })
 
 function getSubject(id?: string) { return id ? subjectsStore.getSubject(id) : undefined }
@@ -190,5 +203,22 @@ onMounted(reloadAll)
   align-items: center;
   gap: var(--space-1);
   flex-shrink: 0;
+}
+
+.gap-row {
+  padding: var(--space-2) var(--space-4);
+  line-height: 1.4;
+}
+
+.gap-row__times {
+  display: block;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+.session-times {
+  display: block;
+  line-height: 1.45;
+  white-space: normal;
 }
 </style>
