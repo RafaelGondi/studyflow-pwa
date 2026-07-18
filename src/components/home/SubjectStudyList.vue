@@ -14,8 +14,10 @@
     </div>
 
     <AkSectionHeader :title="title">
-      <template v-if="showBrowse" #action>
-        <AkButton size="sm" variant="ghost" @click="emit('browse')">Ver todas</AkButton>
+      <template v-if="hasMore" #action>
+        <AkButton size="sm" variant="ghost" @click="emit('browse')">
+          Ver todas ({{ totalCount }})
+        </AkButton>
       </template>
     </AkSectionHeader>
 
@@ -33,12 +35,12 @@
 
     <AkList v-else>
       <AkListRow
-        v-for="item in visibleItems"
+        v-for="item in previewItems"
         :key="item.subjectId"
         interactive
         class="subject-row"
         :class="{ 'subject-row--active': activeId === item.subjectId }"
-        :divider="item !== visibleItems[visibleItems.length - 1]"
+        :divider="item !== previewItems[previewItems.length - 1] || hasMore"
         @click="emit('select', item.subjectId)"
       >
         <template #leading>
@@ -71,6 +73,12 @@
           <AkBadge v-else-if="activeId === item.subjectId" variant="success" label="●" />
         </template>
       </AkListRow>
+
+      <li v-if="hasMore" class="list-more-row">
+        <button type="button" class="list-more-row__btn tap-scale" @click="emit('browse')">
+          + {{ hiddenCount }} {{ hiddenCount === 1 ? 'matéria' : 'matérias' }} — ver todas
+        </button>
+      </li>
     </AkList>
   </section>
 </template>
@@ -84,16 +92,18 @@ import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
 
+const HOME_PREVIEW_LIMIT = 8
+
 const props = withDefaults(defineProps<{
   activeId?: string | null
   extraSeconds?: number
   extraSubjectId?: string | null
   showPlay?: boolean
-  showBrowse?: boolean
+  previewLimit?: number
   title?: string
 }>(), {
   showPlay: true,
-  showBrowse: false,
+  previewLimit: HOME_PREVIEW_LIMIT,
   title: 'Matérias de hoje',
 })
 
@@ -145,6 +155,27 @@ const visibleItems = computed(() => {
   if (!filterId.value) return items.value
   return items.value.filter(item => item.categoryId === filterId.value)
 })
+
+const totalCount = computed(() => visibleItems.value.length)
+
+const previewItems = computed(() => {
+  const list = visibleItems.value
+  const limit = props.previewLimit
+  if (list.length <= limit) return list
+
+  const picked = list.slice(0, limit)
+  const activeId = props.activeId
+  if (!activeId || picked.some(item => item.subjectId === activeId)) return picked
+
+  const active = list.find(item => item.subjectId === activeId)
+  if (!active) return picked
+
+  return [...picked.slice(0, limit - 1), active]
+})
+
+const hasMore = computed(() => totalCount.value > previewItems.value.length)
+
+const hiddenCount = computed(() => totalCount.value - previewItems.value.length)
 </script>
 
 <style scoped>
@@ -167,5 +198,27 @@ const visibleItems = computed(() => {
 .subject-row__play {
   color: var(--accent);
   flex-shrink: 0;
+}
+
+.list-more-row {
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+
+.list-more-row__btn {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+  cursor: pointer;
+}
+
+.list-more-row__btn:hover {
+  background: var(--bg-soft);
 }
 </style>

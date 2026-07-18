@@ -65,7 +65,6 @@
           :extra-seconds="timerStore.mode === 'study' || timerStore.mode === 'paused' ? timerStore.studyElapsedSeconds : 0"
           :extra-subject-id="timerStore.activeSubjectId"
           :show-play="timerStore.mode === 'idle' || timerStore.mode === 'break'"
-          :show-browse="subjectsStore.subjects.length > 6"
           @select="handleSubjectSelect"
           @browse="sheetOpen = true"
         />
