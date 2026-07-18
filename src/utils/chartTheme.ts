@@ -8,10 +8,12 @@ export function chartTheme() {
   const isDark = document.documentElement.dataset.theme === 'dark'
   return {
     text: cssVar('--text-tertiary'),
-    grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(41,49,45,0.06)',
+    grid: cssVar('--border'),
     border: cssVar('--border'),
     accent: cssVar('--accent'),
+    accentSoft: cssVar('--accent-soft'),
     warning: cssVar('--warning'),
     bg: cssVar('--bg-elevated'),
+    isDark,
   }
 }

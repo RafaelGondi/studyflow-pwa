@@ -1,17 +1,14 @@
 @import '@rafael_dias/akoma/style.css';
 @import './styles/app.css';
 
-html {
+html,
+body,
+#app {
   background-color: var(--bg);
   overscroll-behavior: none;
 }
 
-html[data-mood='app'][data-theme='light'] {
-  background-color: #f9f9f7;
-}
-
 body {
-  overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
 

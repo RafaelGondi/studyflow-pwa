@@ -46,7 +46,7 @@
         <template #leading>
           <div
             class="subject-leading"
-            :style="{ background: colorMix(item.color, 16) }"
+            :style="{ background: subjectBgMix(item.color, 16) }"
           >
             {{ item.icon }}
           </div>
@@ -91,6 +91,7 @@ import {
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
+import { subjectBgMix } from '@/utils/colors'
 
 const HOME_PREVIEW_LIMIT = 8
 
@@ -115,10 +116,6 @@ const filterId = ref<string | null>(null)
 
 const subjects = computed(() => subjectsStore.subjects)
 const categories = computed(() => subjectsStore.categories)
-
-function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-soft))`
-}
 
 function categoryName(categoryId: string | null) {
   if (!categoryId) return 'Sem categoria'

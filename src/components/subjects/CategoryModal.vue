@@ -31,24 +31,10 @@
                     :class="{ 'color-swatch--active': form.color === c.value }"
                     :style="{ background: c.value }"
                   >
-                    <svg v-if="form.color === c.value" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" style="width:14px;height:14px">
+                    <svg v-if="form.color === c.value" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="width:14px;height:14px;color:var(--accent-contrast)">
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                   </button>
-                </div>
-                <div class="color-custom-row">
-                  <label
-                    class="color-swatch color-swatch--custom"
-                    :class="{ 'color-swatch--active': isCustomColor }"
-                    :style="isCustomColor ? { background: form.color } : undefined"
-                    title="Cor personalizada"
-                  >
-                    <input type="color" :value="form.color" @input="onCustomColor" />
-                    <svg v-if="!isCustomColor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--text-tertiary)">
-                      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
-                    </svg>
-                  </label>
-                  <span class="color-custom-row__label">{{ isCustomColor ? form.color : 'Cor personalizada' }}</span>
                 </div>
               </div>
             </form>
@@ -74,13 +60,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { AkButton, AkIconButton, AkInput } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { SUBJECT_COLORS } from '@/types'
 import type { Category } from '@/types'
-
-const PRESET_VALUES = new Set(SUBJECT_COLORS.map(c => c.value))
 
 const props = defineProps<{ show: boolean; category?: Category | null }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -88,12 +72,6 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 const subjectsStore = useSubjectsStore()
 const saving = ref(false)
 const form = ref({ name: '', color: SUBJECT_COLORS[0].value })
-
-const isCustomColor = computed(() => !PRESET_VALUES.has(form.value.color))
-
-function onCustomColor(e: Event) {
-  form.value.color = (e.target as HTMLInputElement).value
-}
 
 watch(() => props.show, (val) => {
   if (val) {

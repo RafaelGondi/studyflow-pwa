@@ -51,25 +51,14 @@ export interface ActiveTimer {
   accumulatedMs: number
 }
 
+/** Paleta de matérias alinhada aos tokens --cat-* do Akoma */
 export const SUBJECT_COLORS = [
-  // Linha 1
-  { name: 'red',     value: '#ef4444' },
-  { name: 'rose',    value: '#f43f5e' },
-  { name: 'pink',    value: '#ec4899' },
-  { name: 'fuchsia', value: '#d946ef' },
-  { name: 'purple',  value: '#a855f7' },
-  { name: 'violet',  value: '#8b5cf6' },
-  { name: 'indigo',  value: '#6366f1' },
-  { name: 'blue',    value: '#3b82f6' },
-  // Linha 2
-  { name: 'sky',     value: '#0ea5e9' },
-  { name: 'cyan',    value: '#06b6d4' },
-  { name: 'teal',    value: '#14b8a6' },
-  { name: 'emerald', value: '#10b981' },
-  { name: 'lime',    value: '#84cc16' },
-  { name: 'amber',   value: '#f59e0b' },
-  { name: 'orange',  value: '#f97316' },
-  { name: 'stone',   value: '#78716c' },
+  { name: 'sea',    value: '#578eae' },
+  { name: 'violet', value: '#896db9' },
+  { name: 'amber',  value: '#bf8230' },
+  { name: 'green',  value: '#518768' },
+  { name: 'rose',   value: '#bd697c' },
+  { name: 'stone',  value: '#827e6c' },
 ]
 
 export const SUBJECT_ICONS = [

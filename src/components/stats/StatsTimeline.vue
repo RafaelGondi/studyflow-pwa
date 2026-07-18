@@ -1,59 +1,51 @@
 <template>
-  <div class="space-y-3">
-    <h2 v-if="showTitle" class="text-sm font-semibold text-muted uppercase tracking-wider px-1">Timeline</h2>
+  <div class="stack-xs">
+    <h2 v-if="showTitle" class="section-title">Timeline</h2>
 
-    <div v-if="entries.length === 0" class="py-8 text-center text-faint text-sm card">
-      Nenhuma sessão neste dia
-    </div>
+    <AkEmptyState
+      v-if="entries.length === 0"
+      title="Nenhuma sessão"
+      description="Nenhuma sessão neste dia."
+    />
 
-    <div v-else class="space-y-2">
+    <div v-else class="stack-xs">
       <template v-for="(entry, i) in entries" :key="entryKey(entry, i)">
-        <!-- Gap -->
-        <div v-if="entry.type === 'gap'" class="flex gap-3 items-center">
-          <span class="w-12 flex-shrink-0 text-[10px] text-muted text-right tabular-nums">
+        <div v-if="entry.type === 'gap'" class="timeline-gap flex-row" style="gap: var(--space-3)">
+          <span class="timeline-time text-xs text-muted numeric">
             {{ formatClockTime(entry.startTime) }}
           </span>
-          <div class="flex-1 min-w-0 flex items-center gap-2 px-3 py-2 rounded-akoma bg-app-soft text-xs text-muted">
-            <span class="flex-1 truncate">{{ gapLabel(entry.startTime, entry.endTime) }}</span>
+          <div class="timeline-gap__body surface-soft flex-row" style="gap: var(--space-2); flex: 1; padding: var(--space-2) var(--space-3)">
+            <span class="text-xs text-muted truncate">{{ gapLabel(entry.startTime, entry.endTime) }}</span>
           </div>
         </div>
 
-        <!-- Session -->
-        <div v-else class="flex gap-3 items-start group">
-          <span class="w-12 flex-shrink-0 text-[10px] text-muted text-right tabular-nums pt-3">
+        <div v-else class="timeline-row flex-row" style="gap: var(--space-3); align-items: flex-start">
+          <span class="timeline-time text-xs text-muted numeric" style="padding-top: var(--space-3)">
             {{ formatClockTime(entry.session.startTime) }}
           </span>
-          <div class="flex-1 min-w-0 card flex items-start gap-3 p-3 border border-app-border">
-            <div
-              class="w-1 self-stretch rounded-full flex-shrink-0 min-h-[40px]"
-              :style="{ background: getSubject(entry.session.subjectId)?.color ?? 'var(--accent-color)' }"
-            />
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-primary truncate">
-                {{ getSubject(entry.session.subjectId)?.name ?? 'Matéria' }}
-              </p>
-              <p class="text-xs font-semibold text-secondary mt-0.5">
-                {{ formatDuration(entry.session.duration) }}
-              </p>
-              <p class="text-[11px] text-muted mt-0.5">
-                {{ formatClockTime(entry.session.startTime) }} ~ {{ formatClockTime(entry.session.endTime) }}
-              </p>
+          <AkCard padding="sm" class="timeline-card" style="flex: 1">
+            <div class="flex-row" style="gap: var(--space-3); align-items: flex-start">
+              <div
+                class="timeline-accent"
+                :style="{ background: getSubject(entry.session.subjectId)?.color ?? 'var(--accent)' }"
+              />
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-primary truncate">
+                  {{ getSubject(entry.session.subjectId)?.name ?? 'Matéria' }}
+                </p>
+                <p class="text-xs font-semibold text-secondary numeric" style="margin-top: 2px">
+                  {{ formatDuration(entry.session.duration) }}
+                </p>
+                <p class="text-xs text-muted numeric" style="margin-top: 2px">
+                  {{ formatClockTime(entry.session.startTime) }} – {{ formatClockTime(entry.session.endTime) }}
+                </p>
+              </div>
+              <div class="flex-row" style="gap: var(--space-1)">
+                <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="emit('edit', entry.session)" />
+                <AkIconButton label="Excluir" size="sm" icon="trash-outline" class="btn-icon--danger" @click="emit('delete', entry.session.id)" />
+              </div>
             </div>
-            <div class="flex flex-col gap-1">
-              <button @click="emit('edit', entry.session)" class="w-7 h-7 btn-icon tap-scale">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-              <button @click="emit('delete', entry.session.id)" class="w-7 h-7 btn-icon tap-scale hover:text-red-400">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                </svg>
-              </button>
-            </div>
-          </div>
+          </AkCard>
         </div>
       </template>
     </div>
@@ -62,6 +54,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { AkCard, AkEmptyState, AkIconButton } from '@rafael_dias/akoma'
 import type { StudySession } from '@/types'
 import { formatDuration } from '@/types'
 import { useSubjectsStore } from '@/stores/subjects'
@@ -85,3 +78,23 @@ function entryKey(entry: TimelineEntry, i: number) {
   return entry.session.id
 }
 </script>
+
+<style scoped>
+.timeline-time {
+  width: 3rem;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.timeline-accent {
+  width: 3px;
+  align-self: stretch;
+  min-height: 40px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.timeline-card :deep(.ak-card__body) {
+  padding: var(--space-3);
+}
+</style>

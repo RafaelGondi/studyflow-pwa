@@ -1,12 +1,14 @@
 <template>
-  <div class="card p-4">
-    <div v-if="points.length === 0" class="py-10 text-center text-faint text-sm">
-      Sem atividade neste dia
-    </div>
-    <div v-else class="h-36">
+  <AkCard padding="md">
+    <AkEmptyState
+      v-if="points.length === 0"
+      title="Sem atividade"
+      description="Nenhuma atividade neste dia."
+    />
+    <div v-else class="chart-wrap">
       <Line :data="chartData" :options="chartOptions" />
     </div>
-  </div>
+  </AkCard>
 </template>
 
 <script setup lang="ts">
@@ -16,43 +18,37 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement,
   LineElement, Tooltip, Filler, type TooltipItem,
 } from 'chart.js'
+import { AkCard, AkEmptyState } from '@rafael_dias/akoma'
 import type { StudySession } from '@/types'
-import { useThemeStore } from '@/stores/theme'
 import { getCumulativeChartPoints } from '@/utils/stats'
 import { formatDuration } from '@/types'
+import { chartTheme } from '@/utils/chartTheme'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler)
 
 const props = defineProps<{ sessions: StudySession[] }>()
-const theme = useThemeStore()
-
-function cssVar(name: string, fallback: string) {
-  if (typeof document === 'undefined') return fallback
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
-}
 
 const points = computed(() => getCumulativeChartPoints(props.sessions))
 
 const chartData = computed(() => {
-  const accent = cssVar('--accent', '#3d6a94')
+  const theme = chartTheme()
   return {
     labels: points.value.map(p => p.label),
     datasets: [{
       data: points.value.map(p => p.value / 60),
-      borderColor: accent,
-      backgroundColor: theme.isDark ? 'rgba(45, 212, 191, 0.12)' : 'rgba(20, 184, 166, 0.12)',
+      borderColor: theme.accent,
+      backgroundColor: theme.accentSoft,
       fill: true,
       stepped: true,
       pointRadius: 3,
-      pointBackgroundColor: accent,
+      pointBackgroundColor: theme.accent,
       tension: 0,
     }],
   }
 })
 
 const chartOptions = computed(() => {
-  const tickColor = cssVar('--text-tertiary', '#a3a29c')
-  const gridColor = theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(44,44,42,0.06)'
+  const theme = chartTheme()
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -67,14 +63,14 @@ const chartOptions = computed(() => {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: tickColor, font: { size: 10 }, maxTicksLimit: 6 },
+        ticks: { color: theme.text, font: { size: 10, family: 'DM Sans' }, maxTicksLimit: 6 },
         border: { display: false },
       },
       y: {
-        grid: { color: gridColor },
+        grid: { color: theme.grid },
         ticks: {
-          color: tickColor,
-          font: { size: 10 },
+          color: theme.text,
+          font: { size: 10, family: 'DM Sans' },
           callback: (v: number | string) => `${v}m`,
           maxTicksLimit: 4,
         },
@@ -85,3 +81,9 @@ const chartOptions = computed(() => {
   }
 })
 </script>
+
+<style scoped>
+.chart-wrap {
+  height: 144px;
+}
+</style>

@@ -34,7 +34,7 @@
                 >
                   <div
                     class="subject-leading subject-leading--sm"
-                    :style="{ background: colorMix(subject.color, 14) }"
+                    :style="{ background: subjectBgMix(subject.color, 14) }"
                   >
                     {{ subject.icon }}
                   </div>
@@ -62,6 +62,7 @@ import { AkEmptyState, AkIconButton } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
+import { subjectBgMix } from '@/utils/colors'
 
 defineProps<{
   modelValue: boolean
@@ -77,10 +78,6 @@ const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 
 const subjects = computed(() => subjectsStore.subjects)
-
-function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-soft))`
-}
 
 function getCategoryName(categoryId: string | null) {
   if (!categoryId) return null

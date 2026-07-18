@@ -3,7 +3,7 @@
     <div class="timer-panel__head">
       <div
         class="subject-leading"
-        :style="{ background: colorMix(subject?.color ?? 'var(--accent)', 14) }"
+        :style="{ background: subjectBgMix(subject?.color ?? 'var(--accent)', 14) }"
       >
         {{ subject?.icon ?? '📚' }}
       </div>
@@ -34,6 +34,7 @@ import { computed } from 'vue'
 import { AkButton } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSubjectsStore } from '@/stores/subjects'
+import { subjectBgMix } from '@/utils/colors'
 import type { Subject } from '@/types'
 
 const emit = defineEmits<{ stop: []; 'change-subject': [] }>()
@@ -45,10 +46,6 @@ const subject = computed<Subject | null>(() => {
   const id = timerStore.activeSubjectId
   return id ? subjectsStore.getSubject(id) ?? null : null
 })
-
-function colorMix(color: string, pct: number) {
-  return `color-mix(in srgb, ${color} ${pct}%, var(--bg-soft))`
-}
 </script>
 
 <style scoped>
@@ -60,7 +57,7 @@ function colorMix(color: string, pct: number) {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--card-radius, 16px);
-  box-shadow: 0 1px 2px rgba(41, 49, 45, 0.04);
+  box-shadow: var(--card-shadow);
 }
 
 .timer-panel__head {
@@ -73,7 +70,7 @@ function colorMix(color: string, pct: number) {
 .timer-panel__time {
   font-family: var(--font-display);
   font-size: clamp(40px, 12vw, 52px);
-  font-weight: 700;
+  font-weight: 650;
   letter-spacing: -0.03em;
   text-align: center;
   line-height: 1;

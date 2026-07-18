@@ -1,50 +1,54 @@
 <template>
-  <div class="min-h-screen flex flex-col akoma-page">
-    <header class="mb-5 reveal">
-      <button @click="router.back()" class="flex items-center gap-1 text-sm text-muted mb-3 tap-scale">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Matérias
-      </button>
+  <div class="page akoma-page">
+    <PageHeader
+      label="Matéria"
+      :title="subject?.name ?? '…'"
+      :meta="categoryName"
+    >
+      <template #nav>
+        <AkButton size="sm" variant="ghost" @click="router.back()">
+          <template #icon>
+            <AkIcon name="arrow-left-outline" :size="16" />
+          </template>
+          Voltar
+        </AkButton>
+      </template>
+    </PageHeader>
 
-      <div v-if="subject" class="flex items-center gap-4">
+    <div v-if="loading" class="loading-center">
+      <AkShimmer width="32px" height="32px" radius="full" />
+    </div>
+
+    <div v-else class="page-body reveal reveal-d1">
+      <div v-if="subject" class="subject-hero">
         <div
-          class="w-14 h-14 rounded-akoma flex items-center justify-center text-3xl flex-shrink-0"
-          :style="{ background: `${subject.color}20` }"
+          class="subject-avatar subject-avatar--lg"
+          :style="{ background: subjectBgMix(subject.color, 16) }"
         >
           {{ subject.icon }}
         </div>
-        <div class="min-w-0">
-          <h1 class="page-title truncate">{{ subject.name }}</h1>
-          <p class="text-sm text-muted mt-0.5">{{ categoryName }}</p>
-        </div>
       </div>
-    </header>
 
-    <div v-if="loading" class="flex-1 flex items-center justify-center">
-      <div class="w-6 h-6 rounded-full border-2 border-app-elevated border-t-accent animate-spin" />
-    </div>
-
-    <main v-else class="flex-1 overflow-y-auto pb-4 space-y-4 reveal reveal-d1">
-      <div class="grid grid-cols-2 gap-3">
-        <div class="card p-4">
-          <p class="text-xs text-muted font-medium uppercase tracking-wider">Total</p>
-          <p class="text-2xl font-bold text-primary mt-1">{{ formatDuration(stats.totalSeconds) }}</p>
-          <p class="text-xs text-faint mt-1">tempo de estudo</p>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <p class="stat-label">Total</p>
+          <p class="stat-value numeric">{{ formatDuration(stats.totalSeconds) }}</p>
+          <p class="stat-hint">tempo de estudo</p>
         </div>
-        <div class="card p-4">
-          <p class="text-xs text-muted font-medium uppercase tracking-wider">Sessões</p>
-          <p class="text-2xl font-bold text-primary mt-1">{{ stats.sessionCount }}</p>
-          <p class="text-xs text-faint mt-1">{{ stats.daysStudied }} dias ativos</p>
+        <div class="stat-card">
+          <p class="stat-label">Sessões</p>
+          <p class="stat-value numeric">{{ stats.sessionCount }}</p>
+          <p class="stat-hint">{{ stats.daysStudied }} dias ativos</p>
         </div>
-        <div class="card p-4">
-          <p class="text-xs text-muted font-medium uppercase tracking-wider">Média / sessão</p>
-          <p class="text-2xl font-bold text-primary mt-1">{{ formatDuration(stats.avgSessionSeconds) }}</p>
-          <p class="text-xs text-faint mt-1">foco máx. {{ formatDuration(stats.maxSessionSeconds) }}</p>
+        <div class="stat-card">
+          <p class="stat-label">Média / sessão</p>
+          <p class="stat-value numeric">{{ formatDuration(stats.avgSessionSeconds) }}</p>
+          <p class="stat-hint">foco máx. {{ formatDuration(stats.maxSessionSeconds) }}</p>
         </div>
-        <div class="card p-4">
-          <p class="text-xs text-muted font-medium uppercase tracking-wider">Média / dia</p>
-          <p class="text-2xl font-bold text-primary mt-1">{{ formatDuration(stats.avgDaySeconds) }}</p>
-          <p class="text-xs text-faint mt-1">nos dias estudados</p>
+        <div class="stat-card">
+          <p class="stat-label">Média / dia</p>
+          <p class="stat-value numeric">{{ formatDuration(stats.avgDaySeconds) }}</p>
+          <p class="stat-hint">nos dias estudados</p>
         </div>
       </div>
 
@@ -65,21 +69,21 @@
         :date="selectedDate"
       />
 
-      <div class="card p-4 space-y-3">
-        <h2 class="text-xs font-bold text-muted uppercase tracking-wider">Histórico</h2>
-        <div class="flex justify-between items-start gap-3 py-2 border-b border-app-border">
+      <AkCard v-if="sessions.length > 0" padding="md" class="stack-xs">
+        <h2 class="section-title">Histórico</h2>
+        <div class="flex-between" style="padding: var(--space-2) 0; border-bottom: 1px solid var(--border)">
           <span class="text-sm text-muted">Primeiro estudo</span>
           <span class="text-sm font-semibold text-primary text-right">
             {{ stats.firstStudyDate ? formatLongDate(stats.firstStudyDate) : '—' }}
           </span>
         </div>
-        <div class="flex justify-between items-start gap-3 py-2">
+        <div class="flex-between" style="padding: var(--space-2) 0">
           <span class="text-sm text-muted">Último estudo</span>
           <span class="text-sm font-semibold text-primary text-right">
             {{ stats.lastStudyDate ? formatLongDate(stats.lastStudyDate) : '—' }}
           </span>
         </div>
-      </div>
+      </AkCard>
 
       <WeeklyChart v-if="recentSessions.length > 0" :sessions="recentSessions" />
 
@@ -90,14 +94,18 @@
         @delete="deleteSession"
       />
 
-      <div v-else-if="sessions.length > 0" class="py-8 text-center text-faint text-sm card">
-        Nenhuma sessão neste dia
-      </div>
+      <AkEmptyState
+        v-else-if="sessions.length > 0"
+        title="Nenhuma sessão neste dia"
+        description="Selecione outro dia no calendário."
+      />
 
-      <div v-else class="py-12 text-center text-faint text-sm card">
-        Nenhuma sessão registrada para esta matéria
-      </div>
-    </main>
+      <AkEmptyState
+        v-else
+        title="Nenhuma sessão registrada"
+        description="Comece a estudar esta matéria para ver estatísticas."
+      />
+    </div>
 
     <SessionEditModal
       :show="!!editingSession"
@@ -111,6 +119,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { AkButton, AkCard, AkEmptyState, AkIcon, AkShimmer } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import StudyCalendar from '@/components/stats/StudyCalendar.vue'
@@ -118,8 +127,10 @@ import DaySummary from '@/components/stats/DaySummary.vue'
 import WeeklyChart from '@/components/stats/WeeklyChart.vue'
 import StatsTimeline from '@/components/stats/StatsTimeline.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
+import PageHeader from '@/components/layout/PageHeader.vue'
 import { formatDuration, localDateStr, todayDateString } from '@/types'
 import { getSubjectStats, formatLongDate, aggregateByDate } from '@/utils/stats'
+import { subjectBgMix } from '@/utils/colors'
 import type { StudySession } from '@/types'
 
 const route = useRoute()
@@ -188,3 +199,11 @@ async function deleteSession(id: string) {
 watch(subjectId, reload)
 onMounted(reload)
 </script>
+
+<style scoped>
+.subject-hero {
+  display: flex;
+  justify-content: center;
+  margin-top: calc(-1 * var(--space-2));
+}
+</style>
