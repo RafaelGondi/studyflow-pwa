@@ -12,6 +12,8 @@
       </Transition>
     </main>
     <AppTabBar v-if="appReady" />
+    <AppToastHost />
+    <AppConfirmSheet />
   </div>
 </template>
 
@@ -25,6 +27,8 @@ import { useSessionsStore } from '@/stores/sessions'
 import { useThemeStore } from '@/stores/theme'
 import AppTabBar from '@/components/layout/AppTabBar.vue'
 import UpdateBanner from '@/components/ui/UpdateBanner.vue'
+import AppToastHost from '@/components/ui/AppToastHost.vue'
+import AppConfirmSheet from '@/components/ui/AppConfirmSheet.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()

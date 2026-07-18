@@ -1,5 +1,5 @@
 <template>
-  <header class="page-hero page-hero--with-nav reveal">
+  <header class="page-hero page-hero--with-nav reveal" :class="{ 'page-hero--day': bordered }">
     <div class="page-hero__main">
       <span v-if="label" class="page-label">{{ label }}</span>
       <h1 class="page-title">{{ title }}</h1>
@@ -17,5 +17,6 @@ defineProps<{
   label?: string
   title: string
   meta?: string
+  bordered?: boolean
 }>()
 </script>

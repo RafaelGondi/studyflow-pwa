@@ -127,12 +127,16 @@ import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import FabButton from '@/components/ui/FabButton.vue'
+import { useAppToast } from '@/composables/useAppToast'
+import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration } from '@/types'
 import type { Subject, Category } from '@/types'
 
 const router = useRouter()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
+const toast = useAppToast()
+const confirmSheet = useConfirmSheet()
 const showSubjectModal = ref(false)
 const showCategoryModal = ref(false)
 const editingSubject = ref<Subject | null>(null)
@@ -159,9 +163,13 @@ function openEditSubject(subject: Subject) {
 }
 
 async function confirmDeleteSubject(id: string) {
-  if (confirm('Excluir esta matéria? O histórico de sessões será mantido.')) {
-    await subjectsStore.removeSubject(id)
-  }
+  const ok = await confirmSheet.ask({
+    title: 'Excluir matéria',
+    message: 'O histórico de sessões será mantido.',
+  })
+  if (!ok) return
+  await subjectsStore.removeSubject(id)
+  toast.success('Matéria excluída')
 }
 
 function openEditCategory(cat: Category) {
@@ -184,9 +192,13 @@ function todayTime(subjectId: string) {
 }
 
 async function confirmDeleteCategory(id: string) {
-  if (confirm('Excluir esta categoria? As matérias serão mantidas sem categoria.')) {
-    await subjectsStore.removeCategory(id)
-  }
+  const ok = await confirmSheet.ask({
+    title: 'Excluir categoria',
+    message: 'As matérias serão mantidas sem categoria.',
+  })
+  if (!ok) return
+  await subjectsStore.removeCategory(id)
+  toast.success('Categoria excluída')
 }
 
 onMounted(() => sessionsStore.loadToday())

@@ -1,64 +1,59 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="modelValue" class="modal-overlay">
-        <div class="modal-backdrop" @click="emit('update:modelValue', false)" />
-        <div class="modal-sheet sheet-picker">
-          <div class="modal-handle" aria-hidden="true" />
-          <div class="modal-header">
-            <div>
-              <h2 class="modal-title">Selecionar matéria</h2>
-              <p v-if="subjects.length" class="sheet-picker__meta">
-                {{ subjects.length }} {{ subjects.length === 1 ? 'matéria' : 'matérias' }}
-              </p>
-            </div>
-            <AkIconButton label="Fechar" size="sm" icon="x-outline" @click="emit('update:modelValue', false)" />
-          </div>
-
-          <div class="sheet-picker__scroll">
-            <AkEmptyState
-              v-if="subjects.length === 0"
-              title="Nenhuma matéria"
-              description="Cadastre matérias para começar."
-            >
-              <template #icon>📚</template>
-            </AkEmptyState>
-
-            <ul v-else class="sheet-picker__list">
-              <li v-for="subject in subjects" :key="subject.id">
-                <button
-                  type="button"
-                  class="sheet-picker__item tap-scale"
-                  :class="{ 'sheet-picker__item--active': activeId === subject.id }"
-                  @click="select(subject.id)"
-                >
-                  <div
-                    class="subject-leading subject-leading--sm"
-                    :style="{ background: subjectBgMix(subject.color, 14) }"
-                  >
-                    {{ subject.icon }}
-                  </div>
-                  <div class="sheet-picker__content">
-                    <span class="sheet-picker__name truncate">{{ subject.name }}</span>
-                    <span class="sheet-picker__meta-line truncate">
-                      {{ getCategoryName(subject.categoryId) ?? 'Sem categoria' }}
-                      <template v-if="todayTime(subject.id)"> · {{ todayTime(subject.id) }}</template>
-                    </span>
-                  </div>
-                  <span class="status-dot shrink-0" :style="{ background: subject.color }" />
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
+  <AppBottomSheet
+    :open="modelValue"
+    @update:open="(open) => emit('update:modelValue', open)"
+  >
+    <template #header>
+      <div class="sheet-picker__heading">
+        <h2 class="sheet-picker__title">Selecionar matéria</h2>
+        <p v-if="subjects.length" class="sheet-picker__meta">
+          {{ subjects.length }} {{ subjects.length === 1 ? 'matéria' : 'matérias' }}
+        </p>
       </div>
-    </Transition>
-  </Teleport>
+    </template>
+
+    <div class="sheet-picker__scroll">
+      <AkEmptyState
+        v-if="subjects.length === 0"
+        title="Nenhuma matéria"
+        description="Cadastre matérias para começar."
+      >
+        <template #icon>📚</template>
+      </AkEmptyState>
+
+      <ul v-else class="sheet-picker__list">
+        <li v-for="subject in subjects" :key="subject.id">
+          <button
+            type="button"
+            class="sheet-picker__item tap-scale"
+            :class="{ 'sheet-picker__item--active': activeId === subject.id }"
+            @click="select(subject.id)"
+          >
+            <div
+              class="subject-leading subject-leading--sm"
+              :style="{ background: subjectBgMix(subject.color, 14) }"
+            >
+              {{ subject.icon }}
+            </div>
+            <div class="sheet-picker__content">
+              <span class="sheet-picker__name truncate">{{ subject.name }}</span>
+              <span class="sheet-picker__meta-line truncate">
+                {{ getCategoryName(subject.categoryId) ?? 'Sem categoria' }}
+                <template v-if="todayTime(subject.id)"> · {{ todayTime(subject.id) }}</template>
+              </span>
+            </div>
+            <span class="status-dot shrink-0" :style="{ background: subject.color }" />
+          </button>
+        </li>
+      </ul>
+    </div>
+  </AppBottomSheet>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AkEmptyState, AkIconButton } from '@rafael_dias/akoma'
+import { AkEmptyState } from '@rafael_dias/akoma'
+import AppBottomSheet from '@/components/ui/AppBottomSheet.vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
@@ -96,6 +91,18 @@ function select(id: string) {
 </script>
 
 <style scoped>
+.sheet-picker__title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.sheet-picker__heading {
+  flex: 1;
+  min-width: 0;
+}
+
 .sheet-picker__meta {
   margin-top: 2px;
   font-size: 12px;
@@ -103,14 +110,7 @@ function select(id: string) {
 }
 
 .sheet-picker__scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
-  padding: 0 var(--space-4) calc(var(--space-5) + var(--safe-bottom));
+  padding: 0 var(--space-4) var(--space-5);
 }
 
 .sheet-picker__list {

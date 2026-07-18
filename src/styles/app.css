@@ -142,6 +142,11 @@
   color: var(--text);
 }
 
+.page-hero--day {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-4);
+}
+
 .page-hero__meta {
   font-size: 14px;
   color: var(--text-secondary);
@@ -154,46 +159,32 @@
   margin-top: var(--space-1);
 }
 
-.page-hero__date {
-  flex-shrink: 0;
-  max-width: 42%;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.35;
-  text-align: right;
-  color: var(--text-secondary);
-  text-transform: capitalize;
-  padding-top: var(--space-6);
-}
-
-.home-start-btn {
-  margin-top: calc(-1 * var(--space-1));
-}
-
-/* ── Collapsible records (Home) ─────────────────────────── */
-.collapsible-section__actions {
+.day-header__progress {
   display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
 }
 
-.records-collapsed-hint {
-  width: 100%;
-  padding: var(--space-3) var(--space-4);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--bg-soft);
-  color: var(--text-secondary);
-  font-size: 13px;
-  text-align: center;
-  cursor: pointer;
-  transition: background-color var(--transition), border-color var(--transition);
+.chip-row {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
 }
 
-.records-collapsed-hint:hover {
-  background: var(--bg-muted);
-  border-color: var(--border);
+.chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.chip-row > * {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.page-chip-row {
+  padding: 0 var(--page-pad-x) var(--space-3);
 }
 
 :deep(.subject-row--active) {
@@ -206,7 +197,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding-top: var(--space-3);
 }
 
 .progress-strip__hero {
@@ -248,23 +238,6 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--text-tertiary);
-}
-
-.day-stats {
-  display: flex;
-  gap: var(--space-4);
-  padding-top: var(--space-2);
-  font-size: 13px;
-  color: var(--text-tertiary);
-}
-
-.day-stats__value {
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.day-stats__value--break {
-  color: var(--warning);
 }
 
 /* ── Today summary (stats pages) ────────────────────────── */
@@ -393,41 +366,6 @@
   height: 36px;
   font-size: 18px;
   border-radius: 10px;
-}
-
-/* ── Timer bar (card branco) ────────────────────────────── */
-.timer-bar {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-}
-
-[data-theme='dark'] .timer-bar {
-  background: var(--bg-elevated);
-}
-
-.timer-bar__row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.timer-bar__time {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 650;
-  letter-spacing: -0.03em;
-  margin-left: auto;
-}
-
-.timer-bar__actions {
-  display: flex;
-  gap: var(--space-2);
 }
 
 /* ── Date navigator ─────────────────────────────────────── */
@@ -996,6 +934,35 @@
   display: flex;
   justify-content: center;
   padding: var(--space-8) 0;
+}
+
+/* Day navigation slide / fade */
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform 0.32s var(--ease-out-expo);
+}
+
+.slide-left-enter-from { transform: translateX(100%); }
+.slide-left-leave-to { transform: translateX(-100%); }
+.slide-right-enter-from { transform: translateX(-100%); }
+.slide-right-leave-to { transform: translateX(100%); }
+
+.fade-enter-active,
+.fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from,
+.fade-leave-to { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-left-enter-active,
+  .slide-left-leave-active,
+  .slide-right-enter-active,
+  .slide-right-leave-active,
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: none;
+  }
 }
 
 /* Router transitions */

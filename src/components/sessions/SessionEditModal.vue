@@ -1,67 +1,61 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="show" class="modal-overlay">
-        <div class="modal-backdrop" @click="emit('close')" />
-        <AkCard padding="none" class="modal-sheet">
-          <div class="modal-header">
-            <h2 class="modal-title">Editar registro</h2>
-            <AkIconButton label="Fechar" size="sm" icon="x-outline" @click="emit('close')" />
-          </div>
+  <AppBottomSheet
+    :open="show"
+    title="Editar registro"
+    @update:open="(open) => { if (!open) emit('close') }"
+  >
+    <div class="modal-body stack">
+      <AkCard v-if="isBreak" padding="sm">
+        <div class="flex-row" style="gap: var(--space-3)">
+          <div class="subject-avatar" :style="{ background: 'var(--warning-soft)' }">☕</div>
+          <span class="text-sm font-semibold text-warning">Pausa</span>
+          <span class="text-xs text-muted" style="margin-left: auto">{{ dateLabel }}</span>
+        </div>
+      </AkCard>
 
-          <div class="modal-body stack">
-            <AkCard v-if="isBreak" padding="sm">
-              <div class="flex-row" style="gap: var(--space-3)">
-                <div class="subject-avatar" :style="{ background: 'var(--warning-soft)' }">☕</div>
-                <span class="text-sm font-semibold text-warning">Pausa</span>
-                <span class="text-xs text-muted" style="margin-left: auto">{{ dateLabel }}</span>
-              </div>
-            </AkCard>
+      <div v-else>
+        <label class="stat-label" style="display: block; margin-bottom: var(--space-2)">Matéria</label>
+        <select v-model="form.subjectId" class="field-select">
+          <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.icon }} {{ s.name }}</option>
+        </select>
+      </div>
 
-            <div v-else>
-              <label class="stat-label" style="display: block; margin-bottom: var(--space-2)">Matéria</label>
-              <select v-model="form.subjectId" class="field-select">
-                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.icon }} {{ s.name }}</option>
-              </select>
-            </div>
+      <form @submit.prevent="handleSubmit" class="stack">
+        <div class="grid-2">
+          <AkInput v-model="form.startTime" label="Início" type="time" required />
+          <AkInput
+            v-model="form.endTime"
+            label="Fim"
+            type="time"
+            required
+            :error="endBeforeStart ? 'Fim antes do início' : undefined"
+          />
+        </div>
 
-            <form @submit.prevent="handleSubmit" class="stack">
-              <div class="grid-2">
-                <AkInput v-model="form.startTime" label="Início" type="time" required />
-                <AkInput
-                  v-model="form.endTime"
-                  label="Fim"
-                  type="time"
-                  required
-                  :error="endBeforeStart ? 'Fim antes do início' : undefined"
-                />
-              </div>
-
-              <AkCard padding="sm">
-                <div class="flex-between">
-                  <span class="text-xs text-muted">Duração calculada</span>
-                  <span class="text-sm font-bold numeric" :class="endBeforeStart ? 'text-danger' : 'text-primary'">
-                    {{ endBeforeStart ? 'Inválida' : formatDuration(computedDuration) }}
-                  </span>
-                </div>
-              </AkCard>
-
-              <AkButton type="submit" variant="primary" block :loading="saving" :disabled="endBeforeStart">
-                Salvar alterações
-              </AkButton>
-            </form>
+        <AkCard padding="sm">
+          <div class="flex-between">
+            <span class="text-xs text-muted">Duração calculada</span>
+            <span class="text-sm font-bold numeric" :class="endBeforeStart ? 'text-danger' : 'text-primary'">
+              {{ endBeforeStart ? 'Inválida' : formatDuration(computedDuration) }}
+            </span>
           </div>
         </AkCard>
-      </div>
-    </Transition>
-  </Teleport>
+
+        <AkButton type="submit" variant="primary" block :loading="saving" :disabled="endBeforeStart">
+          Salvar alterações
+        </AkButton>
+      </form>
+    </div>
+  </AppBottomSheet>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AkButton, AkCard, AkIconButton, AkInput } from '@rafael_dias/akoma'
+import { AkButton, AkCard, AkInput } from '@rafael_dias/akoma'
+import AppBottomSheet from '@/components/ui/AppBottomSheet.vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
+import { useAppToast } from '@/composables/useAppToast'
 import { formatDuration, isBreakSession } from '@/types'
 import type { StudySession } from '@/types'
 
@@ -70,6 +64,7 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
+const toast = useAppToast()
 const saving = ref(false)
 
 const form = ref({ startTime: '', endTime: '', subjectId: '' })
@@ -134,6 +129,7 @@ async function handleSubmit() {
       )
     }
     await sessionsStore.update(props.session.id, patch)
+    toast.success('Registro atualizado')
     emit('saved')
     emit('close')
   } finally {

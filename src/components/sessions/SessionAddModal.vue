@@ -1,66 +1,60 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="show" class="modal-overlay">
-        <div class="modal-backdrop" @click="emit('close')" />
-        <AkCard padding="none" class="modal-sheet">
-          <div class="modal-header">
-            <h2 class="modal-title">Adicionar registro</h2>
-            <AkIconButton label="Fechar" size="sm" icon="x-outline" @click="emit('close')" />
-          </div>
+  <AppBottomSheet
+    :open="show"
+    title="Adicionar registro"
+    @update:open="(open) => { if (!open) emit('close') }"
+  >
+    <div class="modal-body stack">
+      <form @submit.prevent="handleSubmit" class="stack">
+        <div>
+          <label class="stat-label" style="display: block; margin-bottom: var(--space-2)">Matéria</label>
+          <select v-model="form.subjectId" required class="field-select">
+            <option value="" disabled>Selecione</option>
+            <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.icon }} {{ s.name }}</option>
+          </select>
+        </div>
 
-          <div class="modal-body stack">
-            <form @submit.prevent="handleSubmit" class="stack">
-              <div>
-                <label class="stat-label" style="display: block; margin-bottom: var(--space-2)">Matéria</label>
-                <select v-model="form.subjectId" required class="field-select">
-                  <option value="" disabled>Selecione</option>
-                  <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.icon }} {{ s.name }}</option>
-                </select>
-              </div>
+        <div class="grid-2">
+          <AkInput v-model="form.startTime" label="Início" type="time" required />
+          <AkInput
+            v-model="form.endTime"
+            label="Fim"
+            type="time"
+            required
+            :error="endBeforeStart ? 'Fim antes do início' : undefined"
+          />
+        </div>
 
-              <div class="grid-2">
-                <AkInput v-model="form.startTime" label="Início" type="time" required />
-                <AkInput
-                  v-model="form.endTime"
-                  label="Fim"
-                  type="time"
-                  required
-                  :error="endBeforeStart ? 'Fim antes do início' : undefined"
-                />
-              </div>
-
-              <AkCard padding="sm">
-                <div class="flex-between">
-                  <span class="text-xs text-muted">Duração</span>
-                  <span class="text-sm font-bold numeric" :class="endBeforeStart ? 'text-danger' : 'text-primary'">
-                    {{ endBeforeStart ? 'Inválida' : formatDuration(computedDuration) }}
-                  </span>
-                </div>
-              </AkCard>
-
-              <AkButton
-                type="submit"
-                variant="primary"
-                block
-                :loading="saving"
-                :disabled="endBeforeStart || !form.subjectId"
-              >
-                Adicionar
-              </AkButton>
-            </form>
+        <AkCard padding="sm">
+          <div class="flex-between">
+            <span class="text-xs text-muted">Duração</span>
+            <span class="text-sm font-bold numeric" :class="endBeforeStart ? 'text-danger' : 'text-primary'">
+              {{ endBeforeStart ? 'Inválida' : formatDuration(computedDuration) }}
+            </span>
           </div>
         </AkCard>
-      </div>
-    </Transition>
-  </Teleport>
+
+        <AkButton
+          type="submit"
+          variant="primary"
+          block
+          :loading="saving"
+          :disabled="endBeforeStart || !form.subjectId"
+        >
+          Adicionar
+        </AkButton>
+      </form>
+    </div>
+  </AppBottomSheet>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AkButton, AkCard, AkIconButton, AkInput } from '@rafael_dias/akoma'
+import { AkButton, AkCard, AkInput } from '@rafael_dias/akoma'
+import AppBottomSheet from '@/components/ui/AppBottomSheet.vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
+import { useAppToast } from '@/composables/useAppToast'
 import { formatDuration } from '@/types'
 
 const props = defineProps<{ show: boolean; date: string }>()
@@ -68,6 +62,7 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
+const toast = useAppToast()
 const saving = ref(false)
 
 const form = ref({
@@ -112,6 +107,7 @@ async function handleSubmit() {
       endTime: newEndTs.value,
       duration: computedDuration.value,
     })
+    toast.success('Registro adicionado')
     emit('saved')
     emit('close')
   } finally {

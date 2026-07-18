@@ -114,12 +114,16 @@ import WeeklyChart from '@/components/stats/WeeklyChart.vue'
 import SubjectDonut from '@/components/stats/SubjectDonut.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
+import { useAppToast } from '@/composables/useAppToast'
+import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration, localDateStr, isStudySession } from '@/types'
 import { buildTimeline, formatSessionTimeRange } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
 const sessionsStore = useSessionsStore()
 const subjectsStore = useSubjectsStore()
+const toast = useAppToast()
+const confirmSheet = useConfirmSheet()
 const editingSession = ref<StudySession | null>(null)
 
 type Period = 'today' | 'week' | 'month'
@@ -162,10 +166,14 @@ function formatGroupDate(date: string) {
 }
 
 async function deleteSession(id: string) {
-  if (confirm('Excluir este registro?')) {
-    await sessionsStore.remove(id)
-    await reloadAll()
-  }
+  const ok = await confirmSheet.ask({
+    title: 'Excluir registro',
+    message: 'Este registro será removido permanentemente.',
+  })
+  if (!ok) return
+  await sessionsStore.remove(id)
+  toast.success('Registro excluído')
+  await reloadAll()
 }
 
 async function loadRange() {

@@ -128,6 +128,8 @@ import WeeklyChart from '@/components/stats/WeeklyChart.vue'
 import StatsTimeline from '@/components/stats/StatsTimeline.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
+import { useAppToast } from '@/composables/useAppToast'
+import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration, localDateStr, todayDateString } from '@/types'
 import { getSubjectStats, formatLongDate, aggregateByDate } from '@/utils/stats'
 import { subjectBgMix } from '@/utils/colors'
@@ -137,6 +139,8 @@ const route = useRoute()
 const router = useRouter()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
+const toast = useAppToast()
+const confirmSheet = useConfirmSheet()
 
 const loading = ref(true)
 const sessions = ref<StudySession[]>([])
@@ -191,8 +195,13 @@ async function reload() {
 }
 
 async function deleteSession(id: string) {
-  if (!confirm('Excluir esta sessão?')) return
+  const ok = await confirmSheet.ask({
+    title: 'Excluir sessão',
+    message: 'Esta sessão será removida permanentemente.',
+  })
+  if (!ok) return
   await sessionsStore.remove(id)
+  toast.success('Sessão excluída')
   await reload()
 }
 
