@@ -64,6 +64,7 @@ import { ref, watch } from 'vue'
 import { AkButton, AkIconButton, AkInput } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { SUBJECT_COLORS } from '@/types'
+import { DEFAULT_SUBJECT_COLOR } from '@/utils/colors'
 import type { Category } from '@/types'
 
 const props = defineProps<{ show: boolean; category?: Category | null }>()
@@ -71,13 +72,13 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const subjectsStore = useSubjectsStore()
 const saving = ref(false)
-const form = ref<{ name: string; color: string }>({ name: '', color: SUBJECT_COLORS[0].value })
+const form = ref<{ name: string; color: string }>({ name: '', color: DEFAULT_SUBJECT_COLOR })
 
 watch(() => props.show, (val) => {
   if (val) {
     form.value = props.category
       ? { name: props.category.name, color: props.category.color }
-      : { name: '', color: SUBJECT_COLORS[0].value }
+      : { name: '', color: DEFAULT_SUBJECT_COLOR }
   }
 })
 

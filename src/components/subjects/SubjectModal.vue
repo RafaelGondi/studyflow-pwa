@@ -97,7 +97,7 @@ import { ref, computed, watch } from 'vue'
 import { AkButton, AkIconButton, AkInput } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { SUBJECT_COLORS, SUBJECT_ICONS } from '@/types'
-import { normalizeAkomaColor, subjectBgMix } from '@/utils/colors'
+import { DEFAULT_SUBJECT_COLOR, normalizeAkomaColor, subjectBgMix } from '@/utils/colors'
 import type { Subject } from '@/types'
 
 const props = defineProps<{ show: boolean; subject?: Subject | null }>()
@@ -110,7 +110,7 @@ const saving = ref(false)
 const form = ref<{ name: string; icon: string; color: string; categoryId: string | null }>({
   name: '',
   icon: '📚',
-  color: SUBJECT_COLORS[0].value,
+  color: DEFAULT_SUBJECT_COLOR,
   categoryId: null,
 })
 
@@ -124,7 +124,7 @@ watch(() => props.show, (val) => {
         categoryId: props.subject.categoryId,
       }
     } else {
-      form.value = { name: '', icon: '📚', color: SUBJECT_COLORS[0].value, categoryId: null }
+      form.value = { name: '', icon: '📚', color: DEFAULT_SUBJECT_COLOR, categoryId: null }
     }
   }
 })

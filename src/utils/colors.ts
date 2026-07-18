@@ -19,6 +19,9 @@ export const AKOMA_CAT_COLORS = [
   { name: 'Rubro',     token: '--accent-rose', value: '#c36d80' },
 ] as const
 
+/** Cor padrão para novas matérias/categorias (accent slate do Akoma) */
+export const DEFAULT_SUBJECT_COLOR = '#5e7894'
+
 /** @deprecated use AKOMA_CAT_COLORS */
 export const SUBJECT_COLORS = AKOMA_CAT_COLORS.map(({ name, value }) => ({
   name: name.toLowerCase(),
@@ -66,9 +69,9 @@ function rgbDistance(a: [number, number, number], b: [number, number, number]) {
 
 function closestPaletteColor(hex: string): string {
   const rgb = hexToRgb(hex)
-  if (!rgb) return AKOMA_CAT_COLORS[0].value
+  if (!rgb) return DEFAULT_SUBJECT_COLOR
 
-  let best: string = AKOMA_CAT_COLORS[0].value
+  let best: string = DEFAULT_SUBJECT_COLOR
   let bestDist = Infinity
   for (const cat of AKOMA_CAT_COLORS) {
     const catRgb = hexToRgb(cat.value)
@@ -84,7 +87,7 @@ function closestPaletteColor(hex: string): string {
 
 /** Garante que a cor exibida/gravada pertence à paleta Akoma */
 export function normalizeAkomaColor(color: string | undefined | null): string {
-  if (!color) return AKOMA_CAT_COLORS[0].value
+  if (!color) return DEFAULT_SUBJECT_COLOR
   const c = color.trim().toLowerCase()
   if (PALETTE_SET.has(c)) return c
   if (LEGACY_COLOR_MAP[c]) return LEGACY_COLOR_MAP[c]

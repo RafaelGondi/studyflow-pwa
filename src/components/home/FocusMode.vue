@@ -22,7 +22,7 @@
         <div class="focus-subject">
           <div
             class="subject-avatar subject-avatar--lg"
-            :style="{ background: subjectBgMix(subject?.color ?? AKOMA_CAT_COLORS[0].value, 10) }"
+            :style="{ background: subjectBgMix(subject?.color ?? DEFAULT_SUBJECT_COLOR, 10) }"
           >
             {{ subject?.icon ?? '📚' }}
           </div>
@@ -69,7 +69,7 @@
 import { watch } from 'vue'
 import { AkButton } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
-import { subjectBgMix, AKOMA_CAT_COLORS } from '@/utils/colors'
+import { AKOMA_CAT_COLORS, DEFAULT_SUBJECT_COLOR, subjectBgMix } from '@/utils/colors'
 import type { Subject } from '@/types'
 
 const props = defineProps<{
