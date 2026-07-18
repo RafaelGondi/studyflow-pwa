@@ -16,7 +16,10 @@
       <AkButton size="sm" variant="ghost" @click="emit('change-subject')">Trocar</AkButton>
     </div>
 
-    <div class="timer-panel__time numeric" :style="{ color: subject?.color ?? 'var(--accent)' }">
+    <div
+      class="timer-panel__time numeric"
+      :class="timerStore.isRunning ? 'timer-panel__time--live' : 'timer-panel__time--paused'"
+    >
       {{ timerStore.studyFormatted }}
     </div>
 
@@ -74,6 +77,11 @@ const subject = computed<Subject | null>(() => {
   letter-spacing: -0.03em;
   text-align: center;
   line-height: 1;
+  color: var(--text);
+}
+
+.timer-panel__time--paused {
+  color: var(--warning);
 }
 
 .timer-panel__actions {

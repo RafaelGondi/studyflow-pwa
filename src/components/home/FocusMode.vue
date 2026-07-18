@@ -31,7 +31,7 @@
 
         <div
           class="focus-timer numeric"
-          :style="{ color: subject?.color ?? 'var(--accent)' }"
+          :class="timerStore.isRunning ? 'focus-timer--live' : 'focus-timer--paused'"
         >
           {{ timerStore.studyFormatted }}
         </div>
@@ -49,7 +49,6 @@
         <AkButton
           class="focus-control"
           variant="primary"
-          :style="!timerStore.isRunning ? { background: subject?.color ?? 'var(--accent)' } : undefined"
           @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
         >
           <template #icon>
@@ -141,8 +140,13 @@ document.addEventListener('fullscreenchange', () => {
 .focus-timer {
   font-family: var(--font-display);
   font-size: clamp(4rem, 18vw, 9rem);
-  font-weight: 700;
+  font-weight: 650;
   line-height: 1;
+  color: var(--text-inverse);
+}
+
+.focus-timer--paused {
+  color: color-mix(in srgb, var(--warning) 85%, var(--text-inverse));
 }
 
 .focus-status {
