@@ -26,7 +26,15 @@
               :style="{ background: c.value }"
               @click="form.color = c.value"
             >
-              <svg v-if="form.color === c.value" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="width:14px;height:14px;color:var(--accent-contrast)">
+              <svg
+                v-if="form.color === c.value"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                class="color-swatch__check"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </button>

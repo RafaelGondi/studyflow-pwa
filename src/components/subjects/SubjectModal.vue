@@ -25,9 +25,14 @@
 
         <AkInput v-model="form.name" label="Nome" placeholder="Ex: Matemática" required />
 
-        <div class="form-field">
-          <label class="form-label" for="subject-category">Categoria</label>
-          <select id="subject-category" v-model="form.categoryId" class="field-select">
+        <div class="ak-field">
+          <span class="ak-field__label" id="subject-category-label">Categoria</span>
+          <select
+            id="subject-category"
+            v-model="form.categoryId"
+            class="ak-field__control ak-field__control--md field-select"
+            aria-labelledby="subject-category-label"
+          >
             <option :value="null">Sem categoria</option>
             <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
@@ -46,7 +51,15 @@
               :aria-label="c.name"
               @click="form.color = c.value"
             >
-              <svg v-if="form.color === c.value" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="width:14px;height:14px;color:var(--accent-contrast)">
+              <svg
+                v-if="form.color === c.value"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                class="color-swatch__check"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </button>

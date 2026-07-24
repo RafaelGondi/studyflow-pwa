@@ -3,7 +3,7 @@
     <AkPageHeader label="Preferências" title="Ajustes" size="md" />
 
     <div class="page-body reveal reveal-d1">
-      <AkCard v-if="authStore.dataLost" padding="md">
+      <div v-if="authStore.dataLost" class="inline-notice">
         <p class="text-sm font-semibold">Dados perdidos na atualização</p>
         <p class="text-xs text-muted" style="margin-top: var(--space-2); line-height: 1.5">
           Entre com Google para evitar perda de dados ao atualizar o app.
@@ -11,12 +11,12 @@
         <AkButton size="sm" variant="ghost" style="margin-top: var(--space-3)" @click="authStore.dismissDataLostWarning()">
           Dispensar
         </AkButton>
-      </AkCard>
+      </div>
 
-      <AkCard v-if="authStore.signInError" padding="sm">
+      <div v-if="authStore.signInError" class="inline-notice inline-notice--danger">
         <p class="text-sm">{{ authStore.signInError }}</p>
         <AkButton size="sm" variant="ghost" @click="authStore.clearSignInError()">Fechar</AkButton>
-      </AkCard>
+      </div>
 
       <section class="section-block">
         <AkSectionHeader title="Conta" />
@@ -115,7 +115,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import {
-  AkBadge, AkButton, AkCard, AkIcon, AkList, AkListRow, AkPageHeader, AkSectionHeader, AkSwitch,
+  AkBadge, AkButton, AkIcon, AkList, AkListRow, AkPageHeader, AkSectionHeader, AkSwitch,
 } from '@rafael_dias/akoma'
 import { useAppTheme } from '@/composables/useAppTheme'
 import { useAuthStore } from '@/stores/auth'

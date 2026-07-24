@@ -1,55 +1,100 @@
 /**
- * Cores de matéria/categoria do Akoma:
- * tokens --cat-* + acentos oficiais das paletas do DS.
+ * Entity colors for subjects/categories — `--cat-*` only (accent stays system chrome).
+ * Picker: 6 hue families × 3 shades + neutro, same contract as Habitify.
  */
-export const AKOMA_CAT_COLORS = [
-  { name: 'Mar',       token: '--cat-1', value: '#578eae' },
-  { name: 'Violeta',   token: '--cat-2', value: '#896db9' },
-  { name: 'Âmbar',     token: '--cat-3', value: '#bf8230' },
-  { name: 'Verde',     token: '--cat-4', value: '#518768' },
-  { name: 'Rosa',      token: '--cat-5', value: '#bd697c' },
-  { name: 'Pedra',     token: '--cat-6', value: '#827e6c' },
-  { name: 'Oceano',    token: '--accent-ocean', value: '#5184b1' },
-  { name: 'Teal',      token: '--accent-teal', value: '#4b99a4' },
-  { name: 'Evergreen', token: '--accent-evergreen', value: '#3c8866' },
-  { name: 'Lilás',     token: '--accent-violet', value: '#8375cc' },
-  { name: 'Dourado',   token: '--accent-amber', value: '#bc8a3b' },
-  { name: 'Coral',     token: '--accent-coral', value: '#d07b5f' },
-  { name: 'Slate',     token: '--accent-slate', value: '#5e7894' },
-  { name: 'Rubro',     token: '--accent-rose', value: '#c36d80' },
-] as const
 
-/** Cor padrão para novas matérias/categorias (primeira cor da paleta Akoma) */
-export const DEFAULT_SUBJECT_COLOR = AKOMA_CAT_COLORS[0].value
+export type SubjectColor = {
+  name: string
+  value: string
+}
 
-/** @deprecated use AKOMA_CAT_COLORS */
-export const SUBJECT_COLORS = AKOMA_CAT_COLORS.map(({ name, value }) => ({
-  name: name.toLowerCase(),
-  value,
-}))
+type CatIndex = 1 | 2 | 3 | 4 | 5 | 6
+type Shade = 'light' | 'base' | 'dark'
 
-const PALETTE = AKOMA_CAT_COLORS.map(c => c.value.toLowerCase())
-const PALETTE_SET = new Set(PALETTE)
+function catSwatch(name: string, cat: CatIndex, shade: Shade): SubjectColor {
+  const token = `var(--cat-${cat})`
+  const value =
+    shade === 'light'
+      ? `color-mix(in srgb, ${token} 58%, white)`
+      : shade === 'dark'
+        ? `color-mix(in srgb, ${token} 68%, #121612)`
+        : token
 
-/** Mapeia cores legadas (Tailwind) para a paleta Akoma mais próxima */
+  return { name, value }
+}
+
+export const AKOMA_CAT_COLORS: SubjectColor[] = [
+  catSwatch('Azul claro', 1, 'light'),
+  catSwatch('Azul', 1, 'base'),
+  catSwatch('Azul profundo', 1, 'dark'),
+
+  catSwatch('Lilás', 2, 'light'),
+  catSwatch('Violeta', 2, 'base'),
+  catSwatch('Uva', 2, 'dark'),
+
+  catSwatch('Areia', 3, 'light'),
+  catSwatch('Âmbar', 3, 'base'),
+  catSwatch('Terracota', 3, 'dark'),
+
+  catSwatch('Menta', 4, 'light'),
+  catSwatch('Botânico', 4, 'base'),
+  catSwatch('Floresta', 4, 'dark'),
+
+  catSwatch('Pêssego', 5, 'light'),
+  catSwatch('Rosé', 5, 'base'),
+  catSwatch('Vinho', 5, 'dark'),
+
+  catSwatch('Névoa', 6, 'light'),
+  catSwatch('Ardósia', 6, 'base'),
+  catSwatch('Pedra', 6, 'dark'),
+
+  {
+    name: 'Neutro',
+    value: 'var(--border-strong)',
+  },
+]
+
+/** Default for new subjects/categories */
+export const DEFAULT_SUBJECT_COLOR = AKOMA_CAT_COLORS[1].value // Azul base
+
+/** @deprecated prefer AKOMA_CAT_COLORS — kept for existing imports */
+export const SUBJECT_COLORS = AKOMA_CAT_COLORS
+
+const PALETTE_SET = new Set(AKOMA_CAT_COLORS.map(c => c.value))
+
+/** Legacy hex (Tailwind / old accent swatches) → current `--cat-*` tokens */
 const LEGACY_COLOR_MAP: Record<string, string> = {
-  '#ef4444': '#bd697c',
-  '#f43f5e': '#bd697c',
-  '#ec4899': '#c36d80',
-  '#d946ef': '#896db9',
-  '#a855f7': '#896db9',
-  '#8b5cf6': '#8375cc',
-  '#6366f1': '#8375cc',
-  '#3b82f6': '#5184b1',
-  '#0ea5e9': '#578eae',
-  '#06b6d4': '#4b99a4',
-  '#14b8a6': '#4b99a4',
-  '#10b981': '#518768',
-  '#84cc16': '#518768',
-  '#f59e0b': '#bf8230',
-  '#f97316': '#d07b5f',
-  '#78716c': '#827e6c',
-  '#3d6a94': '#5184b1',
+  '#578eae': 'var(--cat-1)',
+  '#896db9': 'var(--cat-2)',
+  '#bf8230': 'var(--cat-3)',
+  '#518768': 'var(--cat-4)',
+  '#bd697c': 'var(--cat-5)',
+  '#827e6c': 'var(--cat-6)',
+  '#5184b1': 'var(--cat-1)',
+  '#4b99a4': 'var(--cat-4)',
+  '#3c8866': 'var(--cat-4)',
+  '#8375cc': 'var(--cat-2)',
+  '#bc8a3b': 'var(--cat-3)',
+  '#d07b5f': 'var(--cat-5)',
+  '#5e7894': 'var(--cat-1)',
+  '#c36d80': 'var(--cat-5)',
+  '#ef4444': 'var(--cat-5)',
+  '#f43f5e': 'var(--cat-5)',
+  '#ec4899': 'var(--cat-5)',
+  '#d946ef': 'var(--cat-2)',
+  '#a855f7': 'var(--cat-2)',
+  '#8b5cf6': 'var(--cat-2)',
+  '#6366f1': 'var(--cat-2)',
+  '#3b82f6': 'var(--cat-1)',
+  '#0ea5e9': 'var(--cat-1)',
+  '#06b6d4': 'var(--cat-4)',
+  '#14b8a6': 'var(--cat-4)',
+  '#10b981': 'var(--cat-4)',
+  '#84cc16': 'var(--cat-4)',
+  '#f59e0b': 'var(--cat-3)',
+  '#f97316': 'var(--cat-3)',
+  '#78716c': 'var(--cat-6)',
+  '#3d6a94': 'var(--cat-1)',
 }
 
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -63,47 +108,73 @@ function hexToRgb(hex: string): [number, number, number] | null {
   ]
 }
 
-function rgbDistance(a: [number, number, number], b: [number, number, number]) {
-  return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
+/** Approximate RGB for `--cat-*` bases (from Akoma tokens) for nearest-match. */
+const CAT_BASE_RGB: Record<string, [number, number, number]> = {
+  'var(--cat-1)': [87, 142, 174],
+  'var(--cat-2)': [137, 109, 185],
+  'var(--cat-3)': [191, 130, 48],
+  'var(--cat-4)': [81, 135, 104],
+  'var(--cat-5)': [189, 105, 124],
+  'var(--cat-6)': [130, 126, 108],
 }
 
-function closestPaletteColor(hex: string): string {
+function closestCatToken(hex: string): string {
   const rgb = hexToRgb(hex)
   if (!rgb) return DEFAULT_SUBJECT_COLOR
 
-  let best: string = DEFAULT_SUBJECT_COLOR
+  let best = DEFAULT_SUBJECT_COLOR
   let bestDist = Infinity
-  for (const cat of AKOMA_CAT_COLORS) {
-    const catRgb = hexToRgb(cat.value)
-    if (!catRgb) continue
-    const dist = rgbDistance(rgb, catRgb)
+  for (const [token, catRgb] of Object.entries(CAT_BASE_RGB)) {
+    const dist =
+      (rgb[0] - catRgb[0]) ** 2
+      + (rgb[1] - catRgb[1]) ** 2
+      + (rgb[2] - catRgb[2]) ** 2
     if (dist < bestDist) {
       bestDist = dist
-      best = cat.value
+      best = token
     }
   }
   return best
 }
 
-/** Garante que a cor exibida/gravada pertence à paleta Akoma */
+/** Ensures displayed/stored color is a current palette value. */
 export function normalizeAkomaColor(color: string | undefined | null): string {
   if (!color) return DEFAULT_SUBJECT_COLOR
-  const c = color.trim().toLowerCase()
+  const c = color.trim()
   if (PALETTE_SET.has(c)) return c
-  if (LEGACY_COLOR_MAP[c]) return LEGACY_COLOR_MAP[c]
-  return closestPaletteColor(c)
+  const lower = c.toLowerCase()
+  if (LEGACY_COLOR_MAP[lower]) return LEGACY_COLOR_MAP[lower]
+  if (lower.startsWith('var(--cat-') || lower.startsWith('color-mix(')) return c
+  if (lower.startsWith('#')) return closestCatToken(lower)
+  return DEFAULT_SUBJECT_COLOR
 }
 
 export function isAkomaColor(color: string): boolean {
-  return PALETTE_SET.has(color.trim().toLowerCase())
+  return PALETTE_SET.has(color.trim())
 }
 
-/** Fundo suave para avatares e chips com cor de matéria */
+/** Soft wash for avatars and chips */
 export function subjectBgMix(color: string | undefined | null, pct = 14): string {
   return `color-mix(in srgb, ${normalizeAkomaColor(color)} ${pct}%, var(--bg-soft))`
 }
 
-/** Cor resolvida para matéria/categoria (sempre da paleta Akoma) */
 export function resolveSubjectColor(color: string | undefined | null): string {
   return normalizeAkomaColor(color)
+}
+
+/**
+ * Resolve token / color-mix values to a concrete color for Canvas (Chart.js).
+ */
+export function resolvePaintColor(color: string | undefined | null): string {
+  const c = normalizeAkomaColor(color)
+  if (c.startsWith('#')) return c
+  if (typeof document === 'undefined') return '#578eae'
+
+  const probe = document.createElement('span')
+  probe.style.color = c
+  probe.style.display = 'none'
+  document.body.appendChild(probe)
+  const resolved = getComputedStyle(probe).color
+  document.body.removeChild(probe)
+  return resolved || '#578eae'
 }

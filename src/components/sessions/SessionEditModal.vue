@@ -6,17 +6,17 @@
     @update:open="(open) => { if (!open) emit('close') }"
   >
     <div class="modal-body stack">
-      <AkCard v-if="isBreak" padding="sm">
-        <div class="flex-row" style="gap: var(--space-3)">
+      <div v-if="isBreak" class="metric-row metric-row--warning">
+        <div class="flex-row" style="gap: var(--space-3); align-items: center; flex: 1">
           <div class="subject-avatar" :style="{ background: 'var(--warning-soft)' }">☕</div>
           <span class="text-sm font-semibold text-warning">Pausa</span>
-          <span class="text-xs text-muted" style="margin-left: auto">{{ dateLabel }}</span>
         </div>
-      </AkCard>
+        <span class="text-xs text-muted">{{ dateLabel }}</span>
+      </div>
 
-      <div v-else>
-        <label class="stat-label" style="display: block; margin-bottom: var(--space-2)">Matéria</label>
-        <select v-model="form.subjectId" class="field-select">
+      <div v-else class="ak-field">
+        <span class="ak-field__label">Matéria</span>
+        <select v-model="form.subjectId" class="ak-field__control ak-field__control--md field-select">
           <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.icon }} {{ s.name }}</option>
         </select>
       </div>
@@ -33,14 +33,12 @@
           />
         </div>
 
-        <AkCard padding="sm">
-          <div class="flex-between">
-            <span class="text-xs text-muted">Duração calculada</span>
-            <span class="text-sm font-bold numeric" :class="endBeforeStart ? 'text-danger' : 'text-primary'">
-              {{ endBeforeStart ? 'Inválida' : formatDuration(computedDuration) }}
-            </span>
-          </div>
-        </AkCard>
+        <div class="metric-row">
+          <span class="text-xs text-muted">Duração calculada</span>
+          <span class="text-sm font-semibold numeric" :class="endBeforeStart ? 'text-danger' : 'text-primary'">
+            {{ endBeforeStart ? 'Inválida' : formatDuration(computedDuration) }}
+          </span>
+        </div>
 
         <AkButton type="submit" variant="primary" block :loading="saving" :disabled="endBeforeStart">
           Salvar alterações
@@ -52,7 +50,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AkButton, AkCard, AkInput, AkSheet } from '@rafael_dias/akoma'
+import { AkButton, AkInput, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useAppToast } from '@/composables/useAppToast'

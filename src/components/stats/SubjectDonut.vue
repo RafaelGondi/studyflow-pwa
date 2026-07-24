@@ -73,7 +73,7 @@ import type { StudySession } from '@/types'
 import { useSubjectsStore } from '@/stores/subjects'
 import { formatDuration, isStudySession } from '@/types'
 import { chartTheme } from '@/utils/chartTheme'
-import { AKOMA_CAT_COLORS, normalizeAkomaColor } from '@/utils/colors'
+import { AKOMA_CAT_COLORS, normalizeAkomaColor, resolvePaintColor } from '@/utils/colors'
 
 ChartJS.register(ArcElement, Tooltip)
 
@@ -159,14 +159,14 @@ const chartData = computed(() => {
     datasets: [
       {
         data: subjectItems.value.map(i => i.seconds),
-        backgroundColor: subjectItems.value.map(i => i.color),
+        backgroundColor: subjectItems.value.map(i => resolvePaintColor(i.color)),
         borderWidth: 2,
         borderColor: border,
         hoverBorderColor: border,
       },
       {
         data: categoryItems.value.map(i => i.seconds),
-        backgroundColor: categoryItems.value.map(i => i.color),
+        backgroundColor: categoryItems.value.map(i => resolvePaintColor(i.color)),
         borderWidth: 2,
         borderColor: border,
         hoverBorderColor: border,

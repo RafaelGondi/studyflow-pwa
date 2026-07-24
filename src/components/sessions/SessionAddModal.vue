@@ -7,9 +7,9 @@
   >
     <div class="modal-body stack">
       <form @submit.prevent="handleSubmit" class="stack">
-        <div>
-          <label class="stat-label" style="display: block; margin-bottom: var(--space-2)">Matéria</label>
-          <select v-model="form.subjectId" required class="field-select">
+        <div class="ak-field">
+          <span class="ak-field__label">Matéria</span>
+          <select v-model="form.subjectId" required class="ak-field__control ak-field__control--md field-select">
             <option value="" disabled>Selecione</option>
             <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.icon }} {{ s.name }}</option>
           </select>
@@ -26,14 +26,12 @@
           />
         </div>
 
-        <AkCard padding="sm">
-          <div class="flex-between">
-            <span class="text-xs text-muted">Duração</span>
-            <span class="text-sm font-bold numeric" :class="endBeforeStart ? 'text-danger' : 'text-primary'">
-              {{ endBeforeStart ? 'Inválida' : formatDuration(computedDuration) }}
-            </span>
-          </div>
-        </AkCard>
+        <div class="metric-row">
+          <span class="text-xs text-muted">Duração</span>
+          <span class="text-sm font-semibold numeric" :class="endBeforeStart ? 'text-danger' : 'text-primary'">
+            {{ endBeforeStart ? 'Inválida' : formatDuration(computedDuration) }}
+          </span>
+        </div>
 
         <AkButton
           type="submit"
@@ -51,7 +49,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AkButton, AkCard, AkInput, AkSheet } from '@rafael_dias/akoma'
+import { AkButton, AkInput, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useAppToast } from '@/composables/useAppToast'
