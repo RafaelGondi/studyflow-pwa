@@ -3,71 +3,76 @@
     :open="modelValue"
     title="Selecionar matéria"
     close-label="Fechar"
+    class="subject-picker-sheet"
     @update:open="(open) => emit('update:modelValue', open)"
   >
-    <div class="sheet-picker__scroll">
-      <div
-        v-if="categories.length > 0 && subjects.length > 0"
-        class="chip-scroll chip-scroll--sheet"
-      >
-        <AkChip :active="filterId === null" @click="filterId = null">
-          Todas
-        </AkChip>
-        <AkChip
-          v-for="cat in categories"
-          :key="cat.id"
-          :active="filterId === cat.id"
-          :color="cat.color"
-          @click="filterId = cat.id"
+    <div class="sheet-picker">
+      <div class="sheet-picker__chrome">
+        <div
+          v-if="categories.length > 0 && subjects.length > 0"
+          class="chip-scroll chip-scroll--sheet"
         >
-          {{ cat.name }}
-        </AkChip>
+          <AkChip :active="filterId === null" @click="filterId = null">
+            Todas
+          </AkChip>
+          <AkChip
+            v-for="cat in categories"
+            :key="cat.id"
+            :active="filterId === cat.id"
+            :color="cat.color"
+            @click="filterId = cat.id"
+          >
+            {{ cat.name }}
+          </AkChip>
+        </div>
+
+        <p v-if="subjects.length" class="sheet-picker__meta">
+          {{ filteredSubjects.length }}
+          {{ filteredSubjects.length === 1 ? 'matéria' : 'matérias' }}
+          <template v-if="filterId"> nesta categoria</template>
+        </p>
       </div>
 
-      <p v-if="subjects.length" class="sheet-picker__meta">
-        {{ filteredSubjects.length }}
-        {{ filteredSubjects.length === 1 ? 'matéria' : 'matérias' }}
-        <template v-if="filterId"> nesta categoria</template>
-      </p>
+      <div class="sheet-picker__list-wrap">
+        <AkEmptyState
+          v-if="subjects.length === 0"
+          title="Nenhuma matéria"
+          description="Cadastre matérias para começar."
+        >
+          <template #icon>📚</template>
+        </AkEmptyState>
 
-      <AkEmptyState
-        v-if="subjects.length === 0"
-        title="Nenhuma matéria"
-        description="Cadastre matérias para começar."
-      >
-        <template #icon>📚</template>
-      </AkEmptyState>
+        <AkEmptyState
+          v-else-if="filteredSubjects.length === 0"
+          title="Nada nesta categoria"
+          description="Troque o filtro ou cadastre uma matéria neste grupo."
+        />
 
-      <AkEmptyState
-        v-else-if="filteredSubjects.length === 0"
-        title="Nada nesta categoria"
-        description="Troque o filtro ou cadastre uma matéria neste grupo."
-      />
-
-      <ul v-else class="sheet-picker__list">
-        <li v-for="subject in filteredSubjects" :key="subject.id">
-          <button
-            type="button"
-            class="sheet-picker__item tap-scale"
-            :class="{ 'sheet-picker__item--active': activeId === subject.id }"
-            @click="select(subject.id)"
-          >
-            <div
-              class="subject-leading subject-leading--sm"
-              :style="{ background: subjectBgMix(subject.color, 14) }"
+        <ul v-else class="sheet-picker__list">
+          <li v-for="subject in filteredSubjects" :key="subject.id">
+            <button
+              type="button"
+              class="sheet-picker__item tap-scale"
+              :class="{ 'sheet-picker__item--active': activeId === subject.id }"
+              @click="select(subject.id)"
             >
-              {{ subject.icon }}
-            </div>
-            <div class="sheet-picker__content">
-              <span class="sheet-picker__name truncate">{{ subject.name }}</span>
-              <span class="sheet-picker__meta-line truncate">
-                {{ getCategoryName(subject.categoryId) ?? 'Sem categoria' }}
-              </span>
-            </div>
-            <span class="status-dot shrink-0" :style="{ background: subject.color }" />
-          </button>
-        </li>
-      </ul>
+              <div
+                class="subject-leading subject-leading--sm"
+                :style="{ background: subjectBgMix(subject.color, 14) }"
+              >
+                {{ subject.icon }}
+              </div>
+              <div class="sheet-picker__content">
+                <span class="sheet-picker__name truncate">{{ subject.name }}</span>
+                <span class="sheet-picker__meta-line truncate">
+                  {{ getCategoryName(subject.categoryId) ?? 'Sem categoria' }}
+                </span>
+              </div>
+              <span class="status-dot shrink-0" :style="{ background: subject.color }" />
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
   </AkSheet>
 </template>
@@ -118,6 +123,19 @@ function select(id: string) {
 </script>
 
 <style scoped>
+.sheet-picker {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding: 0 var(--space-4) var(--space-5);
+}
+
+.sheet-picker__chrome {
+  flex-shrink: 0;
+}
+
 .chip-scroll--sheet {
   margin: 0 0 var(--space-3);
   padding: 0 0 var(--space-1);
@@ -130,8 +148,12 @@ function select(id: string) {
   color: var(--text-tertiary);
 }
 
-.sheet-picker__scroll {
-  padding: 0 var(--space-4) var(--space-5);
+.sheet-picker__list-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sheet-picker__list {
@@ -185,5 +207,22 @@ function select(id: string) {
 .sheet-picker__meta-line {
   font-size: 12px;
   color: var(--text-tertiary);
+}
+</style>
+
+<style>
+/* Unscoped: AkSheet teleports to body — parent :deep() cannot reach it. */
+.ak-sheet:has(.sheet-picker) {
+  height: min(72dvh, 640px);
+  max-height: 92dvh;
+  min-height: 0;
+}
+
+.ak-sheet:has(.sheet-picker) .ak-sheet__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 </style>
