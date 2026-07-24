@@ -1,6 +1,6 @@
 <template>
-  <AkCard padding="md" class="stack">
-    <h3 class="section-title">Por matéria</h3>
+  <section class="section-block">
+    <AkSectionHeader title="Por matéria" />
 
     <AkEmptyState
       v-if="subjectItems.length === 0"
@@ -8,7 +8,7 @@
       description="Nenhum registro de estudo neste período."
     />
 
-    <div v-else class="stack">
+    <div v-else class="chart-panel stack">
       <div class="flex-row" style="gap: var(--space-6); flex-wrap: wrap; justify-content: center">
         <div style="position: relative; width: 160px; height: 160px; flex-shrink: 0">
           <Doughnut :data="chartData" :options="chartOptions" />
@@ -61,13 +61,13 @@
         </div>
       </div>
     </div>
-  </AkCard>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
-import { AkCard, AkChip, AkEmptyState } from '@rafael_dias/akoma'
+import { AkChip, AkEmptyState, AkSectionHeader } from '@rafael_dias/akoma'
 import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
 import type { StudySession } from '@/types'
 import { useSubjectsStore } from '@/stores/subjects'

@@ -55,10 +55,9 @@ const subject = computed<Subject | null>(() => {
   flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-5);
-  background: var(--bg-elevated);
+  background: var(--bg-soft);
   border: 1px solid var(--border);
-  border-radius: var(--card-radius, 16px);
-  box-shadow: var(--card-shadow);
+  border-radius: var(--radius-md);
 }
 
 .timer-panel__head {

@@ -1,33 +1,30 @@
 <template>
   <Transition name="slide-banner">
-    <AkCard
+    <div
       v-if="hasUpdate && show"
-      padding="sm"
       class="update-banner"
+      role="status"
     >
-      <div class="flex-row" style="gap: var(--space-2); min-width: 0">
-        <span>🔄</span>
-        <p class="text-sm font-semibold truncate" style="color: var(--accent-contrast)">Nova versão disponível</p>
-      </div>
-      <div class="flex-row" style="gap: var(--space-2)">
-        <AkButton size="sm" variant="secondary" :loading="updating" @click="applyUpdate">
+      <p class="update-banner__text">Nova versão disponível</p>
+      <div class="update-banner__actions">
+        <AkButton size="sm" variant="primary" :loading="updating" @click="applyUpdate">
           Atualizar
         </AkButton>
-        <AkButton size="sm" variant="ghost" @click="show = false">
-          <template #icon>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </template>
-        </AkButton>
+        <AkIconButton
+          size="sm"
+          variant="ghost"
+          label="Dispensar"
+          icon="x-outline"
+          @click="show = false"
+        />
       </div>
-    </AkCard>
+    </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { AkButton, AkCard } from '@rafael_dias/akoma'
+import { AkButton, AkIconButton } from '@rafael_dias/akoma'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
 
 const { hasUpdate, setup, applyUpdate: triggerUpdate } = usePwaUpdate()
@@ -55,14 +52,29 @@ function applyUpdate() {
   gap: var(--space-3);
   max-width: var(--shell-max);
   margin: 0 auto;
-  padding-top: calc(var(--safe-top) + var(--space-3));
-  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, var(--fill-strong))) !important;
-  border: none !important;
-  border-radius: 0 0 var(--card-radius) var(--card-radius) !important;
-  color: var(--accent-contrast);
+  padding:
+    calc(var(--safe-top) + var(--space-3))
+    var(--page-pad-x)
+    var(--space-3);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
 }
 
-.slide-banner-enter-active { transition: transform 0.3s var(--ease-spring); }
+.update-banner__text {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  min-width: 0;
+}
+
+.update-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.slide-banner-enter-active { transition: transform 0.3s var(--ease-out-expo); }
 .slide-banner-leave-active { transition: transform 0.2s var(--ease-smooth); }
 .slide-banner-enter-from,
 .slide-banner-leave-to { transform: translateY(-100%); }

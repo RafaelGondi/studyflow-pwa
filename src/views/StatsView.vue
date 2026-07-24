@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="ak-app-page ak-app-scroll">
+  <div class="ak-app-page">
     <AkPageHeader
       label="Retrospectiva"
       title="Progresso"
@@ -18,7 +18,7 @@
       </AkChip>
     </div>
 
-    <div class="page-body reveal reveal-d2">
+    <div class="ak-app-scroll page-body reveal reveal-d2">
       <section
         v-if="periodDates.length"
         class="history-overview reveal reveal-d1"

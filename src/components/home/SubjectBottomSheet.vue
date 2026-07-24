@@ -6,9 +6,30 @@
     @update:open="(open) => emit('update:modelValue', open)"
   >
     <div class="sheet-picker__scroll">
+      <div
+        v-if="categories.length > 0 && subjects.length > 0"
+        class="chip-scroll chip-scroll--sheet"
+      >
+        <AkChip :active="filterId === null" @click="filterId = null">
+          Todas
+        </AkChip>
+        <AkChip
+          v-for="cat in categories"
+          :key="cat.id"
+          :active="filterId === cat.id"
+          :color="cat.color"
+          @click="filterId = cat.id"
+        >
+          {{ cat.name }}
+        </AkChip>
+      </div>
+
       <p v-if="subjects.length" class="sheet-picker__meta">
-        {{ subjects.length }} {{ subjects.length === 1 ? 'matéria' : 'matérias' }}
+        {{ filteredSubjects.length }}
+        {{ filteredSubjects.length === 1 ? 'matéria' : 'matérias' }}
+        <template v-if="filterId"> nesta categoria</template>
       </p>
+
       <AkEmptyState
         v-if="subjects.length === 0"
         title="Nenhuma matéria"
@@ -17,8 +38,14 @@
         <template #icon>📚</template>
       </AkEmptyState>
 
+      <AkEmptyState
+        v-else-if="filteredSubjects.length === 0"
+        title="Nada nesta categoria"
+        description="Troque o filtro ou cadastre uma matéria neste grupo."
+      />
+
       <ul v-else class="sheet-picker__list">
-        <li v-for="subject in subjects" :key="subject.id">
+        <li v-for="subject in filteredSubjects" :key="subject.id">
           <button
             type="button"
             class="sheet-picker__item tap-scale"
@@ -46,12 +73,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { AkEmptyState, AkSheet } from '@rafael_dias/akoma'
+import { computed, ref, watch } from 'vue'
+import { AkChip, AkEmptyState, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { subjectBgMix } from '@/utils/colors'
 
-defineProps<{
+const props = defineProps<{
   modelValue: boolean
   activeId?: string | null
 }>()
@@ -62,8 +89,22 @@ const emit = defineEmits<{
 }>()
 
 const subjectsStore = useSubjectsStore()
+const filterId = ref<string | null>(null)
 
 const subjects = computed(() => subjectsStore.subjects)
+const categories = computed(() => subjectsStore.categories)
+
+const filteredSubjects = computed(() => {
+  if (!filterId.value) return subjects.value
+  return subjects.value.filter(s => s.categoryId === filterId.value)
+})
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) filterId.value = null
+  },
+)
 
 function getCategoryName(categoryId: string | null) {
   if (!categoryId) return null
@@ -77,6 +118,12 @@ function select(id: string) {
 </script>
 
 <style scoped>
+.chip-scroll--sheet {
+  margin: 0 0 var(--space-3);
+  padding: 0 0 var(--space-1);
+  background: transparent;
+}
+
 .sheet-picker__meta {
   margin: 0 0 var(--space-3);
   font-size: 12px;

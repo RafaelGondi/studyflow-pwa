@@ -1,8 +1,8 @@
 <template>
-  <AkCard padding="md">
-    <h3 class="section-title" style="margin-bottom: var(--space-4)">Esta semana</h3>
+  <section class="section-block">
+    <AkSectionHeader title="Esta semana" />
 
-    <div v-if="hasData" style="max-height: 14rem">
+    <div v-if="hasData" class="chart-panel" style="max-height: 14rem">
       <Bar :data="chartData" :options="chartOptions" />
     </div>
 
@@ -11,13 +11,13 @@
       title="Sem dados esta semana"
       description="Nenhuma sessão de estudo nos últimos 7 dias."
     />
-  </AkCard>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
-import { AkCard, AkEmptyState } from '@rafael_dias/akoma'
+import { AkEmptyState, AkSectionHeader } from '@rafael_dias/akoma'
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
   Title, Tooltip, Legend, type TooltipItem,

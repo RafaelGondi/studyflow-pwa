@@ -1,6 +1,6 @@
 <template>
-  <AkCard padding="md" class="stack-xs">
-    <div class="flex-between">
+  <section class="section-block">
+    <div class="flex-between chart-panel">
       <AkIconButton label="Mês anterior" size="sm" icon="arrow-left-outline" @click="prevMonth" />
       <span class="text-sm font-semibold text-primary capitalize">{{ monthTitle }}</span>
       <AkIconButton
@@ -49,12 +49,12 @@
         {{ monthTitle }}: {{ formatShortDayTotal(monthTotal) }}
       </span>
     </div>
-  </AkCard>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AkCard, AkIconButton } from '@rafael_dias/akoma'
+import { AkIconButton } from '@rafael_dias/akoma'
 import { localDateStr } from '@/types'
 import {
   completionShadeClass,
