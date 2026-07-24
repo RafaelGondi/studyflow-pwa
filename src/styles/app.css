@@ -329,15 +329,25 @@
   box-shadow: 0 0 0 2px var(--nav-glass);
 }
 
-/* ── Form body inside AkSheet ───────────────────────────── */
-.modal-body {
-  flex: 1;
+/*
+ * Form sheets: one scroll container only.
+ * Nested overflow on .modal-body + .ak-sheet__body locks touch scroll on mobile.
+ * AkSheet teleports to body, so these rules are unscoped and keyed with :has().
+ */
+.ak-sheet:has(.modal-body) {
+  overflow: hidden;
+}
+
+.ak-sheet:has(.modal-body) .ak-sheet__body {
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+}
+
+.modal-body {
   padding: 0 var(--space-5) var(--space-4);
   display: flex;
   flex-direction: column;
