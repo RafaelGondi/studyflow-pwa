@@ -1,162 +1,130 @@
 <template>
   <div class="ak-app-page">
     <AkPageHeader
-      :label="pageLabel"
+      label="Estudo"
       :title="pageTitle"
-      :meta="dateLabel"
+      :meta="headerMeta"
       size="md"
     >
-      <template #actions>
-        <div class="nav-cluster">
-          <AkIconButton label="Dia anterior" size="sm" icon="arrow-left-outline" @click="goPrev" />
-          <AkIconButton
-            label="Próximo dia"
-            size="sm"
-            icon="arrow-right-outline"
-            :disabled="isToday"
-            @click="goNext"
-          />
-        </div>
-      </template>
-
-      <div v-if="isToday && subjectsStore.subjects.length" class="day-header__progress">
+      <div v-if="subjectsStore.subjects.length" class="day-header__progress">
         <div class="progress-strip">
           <div class="progress-strip__hero">
             <span class="progress-strip__time numeric">{{ studyTotalFormatted }}</span>
-            <span class="progress-strip__caption">de estudo hoje</span>
+            <span class="progress-strip__caption">{{ progressCaption }}</span>
           </div>
         </div>
       </div>
-
-      <Transition name="fade">
-        <div v-if="!isToday" class="chip-row page-chip-row">
-          <AkChip @click="goToToday">
-            <AkIcon name="home-outline" :size="14" />
-            Ir para hoje
-          </AkChip>
-        </div>
-      </Transition>
     </AkPageHeader>
 
     <div
       class="ak-app-scroll page-body"
-      :class="{ 'ak-page-body--with-fab': isToday && subjectsStore.subjects.length > 0 }"
-      @touchstart.passive="onTouchStart"
-      @touchend.passive="onTouchEnd"
+      :class="{ 'ak-page-body--with-fab': subjectsStore.subjects.length > 0 }"
     >
-      <Transition :name="slideDir === 'left' ? 'slide-left' : 'slide-right'" mode="out-in">
-        <div :key="viewDate" class="day-panel reveal reveal-d2">
-          <template v-if="isToday">
-            <ActiveTimerBar
-              v-if="timerStore.mode !== 'idle'"
-              @stop="handleStop"
-              @change-subject="sheetOpen = true"
-            />
+      <div class="day-panel reveal reveal-d2">
+        <ActiveTimerBar
+          v-if="timerStore.mode !== 'idle'"
+          @stop="handleStop"
+          @change-subject="sheetOpen = true"
+        />
 
-            <AkEmptyState
-              v-if="subjectsStore.subjects.length === 0"
-              title="Nenhuma matéria cadastrada"
-              description="Adicione matérias para registrar seu estudo."
-            >
-              <template #icon>📚</template>
-              <AkButton variant="primary" @click="router.push('/subjects')">
-                Ir para Matérias
-              </AkButton>
-            </AkEmptyState>
+        <AkEmptyState
+          v-if="subjectsStore.subjects.length === 0"
+          title="Nenhuma matéria cadastrada"
+          description="Cadastre matérias para iniciar o timer e registrar sessões."
+        >
+          <template #icon>📚</template>
+          <AkButton variant="primary" @click="router.push('/subjects')">
+            Ir para Matérias
+          </AkButton>
+        </AkEmptyState>
 
-            <SubjectStudyList
-              v-else-if="showSubjectList"
-              :active-id="timerStore.activeSubjectId"
-              :extra-seconds="timerStore.mode === 'study' || timerStore.mode === 'paused' ? timerStore.studyElapsedSeconds : 0"
-              :extra-subject-id="timerStore.activeSubjectId"
-              :show-play="timerStore.mode === 'idle'"
-              @select="handleSubjectSelect"
-              @browse="sheetOpen = true"
-            />
-          </template>
+        <StudyLauncher
+          v-else
+          :active-id="timerStore.activeSubjectId"
+          :last-subject-id="lastSubjectId"
+          :extra-seconds="liveExtraSeconds"
+          :extra-subject-id="timerStore.activeSubjectId"
+          :timer-idle="timerStore.mode === 'idle'"
+          @select="handleSubjectSelect"
+          @browse="sheetOpen = true"
+        />
 
-          <section
-            v-if="showRecordsSection"
-            class="section-block"
-          >
-            <AkSectionHeader :title="isToday ? 'Registros' : dateNavLabel">
-              <template #action>
-                <AkButton v-if="isToday" size="sm" variant="ghost" @click="showAddModal = true">
-                  <template #icon>
-                    <AkIcon name="plus-outline" :size="16" />
-                  </template>
-                  Adicionar
-                </AkButton>
-              </template>
-            </AkSectionHeader>
-
-            <div class="collapsible-section__body">
-              <div v-if="loadingHistory" class="loading-center">
-                <AkShimmer width="24px" height="24px" radius="full" />
-              </div>
-
-              <AkEmptyState
-                v-else-if="timeline.length === 0 && isToday"
-                title="Nenhum registro ainda"
-                description="Toque em uma matéria acima para começar."
-              />
-
-              <AkList v-else-if="timeline.length > 0">
-                <template v-for="(item, index) in timeline" :key="item.type === 'gap' ? `gap-${index}` : item.session.id">
-                  <li v-if="item.type === 'gap'" class="text-xs text-muted gap-row">
-                    ↕ ~{{ item.label }} entre sessões
-                  </li>
-
-                  <li v-else-if="item.type === 'break'" class="text-xs text-muted gap-row">
-                    ↕ ~{{ formatDuration(item.session.duration) }} de intervalo
-                    <span class="gap-row__times">{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</span>
-                  </li>
-
-                  <AkListRow v-else :divider="index < timeline.length - 1">
-                    <template #leading>
-                      <div class="subject-leading subject-leading--sm">
-                        {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
-                      </div>
-                    </template>
-
-                    <span class="truncate">
-                      {{ getSubject(item.session.subjectId)?.name ?? 'Matéria' }}
-                    </span>
-
-                    <template #subtitle>
-                      <span class="text-xs text-muted session-times">
-                        {{ formatSessionTimeRange(item.session, fmt) }}
-                      </span>
-                    </template>
-
-                    <template #trailing>
-                      <span class="numeric text-sm font-semibold shrink-0 row-duration text-secondary">
-                        {{ formatDuration(item.session.duration) }}
-                      </span>
-                      <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
-                      <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="deleteSession(item.session.id)" />
-                    </template>
-                  </AkListRow>
+        <section class="section-block">
+          <AkSectionHeader title="Sessões de hoje">
+            <template #action>
+              <AkButton
+                v-if="subjectsStore.subjects.length"
+                size="sm"
+                variant="ghost"
+                @click="showAddModal = true"
+              >
+                <template #icon>
+                  <AkIcon name="plus-outline" :size="16" />
                 </template>
-              </AkList>
-            </div>
-          </section>
+                Manual
+              </AkButton>
+            </template>
+          </AkSectionHeader>
 
-          <AkEmptyState
-            v-else-if="!isToday && !loadingHistory && timeline.length === 0"
-            title="Nenhum registro neste dia"
-            description="Adicione um registro manual ou volte para hoje."
-          />
-        </div>
-      </Transition>
+          <div class="collapsible-section__body">
+            <AkEmptyState
+              v-if="timeline.length === 0"
+              title="Nenhuma sessão ainda"
+              description="Inicie o timer ou adicione um registro manual."
+            />
+
+            <AkList v-else>
+              <template
+                v-for="(item, index) in timeline"
+                :key="item.type === 'gap' ? `gap-${index}` : item.session.id"
+              >
+                <li v-if="item.type === 'gap'" class="text-xs text-muted gap-row">
+                  ↕ ~{{ item.label }} entre sessões
+                </li>
+
+                <li v-else-if="item.type === 'break'" class="text-xs text-muted gap-row">
+                  ↕ ~{{ formatDuration(item.session.duration) }} de intervalo
+                  <span class="gap-row__times">{{ fmt(item.session.startTime) }} – {{ fmt(item.session.endTime) }}</span>
+                </li>
+
+                <AkListRow v-else :divider="index < timeline.length - 1">
+                  <template #leading>
+                    <div class="subject-leading subject-leading--sm">
+                      {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
+                    </div>
+                  </template>
+
+                  <span class="truncate">
+                    {{ getSubject(item.session.subjectId)?.name ?? 'Matéria' }}
+                  </span>
+
+                  <template #subtitle>
+                    <span class="text-xs text-muted session-times">
+                      {{ formatSessionTimeRange(item.session, fmt) }}
+                    </span>
+                  </template>
+
+                  <template #trailing>
+                    <span class="numeric text-sm font-semibold shrink-0 row-duration text-secondary">
+                      {{ formatDuration(item.session.duration) }}
+                    </span>
+                    <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="editingSession = item.session" />
+                    <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="deleteSession(item.session.id)" />
+                  </template>
+                </AkListRow>
+              </template>
+            </AkList>
+          </div>
+        </section>
+      </div>
     </div>
 
-    <AkFab v-if="isToday && subjectsStore.subjects.length > 0">
-      <AkButton size="lg" aria-label="Adicionar" @click="showAddModal = true">
+    <AkFab v-if="subjectsStore.subjects.length > 0">
+      <AkButton size="lg" aria-label="Adicionar registro" @click="showAddModal = true">
         <template #icon>
           <AkIcon name="plus-outline" />
         </template>
-        Adicionar
+        Manual
       </AkButton>
     </AkFab>
 
@@ -177,7 +145,7 @@
 
     <SessionAddModal
       :show="showAddModal"
-      :date="viewDate"
+      :date="todayStr"
       @close="showAddModal = false"
       @saved="onSessionSaved"
     />
@@ -188,8 +156,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  AkButton, AkChip, AkEmptyState, AkFab, AkIcon, AkIconButton, AkList, AkListRow,
-  AkPageHeader, AkSectionHeader, AkShimmer,
+  AkButton, AkEmptyState, AkFab, AkIcon, AkIconButton, AkList, AkListRow,
+  AkPageHeader, AkSectionHeader,
 } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
@@ -197,13 +165,13 @@ import { useSubjectsStore } from '@/stores/subjects'
 import ActiveTimerBar from '@/components/home/ActiveTimerBar.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
-import SubjectStudyList from '@/components/home/SubjectStudyList.vue'
+import StudyLauncher from '@/components/home/StudyLauncher.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
-import { formatDuration, formatTimer, localDateStr, todayDateString, isStudySession } from '@/types'
+import { formatDuration, formatTimer, todayDateString } from '@/types'
 import { buildTimeline, formatSessionTimeRange } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
@@ -219,134 +187,77 @@ const focusMode = ref(false)
 const editingSession = ref<StudySession | null>(null)
 const showAddModal = ref(false)
 const sheetOpen = ref(false)
-const slideDir = ref<'left' | 'right'>('left')
 
 const { isFaceDown } = useFaceDownFocus()
 watch(isFaceDown, (faceDown) => {
   if (faceDown && timerStore.mode !== 'idle') focusMode.value = true
 })
 
-const viewDate = ref(todayDateString())
-const viewSessions = ref<StudySession[]>([])
-const loadingHistory = ref(false)
 const todayStr = todayDateString()
-
-const isToday = computed(() => viewDate.value === todayStr)
-
-const displaySessions = computed<StudySession[]>(() =>
-  isToday.value ? sessionsStore.todaySessions : viewSessions.value
-)
-
-const timeline = computed(() => buildTimeline(displaySessions.value))
-
-const showSubjectList = computed(() => timerStore.mode === 'idle')
-
-const showRecordsSection = computed(() =>
-  !isToday.value || subjectsStore.subjects.length > 0 || loadingHistory.value
-)
-
-const pageLabel = computed(() => (isToday.value ? 'Sua rotina' : 'Histórico'))
+const timeline = computed(() => buildTimeline(sessionsStore.todaySessions))
 
 const pageTitle = computed(() => {
-  if (isToday.value) return 'Hoje'
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  if (viewDate.value === localDateStr(yesterday)) return 'Ontem'
-  const d = new Date(viewDate.value + 'T12:00:00')
-  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })
+  if (timerStore.mode === 'study') return 'Em foco'
+  if (timerStore.mode === 'paused') return 'Pausado'
+  return 'Pronto'
 })
 
-const dateNavLabel = computed(() => pageTitle.value)
+const headerMeta = computed(() =>
+  new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }),
+)
 
 const activeSubject = computed(() => {
   const id = timerStore.activeSubjectId
   return id ? subjectsStore.getSubject(id) : null
 })
 
-const dateLabel = computed(() =>
-  new Date(viewDate.value + 'T12:00:00').toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
+const liveExtraSeconds = computed(() =>
+  timerStore.mode === 'study' || timerStore.mode === 'paused'
+    ? timerStore.studyElapsedSeconds
+    : 0,
 )
 
-const studyTotalFormatted = computed(() => {
-  if (isToday.value) {
-    const live = (timerStore.mode === 'study' || timerStore.mode === 'paused')
-      ? timerStore.studyElapsedSeconds : 0
-    return formatTimer(sessionsStore.todayStudyTotalSeconds + live)
-  }
-  return formatTimer(displaySessions.value.filter(isStudySession).reduce((a, s) => a + s.duration, 0))
+const studyTotalFormatted = computed(() =>
+  formatTimer(sessionsStore.todayStudyTotalSeconds + liveExtraSeconds.value),
+)
+
+const progressCaption = computed(() => {
+  const n = timeline.value.filter(i => i.type === 'study').length
+  if (n === 0) return 'ainda sem sessões hoje'
+  if (n === 1) return 'em 1 sessão hoje'
+  return `em ${n} sessões hoje`
 })
-
-async function fetchViewDate() {
-  if (isToday.value) return
-  loadingHistory.value = true
-  viewSessions.value = await sessionsStore.loadDate(viewDate.value)
-  loadingHistory.value = false
-}
-
-function goPrev() {
-  slideDir.value = 'right'
-  const d = new Date(viewDate.value + 'T12:00:00')
-  d.setDate(d.getDate() - 1)
-  viewDate.value = localDateStr(d)
-}
-
-function goNext() {
-  if (isToday.value) return
-  slideDir.value = 'left'
-  const d = new Date(viewDate.value + 'T12:00:00')
-  d.setDate(d.getDate() + 1)
-  viewDate.value = localDateStr(d) > todayStr ? todayStr : localDateStr(d)
-}
-
-function goToToday() {
-  slideDir.value = viewDate.value > todayStr ? 'right' : 'left'
-  viewDate.value = todayStr
-}
-
-watch(viewDate, fetchViewDate)
-
-let _swipeX = 0
-let _swipeY = 0
-function onTouchStart(e: TouchEvent) {
-  _swipeX = e.touches[0].clientX
-  _swipeY = e.touches[0].clientY
-}
-function onTouchEnd(e: TouchEvent) {
-  const dx = e.changedTouches[0].clientX - _swipeX
-  const dy = e.changedTouches[0].clientY - _swipeY
-  if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-  if (dx < 0) goNext()
-  else goPrev()
-}
 
 function handleSheetSelect(id: string) {
   if (timerStore.mode === 'idle') {
-    timerStore.startStudy(id)
-    lastSubjectId.value = id
+    void startSubject(id)
   } else {
-    switchSubject(id)
+    void switchSubject(id)
   }
 }
 
 async function handleSubjectSelect(id: string) {
   if (timerStore.mode === 'idle') {
-    await timerStore.startStudy(id)
-    lastSubjectId.value = id
-    await sessionsStore.loadToday()
+    await startSubject(id)
     return
   }
   await switchSubject(id)
+}
+
+async function startSubject(id: string) {
+  await timerStore.startStudy(id)
+  lastSubjectId.value = id
+  await sessionsStore.loadToday()
 }
 
 async function handleStop() {
   lastSubjectId.value = timerStore.activeSubjectId ?? lastSubjectId.value
   await timerStore.stop()
   await sessionsStore.loadToday()
-  if (navigator.vibrate) navigator.vibrate([100, 30, 80])
 }
 
 async function switchSubject(id: string) {
@@ -365,18 +276,13 @@ async function deleteSession(id: string) {
   if (!ok) return
   await sessionsStore.remove(id)
   toast.success('Registro excluído')
-  if (isToday.value) await sessionsStore.loadToday()
-  else viewSessions.value = await sessionsStore.loadDate(viewDate.value)
+  await sessionsStore.loadToday()
 }
 
 async function onSessionSaved() {
   editingSession.value = null
   showAddModal.value = false
-  if (isToday.value) {
-    await sessionsStore.loadToday()
-  } else {
-    viewSessions.value = await sessionsStore.loadDate(viewDate.value)
-  }
+  await sessionsStore.loadToday()
 }
 
 function getSubject(id?: string) {
@@ -396,7 +302,7 @@ onMounted(async () => {
 
 <style scoped>
 .gap-row {
-  padding: var(--space-2) var(--space-4);
+      padding: var(--space-2) var(--space-4);
   line-height: 1.4;
 }
 

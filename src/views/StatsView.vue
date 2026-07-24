@@ -1,9 +1,9 @@
 ﻿<template>
   <div class="ak-app-page ak-app-scroll">
     <AkPageHeader
-      label="Sua evolução"
+      label="Retrospectiva"
       title="Progresso"
-      meta="Tempo de estudo no período"
+      meta="Tempo e sessões no período"
       size="md"
     />
 
@@ -26,8 +26,8 @@
       >
         <div class="history-overview__heading">
           <div>
-            <span id="consistency-title" class="history-overview__eyebrow">Consistência</span>
-            <div class="history-overview__score">{{ consistency }}%</div>
+            <span id="consistency-title" class="history-overview__eyebrow">Dias com estudo</span>
+            <div class="history-overview__score">{{ activeDayCount }}/{{ periodDates.length }}</div>
           </div>
           <AkBadge
             :variant="trend.delta > 0 ? 'accent' : 'neutral'"
@@ -153,7 +153,6 @@ import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration, localDateStr, isStudySession } from '@/types'
 import { buildTimeline, formatSessionTimeRange } from '@/utils/timeline'
 import {
-  activeDayRate,
   computeStudyTrend,
   enumerateDates,
   getActiveStudyDays,
@@ -168,12 +167,12 @@ const confirmSheet = useConfirmSheet()
 const editingSession = ref<StudySession | null>(null)
 
 type Period = 'today' | 'week' | 'month'
-const period = ref<Period>('today')
+const period = ref<Period>('week')
 
 const periods = [
-  { value: 'today' as Period, label: 'Hoje' },
   { value: 'week'  as Period, label: 'Semana' },
   { value: 'month' as Period, label: 'Mês' },
+  { value: 'today' as Period, label: 'Hoje' },
 ]
 
 const sessions = computed(() => sessionsStore.rangeSessions.filter(isStudySession))
@@ -186,7 +185,6 @@ const activeDayCount = computed(() => {
   const active = getActiveStudyDays(sessionsStore.rangeSessions)
   return periodDates.value.filter(date => active.has(date)).length
 })
-const consistency = computed(() => activeDayRate(sessionsStore.rangeSessions, periodDates.value))
 const trend = computed(() => computeStudyTrend(sessionsStore.rangeSessions, periodDates.value))
 
 const groupedTimeline = computed(() => {

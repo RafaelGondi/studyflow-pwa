@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="ak-app-page ak-app-scroll">
     <AkPageHeader
-      label="Gerenciar"
+      label="Catálogo"
       title="Matérias"
       :meta="`${subjectsStore.subjects.length} matérias · ${subjectsStore.categories.length} categorias`"
       size="md"
@@ -49,7 +49,6 @@
             <template #subtitle>
               <span class="text-xs text-muted truncate">
                 {{ getSubjectCategory(subject)?.name ?? 'Sem categoria' }}
-                <template v-if="todayTime(subject.id)"> · {{ todayTime(subject.id) }}</template>
               </span>
             </template>
 
@@ -124,23 +123,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   AkBadge, AkButton, AkChip, AkEmptyState, AkFab, AkIcon, AkIconButton, AkList, AkListRow, AkPageHeader, AkSectionHeader,
 } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
-import { useSessionsStore } from '@/stores/sessions'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
-import { formatDuration } from '@/types'
 import type { Subject, Category } from '@/types'
 
 const router = useRouter()
 const subjectsStore = useSubjectsStore()
-const sessionsStore = useSessionsStore()
 const toast = useAppToast()
 const confirmSheet = useConfirmSheet()
 const showSubjectModal = ref(false)
@@ -192,11 +188,6 @@ function countInCategory(catId: string) {
   return n === 1 ? '1' : String(n)
 }
 
-function todayTime(subjectId: string) {
-  const secs = sessionsStore.todayBySubject.get(subjectId) ?? 0
-  return secs > 0 ? formatDuration(secs) : ''
-}
-
 async function confirmDeleteCategory(id: string) {
   const ok = await confirmSheet.ask({
     title: 'Excluir categoria',
@@ -206,6 +197,4 @@ async function confirmDeleteCategory(id: string) {
   await subjectsStore.removeCategory(id)
   toast.success('Categoria excluída')
 }
-
-onMounted(() => sessionsStore.loadToday())
 </script>

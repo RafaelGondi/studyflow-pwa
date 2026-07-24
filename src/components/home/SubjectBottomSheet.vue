@@ -35,7 +35,6 @@
               <span class="sheet-picker__name truncate">{{ subject.name }}</span>
               <span class="sheet-picker__meta-line truncate">
                 {{ getCategoryName(subject.categoryId) ?? 'Sem categoria' }}
-                <template v-if="todayTime(subject.id)"> · {{ todayTime(subject.id) }}</template>
               </span>
             </div>
             <span class="status-dot shrink-0" :style="{ background: subject.color }" />
@@ -50,8 +49,6 @@
 import { computed } from 'vue'
 import { AkEmptyState, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
-import { useSessionsStore } from '@/stores/sessions'
-import { formatDuration } from '@/types'
 import { subjectBgMix } from '@/utils/colors'
 
 defineProps<{
@@ -65,18 +62,12 @@ const emit = defineEmits<{
 }>()
 
 const subjectsStore = useSubjectsStore()
-const sessionsStore = useSessionsStore()
 
 const subjects = computed(() => subjectsStore.subjects)
 
 function getCategoryName(categoryId: string | null) {
   if (!categoryId) return null
   return subjectsStore.getCategory(categoryId)?.name ?? null
-}
-
-function todayTime(subjectId: string) {
-  const secs = sessionsStore.todayBySubject.get(subjectId) ?? 0
-  return secs > 0 ? formatDuration(secs) : ''
 }
 
 function select(id: string) {

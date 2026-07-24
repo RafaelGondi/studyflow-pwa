@@ -1,9 +1,9 @@
 <template>
   <AkTabBar v-model="activeTab">
-    <AkTabBarItem value="/" label="Início">
+    <AkTabBarItem value="/" label="Estudar">
       <template #icon>
         <span class="tab-icon-wrap">
-          <AkIcon name="home-outline" :size="20" />
+          <AkIcon name="play-outline" :size="20" />
           <span v-if="timerStore.isRunning" class="tab-badge" aria-label="Timer ativo" />
         </span>
       </template>
