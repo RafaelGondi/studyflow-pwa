@@ -1,7 +1,8 @@
 ﻿<template>
-  <AppBottomSheet
+  <AkSheet
     :open="show"
     :title="category ? 'Editar categoria' : 'Nova categoria'"
+    close-label="Fechar"
     @update:open="(open) => { if (!open) emit('close') }"
   >
     <div class="modal-body">
@@ -20,40 +21,37 @@
               v-for="c in SUBJECT_COLORS"
               :key="c.value"
               type="button"
-              @click="form.color = c.value"
               class="color-swatch"
               :class="{ 'color-swatch--active': form.color === c.value }"
               :style="{ background: c.value }"
+              @click="form.color = c.value"
             >
               <svg v-if="form.color === c.value" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="width:14px;height:14px;color:var(--accent-contrast)">
-                <polyline points="20 6 9 17 4 12"/>
+                <polyline points="20 6 9 17 4 12" />
               </svg>
             </button>
           </div>
         </div>
+
+        <AkButton
+          type="submit"
+          form="category-form"
+          variant="primary"
+          size="lg"
+          block
+          :loading="saving"
+          :disabled="!form.name.trim()"
+        >
+          {{ category ? 'Salvar' : 'Criar categoria' }}
+        </AkButton>
       </form>
     </div>
-
-    <template #footer>
-      <AkButton
-        type="submit"
-        form="category-form"
-        variant="primary"
-        size="lg"
-        block
-        :loading="saving"
-        :disabled="!form.name.trim()"
-      >
-        {{ category ? 'Salvar' : 'Criar categoria' }}
-      </AkButton>
-    </template>
-  </AppBottomSheet>
+  </AkSheet>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { AkButton, AkInput } from '@rafael_dias/akoma'
-import AppBottomSheet from '@/components/ui/AppBottomSheet.vue'
+import { AkButton, AkInput, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useAppToast } from '@/composables/useAppToast'
 import { SUBJECT_COLORS } from '@/types'

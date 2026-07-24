@@ -1,28 +1,15 @@
 <template>
-  <div
-    class="page akoma-page app-page"
-    :class="{ 'app-page--with-fab': isToday && subjectsStore.subjects.length > 0 }"
-  >
-    <div class="app-page__header">
-      <PageHeader
+  <div class="ak-app-page">
+    <AkPageHeader
       :label="pageLabel"
       :title="pageTitle"
       :meta="dateLabel"
-      bordered
+      size="md"
     >
-      <div v-if="isToday && subjectsStore.subjects.length" class="day-header__progress">
-        <div class="progress-strip">
-          <div class="progress-strip__hero">
-            <span class="progress-strip__time numeric">{{ studyTotalFormatted }}</span>
-            <span class="progress-strip__caption">de estudo hoje</span>
-          </div>
-        </div>
-      </div>
-      <template #nav>
+      <template #actions>
         <div class="nav-cluster">
-          <AkIconButton class="nav-btn" label="Dia anterior" size="sm" icon="arrow-left-outline" @click="goPrev" />
+          <AkIconButton label="Dia anterior" size="sm" icon="arrow-left-outline" @click="goPrev" />
           <AkIconButton
-            class="nav-btn"
             label="Próximo dia"
             size="sm"
             icon="arrow-right-outline"
@@ -31,7 +18,15 @@
           />
         </div>
       </template>
-    </PageHeader>
+
+      <div v-if="isToday && subjectsStore.subjects.length" class="day-header__progress">
+        <div class="progress-strip">
+          <div class="progress-strip__hero">
+            <span class="progress-strip__time numeric">{{ studyTotalFormatted }}</span>
+            <span class="progress-strip__caption">de estudo hoje</span>
+          </div>
+        </div>
+      </div>
 
       <Transition name="fade">
         <div v-if="!isToday" class="chip-row page-chip-row">
@@ -41,15 +36,16 @@
           </AkChip>
         </div>
       </Transition>
-    </div>
+    </AkPageHeader>
 
     <div
-      class="app-scroll"
+      class="ak-app-scroll page-body"
+      :class="{ 'ak-page-body--with-fab': isToday && subjectsStore.subjects.length > 0 }"
       @touchstart.passive="onTouchStart"
       @touchend.passive="onTouchEnd"
     >
       <Transition :name="slideDir === 'left' ? 'slide-left' : 'slide-right'" mode="out-in">
-        <div :key="viewDate" class="page-body reveal reveal-d2">
+        <div :key="viewDate" class="day-panel reveal reveal-d2">
           <template v-if="isToday">
             <ActiveTimerBar
               v-if="timerStore.mode !== 'idle'"
@@ -155,11 +151,14 @@
       </Transition>
     </div>
 
-    <FabButton
-      v-if="isToday && subjectsStore.subjects.length > 0"
-      label="Adicionar"
-      @click="showAddModal = true"
-    />
+    <AkFab v-if="isToday && subjectsStore.subjects.length > 0">
+      <AkButton size="lg" aria-label="Adicionar" @click="showAddModal = true">
+        <template #icon>
+          <AkIcon name="plus-outline" />
+        </template>
+        Adicionar
+      </AkButton>
+    </AkFab>
 
     <FocusMode :active="focusMode" :subject="activeSubject" @close="focusMode = false" />
 
@@ -189,8 +188,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  AkButton, AkChip, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow,
-  AkSectionHeader, AkShimmer,
+  AkButton, AkChip, AkEmptyState, AkFab, AkIcon, AkIconButton, AkList, AkListRow,
+  AkPageHeader, AkSectionHeader, AkShimmer,
 } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
@@ -201,8 +200,6 @@ import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
 import SubjectStudyList from '@/components/home/SubjectStudyList.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
-import FabButton from '@/components/ui/FabButton.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'

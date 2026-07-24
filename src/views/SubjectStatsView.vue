@@ -1,11 +1,12 @@
 <template>
-  <div class="page akoma-page">
-    <PageHeader
+  <div class="ak-app-page ak-app-scroll">
+    <AkPageHeader
       label="Matéria"
       :title="subject?.name ?? '…'"
       :meta="categoryName"
+      size="md"
     >
-      <template #nav>
+      <template #actions>
         <AkButton size="sm" variant="ghost" @click="router.back()">
           <template #icon>
             <AkIcon name="arrow-left-outline" :size="16" />
@@ -13,7 +14,7 @@
           Voltar
         </AkButton>
       </template>
-    </PageHeader>
+    </AkPageHeader>
 
     <div v-if="loading" class="loading-center">
       <AkShimmer width="32px" height="32px" radius="full" />
@@ -118,7 +119,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { AkButton, AkCard, AkEmptyState, AkIcon, AkShimmer } from '@rafael_dias/akoma'
+import { AkButton, AkCard, AkEmptyState, AkIcon, AkPageHeader, AkShimmer } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import StudyCalendar from '@/components/stats/StudyCalendar.vue'
@@ -126,7 +127,6 @@ import DaySummary from '@/components/stats/DaySummary.vue'
 import WeeklyChart from '@/components/stats/WeeklyChart.vue'
 import StatsTimeline from '@/components/stats/StatsTimeline.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration, localDateStr, todayDateString } from '@/types'

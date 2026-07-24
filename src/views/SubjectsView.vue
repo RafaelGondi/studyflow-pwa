@@ -1,9 +1,10 @@
 ﻿<template>
-  <div class="page akoma-page page--with-fab">
-    <PageHeader
+  <div class="ak-app-page ak-app-scroll">
+    <AkPageHeader
       label="Gerenciar"
       title="Matérias"
       :meta="`${subjectsStore.subjects.length} matérias · ${subjectsStore.categories.length} categorias`"
+      size="md"
     />
 
     <div class="chip-scroll reveal reveal-d1">
@@ -21,7 +22,7 @@
       </AkChip>
     </div>
 
-    <div class="page-body reveal reveal-d2">
+    <div class="page-body ak-page-body--with-fab reveal reveal-d2">
       <section class="section-block">
         <AkSectionHeader title="Matérias" />
 
@@ -97,7 +98,14 @@
       </section>
     </div>
 
-    <FabButton label="Nova" @click="openAddSubject" />
+    <AkFab>
+      <AkButton size="lg" aria-label="Nova matéria" @click="openAddSubject">
+        <template #icon>
+          <AkIcon name="plus-outline" />
+        </template>
+        Nova
+      </AkButton>
+    </AkFab>
 
     <SubjectModal
       :show="showSubjectModal"
@@ -119,14 +127,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  AkBadge, AkButton, AkChip, AkEmptyState, AkIconButton, AkList, AkListRow, AkSectionHeader,
+  AkBadge, AkButton, AkChip, AkEmptyState, AkFab, AkIcon, AkIconButton, AkList, AkListRow, AkPageHeader, AkSectionHeader,
 } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
-import FabButton from '@/components/ui/FabButton.vue'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration } from '@/types'

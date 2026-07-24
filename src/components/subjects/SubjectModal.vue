@@ -1,7 +1,8 @@
 ﻿<template>
-  <AppBottomSheet
+  <AkSheet
     :open="show"
     :title="subject ? 'Editar matéria' : 'Nova matéria'"
+    close-label="Fechar"
     @update:open="(open) => { if (!open) emit('close') }"
   >
     <div class="modal-body">
@@ -13,9 +14,9 @@
               v-for="icon in SUBJECT_ICONS"
               :key="icon"
               type="button"
-              @click="form.icon = icon"
               class="icon-pick"
               :class="{ 'icon-pick--active': form.icon === icon }"
+              @click="form.icon = icon"
             >
               {{ icon }}
             </button>
@@ -39,14 +40,14 @@
               v-for="c in SUBJECT_COLORS"
               :key="c.value"
               type="button"
-              @click="form.color = c.value"
               class="color-swatch"
               :class="{ 'color-swatch--active': form.color === c.value }"
               :style="{ background: c.value }"
               :aria-label="c.name"
+              @click="form.color = c.value"
             >
               <svg v-if="form.color === c.value" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="width:14px;height:14px;color:var(--accent-contrast)">
-                <polyline points="20 6 9 17 4 12"/>
+                <polyline points="20 6 9 17 4 12" />
               </svg>
             </button>
           </div>
@@ -64,29 +65,26 @@
             </p>
           </div>
         </div>
+
+        <AkButton
+          type="submit"
+          form="subject-form"
+          variant="primary"
+          size="lg"
+          block
+          :loading="saving"
+          :disabled="!form.name.trim()"
+        >
+          {{ subject ? 'Salvar' : 'Criar matéria' }}
+        </AkButton>
       </form>
     </div>
-
-    <template #footer>
-      <AkButton
-        type="submit"
-        form="subject-form"
-        variant="primary"
-        size="lg"
-        block
-        :loading="saving"
-        :disabled="!form.name.trim()"
-      >
-        {{ subject ? 'Salvar' : 'Criar matéria' }}
-      </AkButton>
-    </template>
-  </AppBottomSheet>
+  </AkSheet>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AkButton, AkInput } from '@rafael_dias/akoma'
-import AppBottomSheet from '@/components/ui/AppBottomSheet.vue'
+import { AkButton, AkInput, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useAppToast } from '@/composables/useAppToast'
 import { SUBJECT_COLORS, SUBJECT_ICONS } from '@/types'
@@ -98,34 +96,37 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const subjectsStore = useSubjectsStore()
 const toast = useAppToast()
-const categories = computed(() => subjectsStore.categories)
 const saving = ref(false)
-
-const form = ref<{ name: string; icon: string; color: string; categoryId: string | null }>({
+const form = ref({
   name: '',
-  icon: '📚',
-  color: DEFAULT_SUBJECT_COLOR,
-  categoryId: null,
+  icon: SUBJECT_ICONS[0] as string,
+  color: DEFAULT_SUBJECT_COLOR as string,
+  categoryId: null as string | null,
 })
 
-watch(() => props.show, (val) => {
-  if (val) {
-    if (props.subject) {
-      form.value = {
-        name: props.subject.name,
-        icon: props.subject.icon,
-        color: normalizeAkomaColor(props.subject.color),
-        categoryId: props.subject.categoryId,
-      }
-    } else {
-      form.value = { name: '', icon: '📚', color: DEFAULT_SUBJECT_COLOR, categoryId: null }
-    }
-  }
-})
-
+const categories = computed(() => subjectsStore.categories)
 const categoryName = computed(() => {
   if (!form.value.categoryId) return null
   return subjectsStore.getCategory(form.value.categoryId)?.name ?? null
+})
+
+watch(() => props.show, (val) => {
+  if (!val) return
+  if (props.subject) {
+    form.value = {
+      name: props.subject.name,
+      icon: props.subject.icon,
+      color: normalizeAkomaColor(props.subject.color),
+      categoryId: props.subject.categoryId,
+    }
+  } else {
+    form.value = {
+      name: '',
+      icon: SUBJECT_ICONS[0],
+      color: DEFAULT_SUBJECT_COLOR,
+      categoryId: null,
+    }
+  }
 })
 
 async function handleSubmit() {

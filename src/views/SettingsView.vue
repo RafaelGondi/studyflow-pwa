@@ -1,6 +1,6 @@
 <template>
-  <div class="page akoma-page">
-    <PageHeader label="Preferências" title="Ajustes" />
+  <div class="ak-app-page ak-app-scroll">
+    <AkPageHeader label="Preferências" title="Ajustes" size="md" />
 
     <div class="page-body reveal reveal-d1">
       <AkCard v-if="authStore.dataLost" padding="md">
@@ -100,10 +100,10 @@
         <AkList>
           <AkListRow :divider="false">
             <AkSwitch
-              :model-value="theme.isDark"
+              :model-value="mode === 'dark'"
               label="Modo escuro"
-              :description="theme.isDark ? 'Tema escuro ativo' : 'Tema claro ativo'"
-              @update:model-value="theme.setDark"
+              :description="mode === 'dark' ? 'Tema escuro ativo' : 'Tema claro ativo'"
+              @update:model-value="(next) => setMode(next ? 'dark' : 'light')"
             />
           </AkListRow>
         </AkList>
@@ -115,18 +115,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import {
-  AkBadge, AkButton, AkCard, AkIcon, AkList, AkListRow, AkSectionHeader, AkSwitch,
+  AkBadge, AkButton, AkCard, AkIcon, AkList, AkListRow, AkPageHeader, AkSectionHeader, AkSwitch,
 } from '@rafael_dias/akoma'
-import { useThemeStore } from '@/stores/theme'
+import { useAppTheme } from '@/composables/useAppTheme'
 import { useAuthStore } from '@/stores/auth'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { usePwaInstall } from '@/composables/usePwaInstall'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
-import PageHeader from '@/components/layout/PageHeader.vue'
 
-const theme = useThemeStore()
+const { mode, setMode } = useAppTheme()
 const authStore = useAuthStore()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()

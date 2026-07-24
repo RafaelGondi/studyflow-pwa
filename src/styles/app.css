@@ -1,194 +1,34 @@
-/* StudyFlow — layout shell. Visual language lives in @rafael_dias/akoma tokens. */
+/* StudyFlow — domain surfaces on top of Akoma shell/tokens. */
 
-/*
- * Indicadores de intensidade usam as 5 tonalidades cromáticas do Akoma:
- * --accent-lighter → --accent-darker
- */
-.completion-shade--none {
-  background: var(--bg-muted);
-  color: var(--text-tertiary);
-}
-
-.completion-shade--lighter {
-  background: var(--accent-lighter);
-  color: var(--text);
-}
-
-.completion-shade--light {
-  background: var(--accent-light);
-  color: var(--text);
-}
-
-.completion-shade--base {
-  background: var(--accent);
-  color: var(--accent-contrast);
-}
-
-.completion-shade--dark {
-  background: var(--accent-dark);
-  color: var(--accent-contrast);
-}
-
-.completion-shade--darker {
-  background: var(--accent-darker);
-  color: var(--accent-contrast);
-}
-
-/* Modal/sheet shadow — único override além dos tokens Akoma */
-[data-mood='app'] {
-  --surface-shadow-md: 0 -12px 40px color-mix(in srgb, var(--fill-strong) 12%, transparent);
-}
-
-/* ── App shell (Habitify layout) ─────────────────────────── */
-.app-shell {
-  position: relative;
-  height: 100dvh;
-  max-width: var(--shell-max);
-  margin: 0 auto;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-}
-
-/* Sem gradiente colorido — fundo plano como Habitify */
-[data-theme='light'] .app-shell::before {
-  content: none;
-}
-
-/* Ambient só no escuro, bem sutil */
-[data-theme='light'] .ambient {
-  display: none;
-}
-
-[data-mood='app'][data-theme='dark'] {
-  --orb-1: color-mix(in srgb, var(--accent) 10%, transparent);
-  --orb-2: color-mix(in srgb, var(--accent) 7%, transparent);
-  --orb-3: color-mix(in srgb, var(--accent) 5%, transparent);
-}
-
-[data-theme='dark'] .app-shell .ambient__orb {
-  filter: blur(80px);
-  opacity: 0.22;
-}
-
-.app-main {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  overflow: hidden;
-}
-
-.app-main > * {
+.ak-app-main > * {
   height: 100%;
 }
 
-.page {
-  height: 100%;
+.page-body {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-}
-
-.page.akoma-page:not(.app-page) {
-  overflow-y: auto;
-  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-4));
-  gap: var(--space-2);
-}
-
-.page.akoma-page:not(.app-page) .page-hero,
-.page.akoma-page:not(.app-page) .chip-scroll {
-  flex-shrink: 0;
-}
-
-.page.akoma-page:not(.app-page) .chip-scroll {
-  position: relative;
-  z-index: 2;
-  background: var(--bg);
-}
-
-.page.akoma-page:not(.app-page) .page-body {
-  flex: 0 0 auto;
-  min-height: 0;
-}
-
-.app-page {
-  padding: 0;
-  overflow: hidden;
-}
-
-.app-page__header {
-  flex-shrink: 0;
+  gap: var(--space-6);
   padding:
-    calc(var(--page-pad-top) + var(--safe-top))
-    var(--page-pad-x)
-    0;
-}
-
-.app-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  padding:
-    0
+    var(--space-5)
     var(--page-pad-x)
     calc(var(--nav-height) + var(--safe-bottom) + var(--space-6));
 }
 
-.app-page--with-fab .app-scroll {
-  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 3.25rem + var(--space-8));
+.page-body.ak-page-body--with-fab {
+  padding-bottom: calc(
+    var(--nav-height)
+    + var(--safe-bottom)
+    + var(--space-3)
+    + var(--fab-height)
+    + var(--space-5)
+  );
 }
 
-.page-body {
+/* Home: scroll child already carries page-body padding */
+.ak-app-page > .ak-app-scroll.page-body {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  padding-bottom: var(--space-4);
-}
-
-.page--with-fab.akoma-page:not(.app-page) {
-  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 3.25rem + var(--space-6));
-}
-
-.page--with-fab .page-body {
-  padding-bottom: var(--space-4);
-}
-
-/* ── Editorial header (Habitify) ─────────────────────────── */
-.page-hero {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin-bottom: var(--space-2);
-  flex-shrink: 0;
-}
-
-.page-hero--with-nav {
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.page-hero__main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.page-hero__nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
-  padding-top: var(--space-5);
+  min-height: 0;
+  height: auto;
 }
 
 .nav-cluster {
@@ -201,44 +41,14 @@
   border-radius: var(--radius-md);
 }
 
-.nav-cluster .nav-btn.ak-icon-button {
+.nav-cluster :deep(.ak-icon-button) {
   width: 34px;
   height: 34px;
   background: transparent;
 }
 
-.nav-cluster .nav-btn.ak-icon-button:hover:not(:disabled) {
+.nav-cluster :deep(.ak-icon-button:hover:not(:disabled)) {
   background: var(--bg-muted);
-}
-
-.nav-btn.ak-icon-button {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: var(--bg-soft);
-  color: var(--text-secondary);
-}
-
-.nav-btn.ak-icon-button:hover:not(:disabled) {
-  background: var(--bg-muted);
-  color: var(--text);
-}
-
-.page-hero--day {
-  border-bottom: 1px solid var(--border);
-  padding-bottom: var(--space-4);
-}
-
-.page-hero__meta {
-  font-size: 14px;
-  color: var(--text-secondary);
-  text-transform: capitalize;
-}
-
-.page-hero__subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-top: var(--space-1);
 }
 
 .day-header__progress {
@@ -556,98 +366,7 @@
   box-shadow: 0 0 0 2px var(--nav-glass);
 }
 
-/* ── FAB (posicionamento — botão é AkButton size="lg") ─── */
-.fab {
-  position: fixed;
-  z-index: 40;
-  right: var(--page-pad-x);
-  bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-3));
-}
-
-/* ── Modals ─────────────────────────────────────────────── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-@media (min-width: 640px) {
-  .modal-overlay { align-items: center; }
-}
-
-.modal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: color-mix(in srgb, var(--fill-strong) 55%, transparent);
-  backdrop-filter: blur(3px);
-}
-
-.modal-sheet {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 32rem;
-  max-height: min(90dvh, calc(100dvh - var(--safe-top) - 24px));
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--card-radius, 16px) var(--card-radius, 16px) 0 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-  box-shadow: var(--surface-shadow-md);
-}
-
-.modal-handle {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-  padding: var(--space-3) var(--space-5) 0;
-}
-
-.modal-handle::after {
-  content: '';
-  width: 36px;
-  height: 4px;
-  border-radius: var(--radius-full);
-  background: var(--border-strong);
-}
-
-/* AkCard wraps slot content in .ak-card__body — restore flex chain for scroll */
-.modal-sheet.ak-card .ak-card__body {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  padding: 0;
-}
-
-@media (min-width: 640px) {
-  .modal-sheet {
-    border-radius: var(--card-radius);
-    max-height: 85vh;
-  }
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-3) var(--space-5) var(--space-3);
-  flex-shrink: 0;
-}
-
-.modal-title {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 650;
-  color: var(--text);
-}
-
+/* ── Form body inside AkSheet ───────────────────────────── */
 .modal-body {
   flex: 1;
   min-height: 0;
@@ -660,29 +379,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-}
-
-.modal-footer {
-  flex-shrink: 0;
-  padding: var(--space-4) var(--space-5) calc(var(--space-5) + var(--safe-bottom));
-  border-top: 1px solid var(--border-strong);
-  background: var(--bg-elevated);
-}
-
-.modal-form .modal-body {
-  padding-bottom: var(--space-2);
-}
-
-.modal-enter-active {
-  transition: opacity 0.28s var(--ease-out-expo), transform 0.28s var(--ease-out-expo);
-}
-.modal-leave-active {
-  transition: opacity 0.18s var(--ease-smooth), transform 0.18s var(--ease-smooth);
-}
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-  transform: translateY(24px);
 }
 
 /* ── Forms helpers ──────────────────────────────────────── */
@@ -785,8 +481,10 @@
   gap: var(--space-2);
   overflow-x: auto;
   flex-shrink: 0;
-  margin: 0 calc(-1 * var(--page-pad-x));
+  position: relative;
+  z-index: 2;
   padding: var(--space-1) var(--page-pad-x) var(--space-2);
+  background: var(--bg);
   scrollbar-width: none;
 }
 
@@ -1089,8 +787,13 @@
   .slide-right-enter-active,
   .slide-right-leave-active,
   .fade-enter-active,
-  .fade-leave-active {
-    transition: none;
+  .fade-leave-active,
+  .page-enter-active,
+  .page-leave-active,
+  .reveal,
+  .tap-scale {
+    transition: none !important;
+    animation: none !important;
   }
 }
 

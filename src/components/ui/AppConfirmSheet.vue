@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { AkButton } from '@rafael_dias/akoma'
-import AppBottomSheet from '@/components/ui/AppBottomSheet.vue'
+import { AkButton, AkSheet } from '@rafael_dias/akoma'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 
 const { state, confirm, cancel } = useConfirmSheet()
 </script>
 
 <template>
-  <AppBottomSheet
+  <AkSheet
     :open="state.open"
     :title="state.title"
+    close-label="Fechar"
     @update:open="(open) => { if (!open) cancel() }"
   >
     <div class="confirm-sheet">
@@ -23,7 +23,7 @@ const { state, confirm, cancel } = useConfirmSheet()
         </AkButton>
       </div>
     </div>
-  </AppBottomSheet>
+  </AkSheet>
 </template>
 
 <style scoped>

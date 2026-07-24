@@ -1,8 +1,8 @@
 <template>
-  <div class="app-shell">
-    <AkAmbientBg />
+  <div class="ak-app-root">
+    <AkAmbientBg contained />
     <UpdateBanner />
-    <main class="app-main">
+    <main class="ak-app-main">
       <Transition name="page" mode="out-in">
         <RouterView v-if="appReady" :key="route.path" />
         <div v-else class="loading-screen reveal">
@@ -24,17 +24,18 @@ import { AkAmbientBg, AkShimmer } from '@rafael_dias/akoma'
 import { useAuthStore } from '@/stores/auth'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
-import { useThemeStore } from '@/stores/theme'
+import { useAppTheme } from '@/composables/useAppTheme'
 import AppTabBar from '@/components/layout/AppTabBar.vue'
 import UpdateBanner from '@/components/ui/UpdateBanner.vue'
 import AppToastHost from '@/components/ui/AppToastHost.vue'
 import AppConfirmSheet from '@/components/ui/AppConfirmSheet.vue'
 
+useAppTheme()
+
 const route = useRoute()
 const authStore = useAuthStore()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
-const themeStore = useThemeStore()
 
 const appReady = ref(false)
 
@@ -46,7 +47,6 @@ watch(() => authStore.uid, (newUid, oldUid) => {
 })
 
 onMounted(async () => {
-  themeStore.init()
   await authStore.init()
   try {
     await Promise.all([subjectsStore.load(), sessionsStore.loadToday()])

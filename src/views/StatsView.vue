@@ -1,9 +1,10 @@
 ﻿<template>
-  <div class="page akoma-page">
-    <PageHeader
+  <div class="ak-app-page ak-app-scroll">
+    <AkPageHeader
       label="Sua evolução"
       title="Progresso"
       meta="Tempo de estudo no período"
+      size="md"
     />
 
     <div class="chip-scroll reveal reveal-d1">
@@ -140,14 +141,13 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import {
   AkBadge, AkChip, AkEmptyState, AkIconButton, AkList, AkListRow,
-  AkProgress, AkSectionHeader,
+  AkPageHeader, AkProgress, AkSectionHeader,
 } from '@rafael_dias/akoma'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
 import WeeklyChart from '@/components/stats/WeeklyChart.vue'
 import SubjectDonut from '@/components/stats/SubjectDonut.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
-import PageHeader from '@/components/layout/PageHeader.vue'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration, localDateStr, isStudySession } from '@/types'

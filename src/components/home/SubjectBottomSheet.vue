@@ -1,18 +1,14 @@
 <template>
-  <AppBottomSheet
+  <AkSheet
     :open="modelValue"
+    title="Selecionar matéria"
+    close-label="Fechar"
     @update:open="(open) => emit('update:modelValue', open)"
   >
-    <template #header>
-      <div class="sheet-picker__heading">
-        <h2 class="sheet-picker__title">Selecionar matéria</h2>
-        <p v-if="subjects.length" class="sheet-picker__meta">
-          {{ subjects.length }} {{ subjects.length === 1 ? 'matéria' : 'matérias' }}
-        </p>
-      </div>
-    </template>
-
     <div class="sheet-picker__scroll">
+      <p v-if="subjects.length" class="sheet-picker__meta">
+        {{ subjects.length }} {{ subjects.length === 1 ? 'matéria' : 'matérias' }}
+      </p>
       <AkEmptyState
         v-if="subjects.length === 0"
         title="Nenhuma matéria"
@@ -47,13 +43,12 @@
         </li>
       </ul>
     </div>
-  </AppBottomSheet>
+  </AkSheet>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AkEmptyState } from '@rafael_dias/akoma'
-import AppBottomSheet from '@/components/ui/AppBottomSheet.vue'
+import { AkEmptyState, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { formatDuration } from '@/types'
@@ -91,20 +86,8 @@ function select(id: string) {
 </script>
 
 <style scoped>
-.sheet-picker__title {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 650;
-  color: var(--text);
-}
-
-.sheet-picker__heading {
-  flex: 1;
-  min-width: 0;
-}
-
 .sheet-picker__meta {
-  margin-top: 2px;
+  margin: 0 0 var(--space-3);
   font-size: 12px;
   color: var(--text-tertiary);
 }

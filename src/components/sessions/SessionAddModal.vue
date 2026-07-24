@@ -1,7 +1,8 @@
 <template>
-  <AppBottomSheet
+  <AkSheet
     :open="show"
     title="Adicionar registro"
+    close-label="Fechar"
     @update:open="(open) => { if (!open) emit('close') }"
   >
     <div class="modal-body stack">
@@ -45,13 +46,12 @@
         </AkButton>
       </form>
     </div>
-  </AppBottomSheet>
+  </AkSheet>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AkButton, AkCard, AkInput } from '@rafael_dias/akoma'
-import AppBottomSheet from '@/components/ui/AppBottomSheet.vue'
+import { AkButton, AkCard, AkInput, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useAppToast } from '@/composables/useAppToast'
