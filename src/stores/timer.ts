@@ -225,6 +225,7 @@ export const useTimerStore = defineStore('timer', () => {
     const ms        = studyElapsedMs.value
     const subjectId = state.value.subjectId
     const startTime = state.value.originalStartedAt || Date.now() - ms
+    const endTime   = Date.now()
     const segments  = buildSegments()
     const count     = state.value.pomodoroCount + 1
     const isLong    = count % prefs.value.pomodoro.longBreakInterval === 0
@@ -232,13 +233,13 @@ export const useTimerStore = defineStore('timer', () => {
       ? prefs.value.pomodoro.longBreakMinutes
       : prefs.value.pomodoro.shortBreakMinutes) * 60_000
 
-    // Transition first (prevents re-entry from watcher)
+    // Transition first (prevents re-entry from watcher, mode → 'break' before async save)
     state.value.pomodoroCount = count
     enterBreak(breakMs, isLong ? 'long' : 'short')
 
     if (subjectId && ms >= 5000) {
       await sessions.saveStudy({
-        subjectId, startTime, endTime: Date.now(),
+        subjectId, startTime, endTime,
         duration: Math.floor(ms / 1000), segments,
       })
     }
@@ -299,14 +300,15 @@ export const useTimerStore = defineStore('timer', () => {
 
     // Flowmodoro: save session then enforce a proportional break
     if (prefs.value.timerType === 'flowmodoro' && ms >= 5000) {
+      const endTime = Date.now()
       const breakMs = Math.max(60_000, Math.floor(ms / prefs.value.flowBreakRatio))
+      enterBreak(breakMs, 'flow')   // mode → 'break' before async save
       if (subjectId) {
         await sessions.saveStudy({
-          subjectId, startTime, endTime: Date.now(),
+          subjectId, startTime, endTime,
           duration: Math.floor(ms / 1000), segments,
         })
       }
-      enterBreak(breakMs, 'flow')
       return
     }
 
