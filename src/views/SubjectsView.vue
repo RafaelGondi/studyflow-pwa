@@ -41,7 +41,7 @@
             @click="openSubjectStats(subject.id)"
           >
             <template #leading>
-              <div class="subject-leading">{{ subject.icon }}</div>
+              <div class="subject-leading"><SubjectIcon :icon="subject.icon" :name="subject.name" /></div>
             </template>
 
             <span class="truncate">{{ subject.name }}</span>
@@ -130,6 +130,7 @@ import {
 } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import SubjectModal from '@/components/subjects/SubjectModal.vue'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import CategoryModal from '@/components/subjects/CategoryModal.vue'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'

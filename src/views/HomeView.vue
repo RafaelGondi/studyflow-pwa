@@ -102,7 +102,10 @@
                 <AkListRow v-else :divider="index < timeline.length - 1">
                   <template #leading>
                     <div class="subject-leading subject-leading--sm">
-                      {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
+                      <SubjectIcon
+                        :icon="getSubject(item.session.subjectId)?.icon ?? '📚'"
+                        :name="getSubject(item.session.subjectId)?.name"
+                      />
                     </div>
                   </template>
 
@@ -178,6 +181,7 @@ import { useSubjectsStore } from '@/stores/subjects'
 import FocusMode from '@/components/home/FocusMode.vue'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
 import StudyLauncher from '@/components/home/StudyLauncher.vue'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'

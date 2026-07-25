@@ -64,7 +64,7 @@
               class="subject-leading"
               :style="{ background: subjectBgMix(item.color, 16) }"
             >
-              {{ item.icon }}
+              <SubjectIcon :icon="item.icon" :name="item.name" />
             </div>
             <div class="launcher-live__id">
               <p class="launcher-live__name truncate">{{ item.name }}</p>
@@ -126,7 +126,7 @@
               class="subject-leading"
               :style="{ background: subjectBgMix(item.color, 16) }"
             >
-              {{ item.icon }}
+              <SubjectIcon :icon="item.icon" :name="item.name" />
             </div>
           </template>
 
@@ -185,6 +185,7 @@ import { useTimerStore } from '@/stores/timer'
 import type { TimerType } from '@/stores/timer'
 import { formatDuration, isStudySession } from '@/types'
 import { subjectBgMix } from '@/utils/colors'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 
 const props = defineProps<{
   activeId?: string | null

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <AkSheet
     :open="show"
     :title="subject ? 'Editar matéria' : 'Nova matéria'"
@@ -7,9 +7,25 @@
   >
     <div class="modal-body">
       <form id="subject-form" class="stack" @submit.prevent="handleSubmit">
+
         <div class="form-field">
           <label class="form-label">Ícone</label>
-          <div class="icon-grid">
+
+          <div class="icon-mode-tabs">
+            <button
+              v-for="m in iconModes"
+              :key="m.value"
+              type="button"
+              class="icon-mode-tab"
+              :class="{ 'icon-mode-tab--active': iconMode === m.value }"
+              @click="setIconMode(m.value)"
+            >
+              {{ m.label }}
+            </button>
+          </div>
+
+          <!-- Emoji -->
+          <div v-if="iconMode === 'emoji'" class="icon-grid">
             <button
               v-for="icon in SUBJECT_ICONS"
               :key="icon"
@@ -20,6 +36,38 @@
             >
               {{ icon }}
             </button>
+          </div>
+
+          <!-- Initial -->
+          <div v-else-if="iconMode === 'initial'" class="icon-initial-mode">
+            <div
+              class="icon-initial-preview"
+              :style="{ background: subjectBgMix(form.color, 15) }"
+            >
+              {{ form.name?.[0]?.toUpperCase() || '?' }}
+            </div>
+            <p class="icon-mode-hint">A inicial do nome será usada como ícone</p>
+          </div>
+
+          <!-- Image -->
+          <div v-else-if="iconMode === 'image'" class="icon-image-mode">
+            <button type="button" class="icon-image-upload" @click="fileInputRef?.click()">
+              <img v-if="imagePreview" :src="imagePreview" class="icon-image-upload__img" alt="" />
+              <template v-else>
+                <AkIcon name="image-outline" :size="28" style="opacity: 0.4" />
+                <span class="icon-image-upload__label">Escolher<br>da galeria</span>
+              </template>
+            </button>
+            <p class="icon-mode-hint">
+              {{ imagePreview ? 'Toque para trocar a imagem' : 'Toque para selecionar uma foto' }}
+            </p>
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="handleImageChange"
+            />
           </div>
         </div>
 
@@ -67,8 +115,8 @@
         </div>
 
         <div class="form-preview">
-          <div class="subject-avatar" :style="{ background: subjectBgMix(form.color, 15) }">
-            {{ form.icon }}
+          <div class="subject-avatar" :style="previewBg">
+            <SubjectIcon :icon="form.icon" :name="form.name" />
           </div>
           <div class="min-w-0">
             <p class="form-preview__name">{{ form.name || 'Nome da matéria' }}</p>
@@ -97,12 +145,13 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { AkButton, AkInput, AkSheet } from '@rafael_dias/akoma'
+import { AkButton, AkIcon, AkInput, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useAppToast } from '@/composables/useAppToast'
-import { SUBJECT_COLORS, SUBJECT_ICONS } from '@/types'
+import { INITIAL_ICON, SUBJECT_COLORS, SUBJECT_ICONS } from '@/types'
 import { DEFAULT_SUBJECT_COLOR, normalizeAkomaColor, subjectBgMix } from '@/utils/colors'
 import type { Subject } from '@/types'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 
 const props = defineProps<{ show: boolean; subject?: Subject | null }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -110,33 +159,106 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 const subjectsStore = useSubjectsStore()
 const toast = useAppToast()
 const saving = ref(false)
+
+type IconMode = 'emoji' | 'initial' | 'image'
+const iconModes: { value: IconMode; label: string }[] = [
+  { value: 'emoji',   label: 'Emoji' },
+  { value: 'initial', label: 'Inicial' },
+  { value: 'image',   label: 'Imagem' },
+]
+
+const iconMode    = ref<IconMode>('emoji')
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const imagePreview = ref<string | null>(null)
+
 const form = ref({
-  name: '',
-  icon: SUBJECT_ICONS[0] as string,
-  color: DEFAULT_SUBJECT_COLOR as string,
+  name:       '',
+  icon:       SUBJECT_ICONS[0] as string,
+  color:      DEFAULT_SUBJECT_COLOR as string,
   categoryId: null as string | null,
 })
 
-const categories = computed(() => subjectsStore.categories)
+const categories  = computed(() => subjectsStore.categories)
 const categoryName = computed(() => {
   if (!form.value.categoryId) return null
   return subjectsStore.getCategory(form.value.categoryId)?.name ?? null
 })
 
+const previewBg = computed(() => ({
+  background: iconMode.value === 'image' && imagePreview.value
+    ? 'transparent'
+    : subjectBgMix(form.value.color, 15),
+  overflow: 'hidden',
+}))
+
+function detectIconMode(icon: string): IconMode {
+  if (icon.startsWith('data:')) return 'image'
+  if (icon === INITIAL_ICON)    return 'initial'
+  return 'emoji'
+}
+
+function setIconMode(mode: IconMode) {
+  iconMode.value = mode
+  if (mode === 'initial') {
+    form.value.icon = INITIAL_ICON
+  } else if (mode === 'emoji') {
+    form.value.icon = SUBJECT_ICONS.includes(form.value.icon)
+      ? form.value.icon
+      : SUBJECT_ICONS[0]
+  } else if (mode === 'image' && imagePreview.value) {
+    form.value.icon = imagePreview.value
+  }
+}
+
+async function handleImageChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  const dataUrl = await compressImage(file, 96, 0.8)
+  imagePreview.value = dataUrl
+  form.value.icon    = dataUrl
+}
+
+function compressImage(file: File, size: number, quality: number): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width  = size
+        canvas.height = size
+        const ctx = canvas.getContext('2d')!
+        const min = Math.min(img.width, img.height)
+        const sx  = (img.width  - min) / 2
+        const sy  = (img.height - min) / 2
+        ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.src = ev.target!.result as string
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 watch(() => props.show, (val) => {
   if (!val) return
   if (props.subject) {
+    const detected = detectIconMode(props.subject.icon)
+    iconMode.value    = detected
+    imagePreview.value = detected === 'image' ? props.subject.icon : null
     form.value = {
-      name: props.subject.name,
-      icon: props.subject.icon,
-      color: normalizeAkomaColor(props.subject.color),
+      name:       props.subject.name,
+      icon:       props.subject.icon,
+      color:      normalizeAkomaColor(props.subject.color),
       categoryId: props.subject.categoryId,
     }
   } else {
+    iconMode.value    = 'emoji'
+    imagePreview.value = null
     form.value = {
-      name: '',
-      icon: SUBJECT_ICONS[0],
-      color: DEFAULT_SUBJECT_COLOR,
+      name:       '',
+      icon:       SUBJECT_ICONS[0],
+      color:      DEFAULT_SUBJECT_COLOR,
       categoryId: null,
     }
   }

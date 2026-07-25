@@ -51,7 +51,7 @@
               class="subject-avatar subject-avatar--lg"
               :style="{ background: subjectBgMix(subject?.color ?? DEFAULT_SUBJECT_COLOR, 10) }"
             >
-              {{ subject?.icon ?? '📚' }}
+              <SubjectIcon :icon="subject?.icon ?? '📚'" :name="subject?.name" />
             </div>
             <p class="focus-subject__name">{{ subject?.name ?? 'Estudo' }}</p>
           </div>
@@ -101,6 +101,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { AkIcon } from '@rafael_dias/akoma'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import { useTimerStore } from '@/stores/timer'
 import { DEFAULT_SUBJECT_COLOR, subjectBgMix } from '@/utils/colors'
 import { formatDuration } from '@/types'
