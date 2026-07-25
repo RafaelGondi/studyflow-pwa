@@ -210,6 +210,11 @@ watch(isFaceDown, (faceDown) => {
   if (faceDown && timerStore.mode !== 'idle') focusMode.value = true
 })
 
+// Auto-enter focus mode when a study session starts (new session or Pomodoro auto-restart)
+watch(() => timerStore.mode, (mode, prev) => {
+  if (mode === 'study' && prev !== 'paused') focusMode.value = true
+})
+
 const todayStr = todayDateString()
 const timeline = computed(() => buildTimeline(sessionsStore.todaySessions))
 const studySessionCount = computed(() => timeline.value.filter(i => i.type === 'study').length)

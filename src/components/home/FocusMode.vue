@@ -146,11 +146,27 @@ watch(() => props.active, async (val) => {
 })
 
 function handleFullscreenChange() {
-  if (!document.fullscreenElement && props.active) emit('close')
+  // Screen lock exits fullscreen while document is hidden — don't close the overlay;
+  // visibilitychange will re-enter fullscreen when the user unlocks.
+  if (!document.fullscreenElement && props.active && !document.hidden) {
+    emit('close')
+  }
 }
 
-onMounted(() => document.addEventListener('fullscreenchange', handleFullscreenChange))
-onUnmounted(() => document.removeEventListener('fullscreenchange', handleFullscreenChange))
+function handleVisibilityChange() {
+  if (!document.hidden && props.active && !document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {})
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+})
+onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+})
 </script>
 
 <style scoped>
