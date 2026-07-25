@@ -52,6 +52,20 @@ const DEFAULT_STATE: TimerState = {
   pomodoroCount: 0,
 }
 
+/* ─── Persistent AudioContext (survives background via resume()) ─── */
+let _audioCtx: AudioContext | null = null
+
+function getAudioCtx(): AudioContext | null {
+  try {
+    if (!_audioCtx || _audioCtx.state === 'closed') {
+      _audioCtx = new AudioContext()
+    }
+    return _audioCtx
+  } catch {
+    return null
+  }
+}
+
 export const useTimerStore = defineStore('timer', () => {
   const sessions = useSessionsStore()
 
@@ -159,31 +173,54 @@ export const useTimerStore = defineStore('timer', () => {
   }
 
   function playChime(type: 'work-done' | 'break-done') {
+    const ctx = getAudioCtx()
+    if (!ctx) return
+    const play = () => {
+      try {
+        const t0 = ctx.currentTime
+        const notes = type === 'work-done'
+          ? [{ freq: 528, vol: 0.12, offset: 0, dur: 2.2 }]
+          : [
+              { freq: 440, vol: 0.10, offset: 0,    dur: 1.8 },
+              { freq: 528, vol: 0.10, offset: 0.35, dur: 1.8 },
+            ]
+        for (const { freq, vol, offset, dur } of notes) {
+          const osc  = ctx.createOscillator()
+          const gain = ctx.createGain()
+          osc.connect(gain)
+          gain.connect(ctx.destination)
+          osc.type = 'sine'
+          osc.frequency.value = freq
+          const t = t0 + offset
+          gain.gain.setValueAtTime(0, t)
+          gain.gain.linearRampToValueAtTime(vol, t + 0.025)
+          gain.gain.exponentialRampToValueAtTime(0.001, t + dur)
+          osc.start(t)
+          osc.stop(t + dur)
+        }
+      } catch {}
+    }
     try {
-      const ctx = new AudioContext()
-      const now = ctx.currentTime
-      const notes = type === 'work-done'
-        ? [{ freq: 528, vol: 0.12, offset: 0, dur: 2.2 }]
-        : [
-            { freq: 440, vol: 0.10, offset: 0,    dur: 1.8 },
-            { freq: 528, vol: 0.10, offset: 0.35, dur: 1.8 },
-          ]
-      for (const { freq, vol, offset, dur } of notes) {
-        const osc  = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.type = 'sine'
-        osc.frequency.value = freq
-        const t = now + offset
-        gain.gain.setValueAtTime(0, t)
-        gain.gain.linearRampToValueAtTime(vol, t + 0.025)
-        gain.gain.exponentialRampToValueAtTime(0.001, t + dur)
-        osc.start(t)
-        osc.stop(t + dur)
+      if (ctx.state === 'suspended') {
+        ctx.resume().then(play).catch(() => {})
+      } else {
+        play()
       }
-      setTimeout(() => ctx.close(), 4000)
     } catch {}
+  }
+
+  function notify(title: string, body: string) {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+    navigator.serviceWorker?.ready
+      .then(reg => reg.showNotification(title, { body, silent: false }))
+      .catch(() => {})
+  }
+
+  async function requestNotificationPermission() {
+    if (typeof Notification === 'undefined') return
+    if (Notification.permission === 'default') {
+      await Notification.requestPermission().catch(() => {})
+    }
   }
 
   function enterBreak(durationMs: number, kind: BreakKind) {
@@ -198,19 +235,27 @@ export const useTimerStore = defineStore('timer', () => {
     save()
     vibrate([200, 100, 200])
     playChime('work-done')
+    notify('Sessão concluída', kind === 'flow' ? 'Hora da pausa proporcional.' : 'Hora da pausa.')
   }
 
   function endBreak() {
     stopTick()
     const afterLong = state.value.breakKind === 'long'
+    const subjectId = state.value.subjectId
     state.value = {
       ...DEFAULT_STATE,
-      subjectId:     state.value.subjectId,   // keep subject for next start
+      subjectId,
       pomodoroCount: afterLong ? 0 : state.value.pomodoroCount,
     }
     localStorage.removeItem(SESSION_KEY)
     vibrate([100, 50, 100, 50, 100])
     playChime('break-done')
+    notify('Pausa encerrada', 'Hora de voltar ao foco!')
+
+    // Auto-restart next Pomodoro cycle
+    if (prefs.value.timerType === 'pomodoro' && subjectId) {
+      void startStudy(subjectId)
+    }
   }
 
   /* ─── Auto-advance: Pomodoro work → break ────────────────────── */
@@ -252,6 +297,10 @@ export const useTimerStore = defineStore('timer', () => {
 
   /* ─── Public actions ─────────────────────────────────────────── */
   async function startStudy(subjectId: string) {
+    // Warm up AudioContext and request notification permission during user gesture
+    getAudioCtx()
+    void requestNotificationPermission()
+
     const now_ = Date.now()
     now.value = now_
     state.value.mode               = 'study'
