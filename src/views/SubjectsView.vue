@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="ak-app-page ak-app-scroll">
+  <div class="ak-app-page">
     <AkPageHeader
       label="Catálogo"
       title="Matérias"
@@ -22,7 +22,7 @@
       </AkChip>
     </div>
 
-    <div class="page-body ak-page-body--with-fab reveal reveal-d2">
+    <div class="ak-app-scroll page-body ak-page-body--with-fab reveal reveal-d2">
       <section class="section-block">
         <AkSectionHeader title="Matérias" />
 

@@ -6,18 +6,14 @@
         class="focus-overlay"
         @dblclick="$emit('close')"
       >
-        <AkButton
+        <button
+          type="button"
           class="focus-exit"
-          size="sm"
-          variant="ghost"
+          aria-label="Sair do modo foco"
           @click="$emit('close')"
         >
-          <template #icon>
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-inverse)" stroke-width="2" stroke-linecap="round">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-            </svg>
-          </template>
-        </AkButton>
+          <AkIcon name="minimize-outline" :size="18" />
+        </button>
 
         <div class="focus-subject">
           <div
@@ -36,6 +32,10 @@
           {{ timerStore.studyFormatted }}
         </div>
 
+        <p v-if="props.totalSeconds != null" class="focus-total">
+          {{ formatDuration(props.totalSeconds) }} hoje
+        </p>
+
         <div class="flex-row" style="gap: var(--space-2); margin-top: var(--space-8)">
           <div
             class="status-dot"
@@ -46,18 +46,14 @@
           </span>
         </div>
 
-        <AkButton
+        <button
+          type="button"
           class="focus-control"
-          variant="primary"
+          :aria-label="timerStore.isRunning ? 'Pausar' : 'Retomar'"
           @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
         >
-          <template #icon>
-            <svg v-if="timerStore.isRunning" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
-            </svg>
-            <svg v-else viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-          </template>
-        </AkButton>
+          <AkIcon :name="timerStore.isRunning ? 'pause-outline' : 'play-outline'" :size="26" />
+        </button>
 
         <p class="focus-hint">toque duas vezes para sair</p>
       </div>
@@ -66,15 +62,17 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
-import { AkButton } from '@rafael_dias/akoma'
+import { onMounted, onUnmounted, watch } from 'vue'
+import { AkIcon } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { DEFAULT_SUBJECT_COLOR, subjectBgMix } from '@/utils/colors'
+import { formatDuration } from '@/types'
 import type { Subject } from '@/types'
 
 const props = defineProps<{
   active: boolean
   subject?: Subject | null
+  totalSeconds?: number
 }>()
 
 const emit = defineEmits<{ close: [] }>()
@@ -90,10 +88,24 @@ watch(() => props.active, async (val) => {
   }
 })
 
-document.addEventListener('fullscreenchange', () => {
+/*
+ * Sair do fullscreen pelo gesto/tecla do sistema também fecha o overlay.
+ * Precisa de ciclo de vida: App.vue usa <RouterView :key="route.path">, então a
+ * Home (e este componente) remonta a cada navegação — registrar no setup sem
+ * remover empilhava listeners presos a instâncias mortas.
+ */
+function handleFullscreenChange() {
   if (!document.fullscreenElement && props.active) {
     emit('close')
   }
+}
+
+onMounted(() => {
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
 })
 </script>
 
@@ -114,9 +126,24 @@ document.addEventListener('fullscreenchange', () => {
   position: absolute;
   top: var(--space-6);
   right: var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-inverse);
   opacity: 0.4;
+  cursor: pointer;
 }
 .focus-exit:hover { opacity: 1; }
+.focus-exit:focus-visible {
+  outline: none;
+  opacity: 1;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-inverse) 40%, transparent);
+}
 
 .focus-subject {
   display: flex;
@@ -146,16 +173,37 @@ document.addEventListener('fullscreenchange', () => {
   color: color-mix(in srgb, var(--warning) 85%, var(--text-inverse));
 }
 
+.focus-total {
+  margin-top: var(--space-2);
+  font-size: 12px;
+  color: color-mix(in srgb, var(--text-inverse) 45%, transparent);
+}
+
 .focus-status {
   color: color-mix(in srgb, var(--text-inverse) 35%, transparent);
 }
 
 .focus-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: var(--space-14);
   width: 64px;
   height: 64px;
+  border: 0;
   border-radius: var(--radius-full);
-  padding: 0;
+  background: var(--accent-ink);
+  color: var(--accent-contrast);
+  cursor: pointer;
+}
+
+.focus-control:active {
+  transform: scale(0.96);
+}
+
+.focus-control:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-inverse) 30%, transparent);
 }
 
 .focus-hint {

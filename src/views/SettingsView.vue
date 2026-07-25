@@ -1,8 +1,8 @@
 <template>
-  <div class="ak-app-page ak-app-scroll">
+  <div class="ak-app-page">
     <AkPageHeader label="Preferências" title="Ajustes" size="md" />
 
-    <div class="page-body reveal reveal-d1">
+    <div class="ak-app-scroll page-body reveal reveal-d1">
       <div v-if="authStore.dataLost" class="inline-notice">
         <p class="text-sm font-semibold">Dados perdidos na atualização</p>
         <p class="text-xs text-muted" style="margin-top: var(--space-2); line-height: 1.5">

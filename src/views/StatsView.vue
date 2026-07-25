@@ -246,13 +246,8 @@ onMounted(reloadAll)
 </script>
 
 <style scoped>
-:deep(.ak-list-row__trailing) {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
-}
-
+/* .ak-list-row__trailing agora vive em styles/app.css — Home e Progresso
+   compartilham o mesmo alinhamento. */
 .gap-row {
   padding: var(--space-2) var(--space-4);
   line-height: 1.4;

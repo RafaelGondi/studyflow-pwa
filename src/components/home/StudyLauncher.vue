@@ -1,41 +1,65 @@
 <template>
-  <section v-if="subjects.length" class="section-block study-launcher">
-    <div v-if="timerIdle" class="study-launcher__cta stack">
-      <AkButton
-        v-if="continueSubject"
-        variant="primary"
-        size="lg"
-        block
-        @click="emit('select', continueSubject.id)"
-      >
-        <template #icon>
-          <AkIcon name="play-outline" />
-        </template>
-        Continuar · {{ continueSubject.icon }} {{ continueSubject.name }}
-      </AkButton>
+  <!--
+    Lista de acesso rápido. A matéria em andamento não vira um card separado:
+    a própria linha dela expande e passa a carregar o timer e os controles.
+    Uma entidade, um lugar na tela.
+  -->
+  <section v-if="recentItems.length" class="section-block study-launcher">
+    <AkSectionHeader :title="timerIdle ? 'Recentes' : 'Hoje'" />
+    <AkList>
+      <template v-for="(item, i) in recentItems" :key="item.subjectId">
+        <li
+          v-if="!timerIdle && activeId === item.subjectId"
+          class="launcher-live"
+        >
+          <button
+            type="button"
+            class="launcher-live__head"
+            aria-label="Abrir modo foco"
+            @click="emit('focus')"
+          >
+            <div
+              class="subject-leading"
+              :style="{ background: subjectBgMix(item.color, 16) }"
+            >
+              {{ item.icon }}
+            </div>
+            <div class="launcher-live__id">
+              <p class="launcher-live__name truncate">{{ item.name }}</p>
+              <p class="launcher-live__state">
+                <span
+                  class="status-dot"
+                  :class="timerStore.isRunning ? 'status-dot--live' : 'status-dot--paused'"
+                />
+                {{ timerStore.isRunning ? 'Estudando agora' : 'Pausado' }}
+              </p>
+            </div>
+            <AkIcon name="arrow-right-outline" :size="18" class="launcher-live__chevron" />
+          </button>
 
-      <AkButton
-        :variant="continueSubject ? 'secondary' : 'primary'"
-        size="lg"
-        block
-        @click="emit('browse')"
-      >
-        <template #icon>
-          <AkIcon :name="continueSubject ? 'open-book-outline' : 'play-outline'" />
-        </template>
-        {{ continueSubject ? 'Escolher outra matéria' : 'Iniciar estudo' }}
-      </AkButton>
-    </div>
+          <div class="launcher-live__controls">
+            <span class="launcher-live__timer numeric">
+              {{ timerStore.studyFormatted }}
+            </span>
 
-    <template v-if="recentItems.length">
-      <AkSectionHeader :title="timerIdle ? 'Recentes' : 'Hoje'" />
-      <AkList>
+            <div class="launcher-live__actions">
+              <AkIconButton
+                variant="secondary"
+                size="sm"
+                :label="timerStore.isRunning ? 'Pausar' : 'Retomar'"
+                :icon="timerStore.isRunning ? 'pause-outline' : 'play-outline'"
+                @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
+              />
+              <AkButton variant="secondary" size="sm" @click="emit('stop')">
+                Parar
+              </AkButton>
+            </div>
+          </div>
+        </li>
+
         <AkListRow
-          v-for="(item, i) in recentItems"
-          :key="item.subjectId"
+          v-else
           interactive
-          :divider="i < recentItems.length - 1"
-          :class="{ 'study-launcher__row--active': activeId === item.subjectId }"
           @click="emit('select', item.subjectId)"
         >
           <template #leading>
@@ -58,29 +82,49 @@
               {{ formatDuration(item.seconds) }}
             </span>
             <AkIcon
-              v-if="timerIdle"
               name="play-outline"
               :size="18"
               class="study-launcher__play"
             />
-            <AkBadge v-else-if="activeId === item.subjectId" variant="success" label="●" />
           </template>
         </AkListRow>
-      </AkList>
-    </template>
+      </template>
+
+      <!--
+        Caminho para "estudar outra coisa". Fica no fim da própria lista, ao
+        alcance do polegar e com rótulo — não como ícone solto no topo da página.
+      -->
+      <AkListRow
+        interactive
+        :divider="false"
+        @click="emit('browse')"
+      >
+        <template #leading>
+          <div class="subject-leading subject-leading--sm study-launcher__all">
+            <AkIcon name="open-book-outline" :size="18" />
+          </div>
+        </template>
+
+        <span>Ver todas as matérias</span>
+
+        <template #trailing>
+          <AkIcon name="arrow-right-outline" :size="18" class="study-launcher__chevron" />
+        </template>
+      </AkListRow>
+    </AkList>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  AkBadge, AkButton, AkIcon, AkList, AkListRow, AkSectionHeader,
+  AkButton, AkIcon, AkIconButton, AkList, AkListRow, AkSectionHeader,
 } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
+import { useTimerStore } from '@/stores/timer'
 import { formatDuration, isStudySession } from '@/types'
 import { subjectBgMix } from '@/utils/colors'
-import type { Subject } from '@/types'
 
 const props = defineProps<{
   activeId?: string | null
@@ -90,19 +134,16 @@ const props = defineProps<{
   timerIdle?: boolean
 }>()
 
-const emit = defineEmits<{ select: [id: string]; browse: [] }>()
+const emit = defineEmits<{
+  select: [id: string]
+  browse: []
+  stop: []
+  focus: []
+}>()
 
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
-
-const subjects = computed(() => subjectsStore.subjects)
-
-const continueSubject = computed((): Subject | null => {
-  if (!props.timerIdle) return null
-  const id = props.lastSubjectId
-  if (!id) return null
-  return subjectsStore.getSubject(id) ?? null
-})
+const timerStore = useTimerStore()
 
 const secondsBySubject = computed(() => {
   const map = new Map(sessionsStore.todayBySubject)
@@ -165,17 +206,102 @@ const recentItems = computed(() => {
 </script>
 
 <style scoped>
-.study-launcher__cta {
-  gap: var(--space-3);
-}
-
 .study-launcher__play {
-  color: var(--accent);
+  color: var(--accent-ink);
   flex-shrink: 0;
 }
 
-.study-launcher__row--active {
-  background: color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
-  box-shadow: inset 3px 0 0 var(--accent);
+.study-launcher__all {
+  color: var(--text-secondary);
+}
+
+.study-launcher__chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+/*
+ * Linha em andamento — mesma lista, estado expandido. O wash de fundo
+ * (--bg-tinted, já usado pelo Akoma pra estados "ligados") + o status-dot
+ * já dizem "essa é a ativa" — sem precisar de uma barra de cor lateral,
+ * que não é um padrão que existe em nenhum outro componente do DS.
+ */
+.launcher-live {
+  list-style: none;
+  padding: var(--space-4);
+  background: var(--bg-tinted);
+  border-bottom: 1px solid var(--border);
+}
+
+.launcher-live__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.launcher-live__head:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+.launcher-live__chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.launcher-live__id {
+  flex: 1;
+  min-width: 0;
+}
+
+.launcher-live__name {
+  font-size: var(--text-base);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0;
+}
+
+.launcher-live__state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.launcher-live__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.launcher-live__timer {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.launcher-live__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 </style>

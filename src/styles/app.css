@@ -24,8 +24,27 @@
   );
 }
 
-/* Home: scroll child already carries page-body padding */
-.ak-app-page > .ak-app-scroll.page-body {
+/*
+ * Home envolve suas seções num wrapper extra (`.day-panel`, só pra animar
+ * a entrada) — sem isso, `.page-body`'s gap não tem o que espaçar, porque
+ * o wrapper é o único filho direto. Repete o mesmo valor aqui.
+ */
+.day-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/*
+ * Contrato de shell (content/patterns.md): AkPageHeader fixo + um único
+ * container de scroll logo abaixo dele.
+ *
+ * Antes só Home e Progresso seguiam isso. Matérias, Ajustes e Detalhe da
+ * matéria juntavam `ak-app-page ak-app-scroll` no mesmo elemento e rolavam a
+ * página inteira, levando título e filtros embora. Agora as 5 telas usam a
+ * mesma anatomia — por isso a regra não exige mais `.page-body`.
+ */
+.ak-app-page > .ak-app-scroll {
   flex: 1;
   min-height: 0;
   height: auto;
@@ -57,11 +76,6 @@
 
 .page-chip-row {
   padding: 0 0 var(--space-3);
-}
-
-:deep(.subject-row--active) {
-  background: color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
-  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 /* ── Progress strip ─────────────────────────────────────── */
@@ -203,13 +217,6 @@
   padding: var(--space-1) 0 var(--space-2);
 }
 
-/* List row title weight */
-:deep(.ak-list-row__title),
-.ak-list-row .truncate {
-  font-weight: 600;
-  font-size: 15px;
-}
-
 /* Section headers mais discretos */
 .section-block {
   display: flex;
@@ -221,13 +228,30 @@
   margin-bottom: var(--space-2);
 }
 
-/* Listas planas — flat before float */
-.ak-list {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-}
+/*
+ * DECISÃO PENDENTE — listas planas ("flat before float").
+ *
+ * A regra abaixo esteve ativa aqui e NUNCA teve efeito. Os estilos do AkList são
+ * scoped, então compilam como `.ak-list[data-v-708bdd68]` (0,2,0) e vencem
+ * `.ak-list` (0,1,0) daqui em qualquer ordem de import. Ou seja: as listas
+ * sempre renderizaram com a borda e o raio de card do Akoma, apesar do commit
+ * 2cd9bde ("Aplana superfícies…") sugerir o contrário.
+ *
+ *   .ak-list {
+ *     background: transparent;
+ *     border: none;
+ *     border-radius: 0;
+ *     box-shadow: none;
+ *   }
+ *
+ * Mantida comentada de propósito: o visual atual (com borda) está mantido por
+ * ora e a escolha entre borda / flat / flat-por-tela ficou para depois.
+ *
+ * Quando for decidir: NÃO reative isto nem suba a especificidade por aqui. O
+ * caminho certo é uma prop `flat` no AkList, no repo do Akoma — assim dá para
+ * escolher por tela (ex.: flat na Home, contêiner na Progresso, que agrupa por
+ * dia) e o Habitify, que tem o mesmo problema, herda a correção.
+ */
 
 .ak-list-row-item--divider:not(:last-child) {
   border-bottom-color: var(--border);
@@ -241,37 +265,36 @@
   margin-bottom: var(--space-1);
 }
 
-:deep(.ak-section-header__title) {
-  letter-spacing: 0.05em;
-}
-
-/* Alinhamento consistente dos ícones/ações à direita */
-:deep(.ak-list-row__trailing) {
-  display: flex;
-  align-items: center;
+/*
+ * Alinhamento consistente das ações à direita.
+ * O Akoma já dá display/align-items/flex-shrink em .ak-list-row__trailing e
+ * align-items:center em .ak-list-row — aqui só falta o gap entre os ícones.
+ */
+.ak-list-row__trailing {
   gap: var(--space-1);
-  flex-shrink: 0;
-  align-self: center;
-}
-
-:deep(.ak-list-row__content) {
-  min-width: 0;
-}
-
-:deep(.ak-list-row__leading) {
-  align-self: center;
 }
 
 /* Switch dentro de list row ocupa a linha inteira */
-:deep(.ak-list-row .ak-switch) {
+.ak-list-row .ak-switch {
   width: 100%;
 }
 
-/* Chips ativos = cinza suave (Habitify) */
-.ak-chip--active {
-  background: var(--bg-muted);
-  color: var(--text);
-}
+/*
+ * Chip ativo: estilo 100% do Akoma, de propósito.
+ *
+ * Já existiu aqui um override `.ak-chip--active { background: var(--bg-muted) }`
+ * ("cinza suave, estilo Habitify"). Ele nunca teve efeito: os estilos do AkChip
+ * são scoped, então saem compilados como
+ * `.ak-chip--active[data-v-…]` (0,2,0) e
+ * `.ak-chip--active[style*='--ak-chip-active-bg'][data-v-…]` (0,3,0),
+ * que vencem qualquer `.ak-chip--active` (0,1,0) daqui, em qualquer ordem.
+ *
+ * Não reintroduza. Igualar a especificidade também não resolve: o fundo passaria
+ * a obedecer este arquivo enquanto a cor do texto continuaria vindo do Akoma
+ * (`--accent-contrast`, branco no accent slate), resultando em texto branco
+ * sobre fundo claro. Para mudar o chip ativo, use a prop `:color` do AkChip ou
+ * ajuste os tokens de accent.
+ */
 
 .chip-scroll .ak-chip {
   flex-shrink: 0;

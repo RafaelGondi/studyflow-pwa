@@ -1,5 +1,5 @@
 <template>
-  <div class="ak-app-page ak-app-scroll">
+  <div class="ak-app-page">
     <AkPageHeader
       label="Matéria"
       :title="subject?.name ?? '…'"
@@ -16,11 +16,11 @@
       </template>
     </AkPageHeader>
 
-    <div v-if="loading" class="loading-center">
+    <div v-if="loading" class="ak-app-scroll loading-center">
       <AkShimmer width="32px" height="32px" radius="full" />
     </div>
 
-    <div v-else class="page-body reveal reveal-d1">
+    <div v-else class="ak-app-scroll page-body reveal reveal-d1">
       <div v-if="subject" class="subject-hero">
         <div
           class="subject-avatar subject-avatar--lg"

@@ -2,7 +2,7 @@
   <div class="ak-app-page">
     <AkPageHeader
       label="Estudo"
-      :title="pageTitle"
+      title="Hoje"
       :meta="headerMeta"
       size="md"
     >
@@ -16,17 +16,8 @@
       </div>
     </AkPageHeader>
 
-    <div
-      class="ak-app-scroll page-body"
-      :class="{ 'ak-page-body--with-fab': subjectsStore.subjects.length > 0 }"
-    >
+    <div class="ak-app-scroll page-body">
       <div class="day-panel reveal reveal-d2">
-        <ActiveTimerBar
-          v-if="timerStore.mode !== 'idle'"
-          @stop="handleStop"
-          @change-subject="sheetOpen = true"
-        />
-
         <AkEmptyState
           v-if="subjectsStore.subjects.length === 0"
           title="Nenhuma matéria cadastrada"
@@ -47,33 +38,54 @@
           :timer-idle="timerStore.mode === 'idle'"
           @select="handleSubjectSelect"
           @browse="sheetOpen = true"
+          @stop="handleStop"
+          @focus="focusMode = true"
         />
 
         <section class="section-block">
           <AkSectionHeader title="Sessões de hoje">
             <template #action>
-              <AkButton
-                v-if="subjectsStore.subjects.length"
-                size="sm"
-                variant="ghost"
-                @click="showAddModal = true"
-              >
-                <template #icon>
-                  <AkIcon name="plus-outline" :size="16" />
-                </template>
-                Manual
-              </AkButton>
+              <div class="section-actions">
+                <AkButton
+                  v-if="subjectsStore.subjects.length"
+                  size="sm"
+                  variant="ghost"
+                  @click="showAddModal = true"
+                >
+                  <template #icon>
+                    <AkIcon name="plus-outline" :size="16" />
+                  </template>
+                  Manual
+                </AkButton>
+                <AkIconButton
+                  v-if="studySessionCount > 0"
+                  size="sm"
+                  :label="sessionsExpanded ? 'Ocultar sessões de hoje' : 'Mostrar sessões de hoje'"
+                  :icon="sessionsExpanded ? 'caret-up-outline' : 'caret-down-outline'"
+                  @click="sessionsExpanded = !sessionsExpanded"
+                />
+              </div>
             </template>
           </AkSectionHeader>
 
-          <div class="collapsible-section__body">
-            <AkEmptyState
-              v-if="timeline.length === 0"
-              title="Nenhuma sessão ainda"
-              description="Inicie o timer ou adicione um registro manual."
-            />
+          <AkEmptyState
+            v-if="timeline.length === 0"
+            title="Nenhuma sessão ainda"
+            description="Inicie o timer ou adicione um registro manual."
+          />
 
-            <AkList v-else>
+          <button
+            v-else-if="!sessionsExpanded"
+            type="button"
+            class="sessions-peek"
+            @click="sessionsExpanded = true"
+          >
+            <span>{{ studySessionCount }} {{ studySessionCount === 1 ? 'sessão registrada' : 'sessões registradas' }} hoje</span>
+            <AkIcon name="caret-down-outline" :size="14" />
+          </button>
+
+          <div v-else class="collapsible-section__body">
+            <AkList>
               <template
                 v-for="(item, index) in timeline"
                 :key="item.type === 'gap' ? `gap-${index}` : item.session.id"
@@ -119,16 +131,17 @@
       </div>
     </div>
 
-    <AkFab v-if="subjectsStore.subjects.length > 0">
-      <AkButton size="lg" aria-label="Adicionar registro" @click="showAddModal = true">
-        <template #icon>
-          <AkIcon name="plus-outline" />
-        </template>
-        Manual
-      </AkButton>
-    </AkFab>
-
-    <FocusMode :active="focusMode" :subject="activeSubject" @close="focusMode = false" />
+    <!--
+      Sem FAB: estudar exige escolher uma matéria, então a lista é a própria
+      superfície de controle. Um FAB "Continuar · X" apenas duplicaria a
+      primeira linha e teria que sumir durante a sessão — âncora instável.
+    -->
+    <FocusMode
+      :active="focusMode"
+      :subject="activeSubject"
+      :total-seconds="todayTotalSeconds"
+      @close="focusMode = false"
+    />
 
     <SubjectBottomSheet
       v-model="sheetOpen"
@@ -156,13 +169,12 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  AkButton, AkEmptyState, AkFab, AkIcon, AkIconButton, AkList, AkListRow,
+  AkButton, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow,
   AkPageHeader, AkSectionHeader,
 } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
-import ActiveTimerBar from '@/components/home/ActiveTimerBar.vue'
 import FocusMode from '@/components/home/FocusMode.vue'
 import SubjectBottomSheet from '@/components/home/SubjectBottomSheet.vue'
 import StudyLauncher from '@/components/home/StudyLauncher.vue'
@@ -187,6 +199,7 @@ const focusMode = ref(false)
 const editingSession = ref<StudySession | null>(null)
 const showAddModal = ref(false)
 const sheetOpen = ref(false)
+const sessionsExpanded = ref(false)
 
 const { isFaceDown } = useFaceDownFocus()
 watch(isFaceDown, (faceDown) => {
@@ -195,12 +208,7 @@ watch(isFaceDown, (faceDown) => {
 
 const todayStr = todayDateString()
 const timeline = computed(() => buildTimeline(sessionsStore.todaySessions))
-
-const pageTitle = computed(() => {
-  if (timerStore.mode === 'study') return 'Em foco'
-  if (timerStore.mode === 'paused') return 'Pausado'
-  return 'Pronto'
-})
+const studySessionCount = computed(() => timeline.value.filter(i => i.type === 'study').length)
 
 const headerMeta = computed(() =>
   new Date().toLocaleDateString('pt-BR', {
@@ -221,12 +229,14 @@ const liveExtraSeconds = computed(() =>
     : 0,
 )
 
-const studyTotalFormatted = computed(() =>
-  formatTimer(sessionsStore.todayStudyTotalSeconds + liveExtraSeconds.value),
+const todayTotalSeconds = computed(() =>
+  sessionsStore.todayStudyTotalSeconds + liveExtraSeconds.value,
 )
 
+const studyTotalFormatted = computed(() => formatTimer(todayTotalSeconds.value))
+
 const progressCaption = computed(() => {
-  const n = timeline.value.filter(i => i.type === 'study').length
+  const n = studySessionCount.value
   if (n === 0) return 'ainda sem sessões hoje'
   if (n === 1) return 'em 1 sessão hoje'
   return `em ${n} sessões hoje`
@@ -262,10 +272,12 @@ async function handleStop() {
 
 async function switchSubject(id: string) {
   if (id === timerStore.activeSubjectId) return
+  const nextSubject = subjectsStore.getSubject(id)
   lastSubjectId.value = id
   await timerStore.stop()
   await sessionsStore.loadToday()
   await timerStore.startStudy(id)
+  toast.success(`Sessão salva · Trocado para ${nextSubject?.name ?? 'nova matéria'}`)
 }
 
 async function deleteSession(id: string) {
@@ -322,4 +334,25 @@ onMounted(async () => {
   min-width: 3rem;
   text-align: right;
 }
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.sessions-peek {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-3) var(--space-1);
+  border: 0;
+  background: transparent;
+  color: var(--text-tertiary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 </style>
