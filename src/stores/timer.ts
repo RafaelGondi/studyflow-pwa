@@ -158,6 +158,34 @@ export const useTimerStore = defineStore('timer', () => {
     try { navigator.vibrate?.(pattern) } catch {}
   }
 
+  function playChime(type: 'work-done' | 'break-done') {
+    try {
+      const ctx = new AudioContext()
+      const now = ctx.currentTime
+      const notes = type === 'work-done'
+        ? [{ freq: 528, vol: 0.12, offset: 0, dur: 2.2 }]
+        : [
+            { freq: 440, vol: 0.10, offset: 0,    dur: 1.8 },
+            { freq: 528, vol: 0.10, offset: 0.35, dur: 1.8 },
+          ]
+      for (const { freq, vol, offset, dur } of notes) {
+        const osc  = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.type = 'sine'
+        osc.frequency.value = freq
+        const t = now + offset
+        gain.gain.setValueAtTime(0, t)
+        gain.gain.linearRampToValueAtTime(vol, t + 0.025)
+        gain.gain.exponentialRampToValueAtTime(0.001, t + dur)
+        osc.start(t)
+        osc.stop(t + dur)
+      }
+      setTimeout(() => ctx.close(), 4000)
+    } catch {}
+  }
+
   function enterBreak(durationMs: number, kind: BreakKind) {
     stopTick()
     state.value.mode            = 'break'
@@ -169,6 +197,7 @@ export const useTimerStore = defineStore('timer', () => {
     startTick()
     save()
     vibrate([200, 100, 200])
+    playChime('work-done')
   }
 
   function endBreak() {
@@ -181,6 +210,7 @@ export const useTimerStore = defineStore('timer', () => {
     }
     localStorage.removeItem(SESSION_KEY)
     vibrate([100, 50, 100, 50, 100])
+    playChime('break-done')
   }
 
   /* ─── Auto-advance: Pomodoro work → break ────────────────────── */
