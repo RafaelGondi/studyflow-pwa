@@ -15,54 +15,91 @@
           <AkIcon name="minimize-outline" :size="18" />
         </button>
 
-        <div class="focus-subject">
-          <div
-            class="subject-avatar subject-avatar--lg"
-            :style="{ background: subjectBgMix(subject?.color ?? DEFAULT_SUBJECT_COLOR, 10) }"
-          >
-            {{ subject?.icon ?? '📚' }}
+        <!-- Break state -->
+        <template v-if="timerStore.isInBreak">
+          <div class="focus-phase-label">
+            {{ breakLabel }}
           </div>
-          <p class="focus-subject__name">{{ subject?.name ?? 'Estudo' }}</p>
-        </div>
 
-        <div
-          class="focus-timer numeric"
-          :class="timerStore.isRunning ? 'focus-timer--live' : 'focus-timer--paused'"
-        >
-          {{ timerStore.studyFormatted }}
-        </div>
+          <div class="focus-timer numeric focus-timer--break">
+            {{ timerStore.breakFormatted }}
+          </div>
 
-        <p v-if="props.totalSeconds != null" class="focus-total">
-          {{ formatDuration(props.totalSeconds) }} hoje
-        </p>
+          <p class="focus-total">{{ breakSubtitle }}</p>
 
-        <div class="flex-row" style="gap: var(--space-2); margin-top: var(--space-8)">
+          <div class="flex-row" style="gap: var(--space-2); margin-top: var(--space-8)">
+            <div class="status-dot status-dot--paused" />
+            <span class="text-sm font-medium focus-status">pausa</span>
+          </div>
+
+          <button
+            type="button"
+            class="focus-control focus-control--skip"
+            aria-label="Pular pausa"
+            @click="timerStore.skipBreak()"
+          >
+            <AkIcon name="arrow-right-outline" :size="22" />
+          </button>
+
+          <p class="focus-hint">toque duas vezes para sair</p>
+        </template>
+
+        <!-- Work / counter state -->
+        <template v-else>
+          <div class="focus-subject">
+            <div
+              class="subject-avatar subject-avatar--lg"
+              :style="{ background: subjectBgMix(subject?.color ?? DEFAULT_SUBJECT_COLOR, 10) }"
+            >
+              {{ subject?.icon ?? '📚' }}
+            </div>
+            <p class="focus-subject__name">{{ subject?.name ?? 'Estudo' }}</p>
+          </div>
+
           <div
-            class="status-dot"
-            :class="timerStore.isRunning ? 'status-dot--live' : 'status-dot--paused'"
-          />
-          <span class="text-sm font-medium focus-status">
-            {{ timerStore.isRunning ? 'em foco' : 'pausado' }}
-          </span>
-        </div>
+            class="focus-timer numeric"
+            :class="timerStore.isRunning ? 'focus-timer--live' : 'focus-timer--paused'"
+          >
+            {{ timerStore.displayFormatted }}
+          </div>
 
-        <button
-          type="button"
-          class="focus-control"
-          :aria-label="timerStore.isRunning ? 'Pausar' : 'Retomar'"
-          @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
-        >
-          <AkIcon :name="timerStore.isRunning ? 'pause-outline' : 'play-outline'" :size="26" />
-        </button>
+          <!-- Pomodoro count indicator -->
+          <p v-if="timerStore.timerType === 'pomodoro'" class="focus-total">
+            Pomodoro {{ timerStore.pomodoroCount + 1 }}
+            · {{ prefs.pomodoro.workMinutes }} min
+          </p>
+          <p v-else-if="props.totalSeconds != null" class="focus-total">
+            {{ formatDuration(props.totalSeconds) }} hoje
+          </p>
 
-        <p class="focus-hint">toque duas vezes para sair</p>
+          <div class="flex-row" style="gap: var(--space-2); margin-top: var(--space-8)">
+            <div
+              class="status-dot"
+              :class="timerStore.isRunning ? 'status-dot--live' : 'status-dot--paused'"
+            />
+            <span class="text-sm font-medium focus-status">
+              {{ timerStore.isRunning ? 'em foco' : 'pausado' }}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            class="focus-control"
+            :aria-label="timerStore.isRunning ? 'Pausar' : 'Retomar'"
+            @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
+          >
+            <AkIcon :name="timerStore.isRunning ? 'pause-outline' : 'play-outline'" :size="26" />
+          </button>
+
+          <p class="focus-hint">toque duas vezes para sair</p>
+        </template>
       </div>
     </Transition>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { AkIcon } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
 import { DEFAULT_SUBJECT_COLOR, subjectBgMix } from '@/utils/colors'
@@ -77,6 +114,25 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [] }>()
 const timerStore = useTimerStore()
+const prefs = computed(() => timerStore.prefs)
+
+const breakLabel = computed(() => {
+  const kind = timerStore.breakKind
+  if (kind === 'long')  return 'Pausa longa'
+  if (kind === 'flow')  return 'Pausa proporcional'
+  return 'Pausa curta'
+})
+
+const breakSubtitle = computed(() => {
+  const kind = timerStore.breakKind
+  if (kind === 'flow') {
+    return `1/${prefs.value.flowBreakRatio} do tempo estudado`
+  }
+  const total = timerStore.prefs.pomodoro
+  const interval = total.longBreakInterval
+  const count = timerStore.pomodoroCount
+  return `Pomodoro ${count} de ${interval}`
+})
 
 watch(() => props.active, async (val) => {
   if (val) {
@@ -88,25 +144,12 @@ watch(() => props.active, async (val) => {
   }
 })
 
-/*
- * Sair do fullscreen pelo gesto/tecla do sistema também fecha o overlay.
- * Precisa de ciclo de vida: App.vue usa <RouterView :key="route.path">, então a
- * Home (e este componente) remonta a cada navegação — registrar no setup sem
- * remover empilhava listeners presos a instâncias mortas.
- */
 function handleFullscreenChange() {
-  if (!document.fullscreenElement && props.active) {
-    emit('close')
-  }
+  if (!document.fullscreenElement && props.active) emit('close')
 }
 
-onMounted(() => {
-  document.addEventListener('fullscreenchange', handleFullscreenChange)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('fullscreenchange', handleFullscreenChange)
-})
+onMounted(() => document.addEventListener('fullscreenchange', handleFullscreenChange))
+onUnmounted(() => document.removeEventListener('fullscreenchange', handleFullscreenChange))
 </script>
 
 <style scoped>
@@ -145,6 +188,15 @@ onUnmounted(() => {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-inverse) 40%, transparent);
 }
 
+.focus-phase-label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-inverse) 50%, transparent);
+  margin-bottom: var(--space-6);
+}
+
 .focus-subject {
   display: flex;
   flex-direction: column;
@@ -173,6 +225,10 @@ onUnmounted(() => {
   color: color-mix(in srgb, var(--warning) 85%, var(--text-inverse));
 }
 
+.focus-timer--break {
+  color: color-mix(in srgb, var(--text-inverse) 70%, transparent);
+}
+
 .focus-total {
   margin-top: var(--space-2);
   font-size: 12px;
@@ -197,10 +253,12 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.focus-control:active {
-  transform: scale(0.96);
+.focus-control--skip {
+  background: color-mix(in srgb, var(--text-inverse) 12%, transparent);
+  color: var(--text-inverse);
 }
 
+.focus-control:active { transform: scale(0.96); }
 .focus-control:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-inverse) 30%, transparent);

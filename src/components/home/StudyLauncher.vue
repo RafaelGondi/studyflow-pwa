@@ -7,10 +7,25 @@
   <section v-if="recentItems.length" class="section-block study-launcher">
     <AkSectionHeader :title="sectionTitle" />
     <AkList>
+      <!-- Mode selector — only when idle -->
+      <li v-if="props.timerIdle" class="mode-row-item">
+        <button
+          v-for="opt in timerModes"
+          :key="opt.value"
+          type="button"
+          class="mode-chip"
+          :class="{ 'mode-chip--active': timerStore.timerType === opt.value }"
+          @click="timerStore.updatePrefs({ timerType: opt.value })"
+        >
+          {{ opt.label }}
+        </button>
+      </li>
+
       <template v-for="(item, i) in recentItems" :key="item.subjectId">
         <li
           v-if="!timerIdle && activeId === item.subjectId"
           class="launcher-live"
+          :class="timerStore.isInBreak && 'launcher-live--break'"
         >
           <button
             type="button"
@@ -29,9 +44,9 @@
               <p class="launcher-live__state">
                 <span
                   class="status-dot"
-                  :class="timerStore.isRunning ? 'status-dot--live' : 'status-dot--paused'"
+                  :class="timerStore.isInBreak ? 'status-dot--paused' : timerStore.isRunning ? 'status-dot--live' : 'status-dot--paused'"
                 />
-                {{ timerStore.isRunning ? 'Estudando agora' : 'Pausado' }}
+                {{ liveStateLabel }}
               </p>
             </div>
             <AkIcon name="arrow-right-outline" :size="18" class="launcher-live__chevron" />
@@ -39,10 +54,22 @@
 
           <div class="launcher-live__controls">
             <span class="launcher-live__timer numeric">
-              {{ timerStore.studyFormatted }}
+              {{ timerStore.displayFormatted }}
             </span>
 
-            <div class="launcher-live__actions">
+            <!-- Break controls -->
+            <div v-if="timerStore.isInBreak" class="launcher-live__actions">
+              <button
+                type="button"
+                class="live-btn live-btn--text"
+                @click="timerStore.skipBreak()"
+              >
+                Pular pausa
+              </button>
+            </div>
+
+            <!-- Work controls -->
+            <div v-else class="launcher-live__actions">
               <button
                 type="button"
                 class="live-btn"
@@ -128,6 +155,7 @@ import {
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useTimerStore } from '@/stores/timer'
+import type { TimerType } from '@/stores/timer'
 import { formatDuration, isStudySession } from '@/types'
 import { subjectBgMix } from '@/utils/colors'
 
@@ -149,6 +177,25 @@ const emit = defineEmits<{
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 const timerStore = useTimerStore()
+
+const timerModes: { value: TimerType; label: string }[] = [
+  { value: 'counter',    label: 'Contador' },
+  { value: 'pomodoro',   label: 'Pomodoro' },
+  { value: 'flowmodoro', label: 'Flowmodoro' },
+]
+
+const liveStateLabel = computed(() => {
+  if (timerStore.isInBreak) {
+    const kind = timerStore.breakKind
+    if (kind === 'long')  return 'Pausa longa'
+    if (kind === 'flow')  return 'Pausa proporcional'
+    return 'Pausa curta'
+  }
+  if (timerStore.timerType === 'pomodoro') {
+    return `Pomodoro ${timerStore.pomodoroCount + 1}`
+  }
+  return timerStore.isRunning ? 'Estudando agora' : 'Pausado'
+})
 
 const secondsBySubject = computed(() => {
   const map = new Map(sessionsStore.todayBySubject)
@@ -261,6 +308,10 @@ const recentItems = computed(() => {
   border-bottom: 1px solid var(--border);
 }
 
+.launcher-live--break {
+  border-top-color: color-mix(in srgb, var(--text-secondary) 25%, transparent);
+}
+
 .launcher-live__head {
   display: flex;
   align-items: center;
@@ -363,5 +414,35 @@ const recentItems = computed(() => {
 .live-btn:not(.live-btn--text) {
   padding: 0;
   width: 32px;
+}
+
+/* ── Mode selector ───────────────────────────────────────────── */
+.mode-row-item {
+  list-style: none;
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.mode-chip {
+  flex: 1;
+  padding: var(--space-1) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.mode-chip--active {
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+  color: var(--accent-contrast);
 }
 </style>

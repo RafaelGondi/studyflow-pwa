@@ -63,6 +63,115 @@
       </section>
 
       <section class="section-block">
+        <AkSectionHeader title="Modo de estudo" />
+
+        <div class="timer-mode-row">
+          <button
+            v-for="opt in timerModes"
+            :key="opt.value"
+            type="button"
+            class="timer-mode-chip"
+            :class="{ 'timer-mode-chip--active': timerStore.timerType === opt.value }"
+            @click="timerStore.updatePrefs({ timerType: opt.value })"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+
+        <AkList v-if="timerStore.timerType === 'pomodoro'">
+          <AkListRow :divider="true">
+            <span>Foco</span>
+            <template #trailing>
+              <div class="duration-input-row">
+                <input
+                  type="number"
+                  class="duration-input"
+                  :value="timerStore.prefs.pomodoro.workMinutes"
+                  min="1" max="90"
+                  aria-label="Duração do foco em minutos"
+                  @change="e => timerStore.updatePrefs({ pomodoro: { workMinutes: Number((e.target as HTMLInputElement).value) } })"
+                />
+                <span class="duration-unit">min</span>
+              </div>
+            </template>
+          </AkListRow>
+          <AkListRow :divider="true">
+            <span>Pausa curta</span>
+            <template #trailing>
+              <div class="duration-input-row">
+                <input
+                  type="number"
+                  class="duration-input"
+                  :value="timerStore.prefs.pomodoro.shortBreakMinutes"
+                  min="1" max="30"
+                  aria-label="Duração da pausa curta em minutos"
+                  @change="e => timerStore.updatePrefs({ pomodoro: { shortBreakMinutes: Number((e.target as HTMLInputElement).value) } })"
+                />
+                <span class="duration-unit">min</span>
+              </div>
+            </template>
+          </AkListRow>
+          <AkListRow :divider="true">
+            <span>Pausa longa</span>
+            <template #trailing>
+              <div class="duration-input-row">
+                <input
+                  type="number"
+                  class="duration-input"
+                  :value="timerStore.prefs.pomodoro.longBreakMinutes"
+                  min="5" max="60"
+                  aria-label="Duração da pausa longa em minutos"
+                  @change="e => timerStore.updatePrefs({ pomodoro: { longBreakMinutes: Number((e.target as HTMLInputElement).value) } })"
+                />
+                <span class="duration-unit">min</span>
+              </div>
+            </template>
+          </AkListRow>
+          <AkListRow :divider="false">
+            <span>Ciclo da pausa longa</span>
+            <template #subtitle>
+              <span class="text-xs text-muted">A cada quantos pomodoros</span>
+            </template>
+            <template #trailing>
+              <div class="duration-input-row">
+                <input
+                  type="number"
+                  class="duration-input"
+                  :value="timerStore.prefs.pomodoro.longBreakInterval"
+                  min="2" max="10"
+                  aria-label="Intervalo para pausa longa"
+                  @change="e => timerStore.updatePrefs({ pomodoro: { longBreakInterval: Number((e.target as HTMLInputElement).value) } })"
+                />
+                <span class="duration-unit">×</span>
+              </div>
+            </template>
+          </AkListRow>
+        </AkList>
+
+        <AkList v-else-if="timerStore.timerType === 'flowmodoro'">
+          <AkListRow :divider="false">
+            <span>Proporção da pausa</span>
+            <template #subtitle>
+              <span class="text-xs text-muted">Pausa = tempo de foco ÷ proporção</span>
+            </template>
+            <template #trailing>
+              <div class="duration-input-row">
+                <span class="duration-unit" style="margin-right: var(--space-1)">1 /</span>
+                <input
+                  type="number"
+                  class="duration-input"
+                  :value="timerStore.prefs.flowBreakRatio"
+                  min="2" max="10"
+                  aria-label="Proporção da pausa"
+                  @change="e => timerStore.updatePrefs({ flowBreakRatio: Number((e.target as HTMLInputElement).value) })"
+                />
+              </div>
+            </template>
+          </AkListRow>
+        </AkList>
+      </section>
+
+      <section class="section-block">
         <AkSectionHeader title="Comportamento" />
         <AkList>
           <AkListRow :divider="false">
@@ -124,8 +233,17 @@ import { useSessionsStore } from '@/stores/sessions'
 import { usePwaInstall } from '@/composables/usePwaInstall'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
+import { useTimerStore } from '@/stores/timer'
+import type { TimerType } from '@/stores/timer'
 
 const { mode, setMode } = useAppTheme()
+const timerStore = useTimerStore()
+
+const timerModes: { value: TimerType; label: string }[] = [
+  { value: 'counter',    label: 'Contador' },
+  { value: 'pomodoro',  label: 'Pomodoro' },
+  { value: 'flowmodoro', label: 'Flowmodoro' },
+]
 const authStore = useAuthStore()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
@@ -166,3 +284,56 @@ async function handleUpdate() {
   }
 }
 </script>
+
+<style scoped>
+.timer-mode-row {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-1) 0 var(--space-3);
+}
+
+.timer-mode-chip {
+  flex: 1;
+  padding: var(--space-2) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  text-align: center;
+}
+
+.timer-mode-chip--active {
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+  color: var(--accent-contrast);
+}
+
+.duration-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.duration-input {
+  width: 52px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: right;
+}
+
+.duration-unit {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+</style>
