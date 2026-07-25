@@ -5,22 +5,49 @@
     Uma entidade, um lugar na tela.
   -->
   <section v-if="recentItems.length" class="section-block study-launcher">
-    <AkSectionHeader :title="sectionTitle" />
-    <AkList>
-      <!-- Mode selector — only when idle -->
-      <li v-if="props.timerIdle" class="mode-row-item">
+    <AkSectionHeader :title="sectionTitle">
+      <template #action>
+        <button
+          v-if="props.timerIdle"
+          type="button"
+          class="mode-toggle-btn"
+          :class="{ 'mode-toggle-btn--open': modePickerOpen }"
+          :aria-expanded="modePickerOpen"
+          aria-label="Selecionar modo de estudo"
+          @click="modePickerOpen = !modePickerOpen"
+        >
+          {{ currentModeLabel }}
+          <AkIcon name="caret-down-outline" :size="12" class="mode-toggle-caret" />
+        </button>
+        <span v-else class="mode-badge-label">{{ currentModeLabel }}</span>
+      </template>
+    </AkSectionHeader>
+
+    <Transition name="mode-picker">
+      <div v-if="modePickerOpen && props.timerIdle" class="mode-picker-panel">
         <button
           v-for="opt in timerModes"
           :key="opt.value"
           type="button"
-          class="mode-chip"
-          :class="{ 'mode-chip--active': timerStore.timerType === opt.value }"
-          @click="timerStore.updatePrefs({ timerType: opt.value })"
+          class="mode-picker-option"
+          :class="{ 'mode-picker-option--active': timerStore.timerType === opt.value }"
+          @click="selectMode(opt.value)"
         >
-          {{ opt.label }}
+          <div class="mode-picker-info">
+            <span class="mode-picker-name">{{ opt.label }}</span>
+            <span class="mode-picker-desc">{{ opt.desc }}</span>
+          </div>
+          <AkIcon
+            v-if="timerStore.timerType === opt.value"
+            name="checkmark-outline"
+            :size="16"
+            class="mode-picker-check"
+          />
         </button>
-      </li>
+      </div>
+    </Transition>
 
+    <AkList>
       <template v-for="(item, i) in recentItems" :key="item.subjectId">
         <li
           v-if="!timerIdle && activeId === item.subjectId"
@@ -148,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import {
   AkIcon, AkList, AkListRow, AkSectionHeader,
 } from '@rafael_dias/akoma'
@@ -178,11 +205,25 @@ const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 const timerStore = useTimerStore()
 
-const timerModes: { value: TimerType; label: string }[] = [
-  { value: 'counter',    label: 'Contador' },
-  { value: 'pomodoro',   label: 'Pomodoro' },
-  { value: 'flowmodoro', label: 'Flowmodoro' },
-]
+const modePickerOpen = ref(false)
+
+const timerModes = computed(() => [
+  { value: 'counter'    as TimerType, label: 'Contador',    desc: 'Cronômetro livre, registra ao parar' },
+  { value: 'pomodoro'   as TimerType, label: 'Pomodoro',    desc: `${timerStore.prefs.pomodoro.workMinutes} min de foco + pausa automática` },
+  { value: 'flowmodoro' as TimerType, label: 'Flowmodoro',  desc: 'Foco livre, pausa proporcional ao parar' },
+])
+
+const currentModeLabel = computed(() => {
+  const m = timerStore.timerType
+  if (m === 'pomodoro')   return 'Pomodoro'
+  if (m === 'flowmodoro') return 'Flowmodoro'
+  return 'Contador'
+})
+
+function selectMode(value: TimerType) {
+  timerStore.updatePrefs({ timerType: value })
+  modePickerOpen.value = false
+}
 
 const liveStateLabel = computed(() => {
   if (timerStore.isInBreak) {
@@ -416,18 +457,12 @@ const recentItems = computed(() => {
   width: 32px;
 }
 
-/* ── Mode selector ───────────────────────────────────────────── */
-.mode-row-item {
-  list-style: none;
-  display: flex;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
-}
-
-.mode-chip {
-  flex: 1;
-  padding: var(--space-1) 0;
+/* ── Mode toggle (section header action) ─────────────────────── */
+.mode-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px var(--space-2) 3px var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
   background: transparent;
@@ -436,13 +471,97 @@ const recentItems = computed(() => {
   font-size: var(--text-xs);
   font-weight: 500;
   cursor: pointer;
-  text-align: center;
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  transition: background 0.12s, color 0.12s;
 }
 
-.mode-chip--active {
-  background: var(--accent-ink);
-  border-color: var(--accent-ink);
-  color: var(--accent-contrast);
+.mode-toggle-btn:hover,
+.mode-toggle-btn--open {
+  background: var(--bg-soft);
+  color: var(--text);
+}
+
+.mode-toggle-caret {
+  transition: transform 0.2s var(--ease-smooth);
+  flex-shrink: 0;
+}
+
+.mode-toggle-btn--open .mode-toggle-caret {
+  transform: rotate(180deg);
+}
+
+.mode-badge-label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ── Mode picker panel ───────────────────────────────────────── */
+.mode-picker-panel {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+
+.mode-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.mode-picker-option:first-child {
+  border-top: none;
+}
+
+.mode-picker-option:active {
+  background: var(--bg-tinted);
+}
+
+.mode-picker-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mode-picker-name {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.mode-picker-option--active .mode-picker-name {
+  color: var(--accent-ink);
+}
+
+.mode-picker-desc {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.mode-picker-check {
+  color: var(--accent-ink);
+  flex-shrink: 0;
+}
+
+.mode-picker-enter-active,
+.mode-picker-leave-active {
+  transition: opacity 0.15s ease, transform 0.18s var(--ease-smooth);
+  transform-origin: top;
+}
+
+.mode-picker-enter-from,
+.mode-picker-leave-to {
+  opacity: 0;
+  transform: scaleY(0.94);
 }
 </style>
