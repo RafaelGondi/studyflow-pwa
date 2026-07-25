@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { AkBadge, AkIcon } from '@rafael_dias/akoma'
+import { AkIcon } from '@rafael_dias/akoma'
 import { useAppToast } from '@/composables/useAppToast'
 
 const { toasts, dismiss } = useAppToast()
 
-function variant(color: string) {
-  if (color === 'success') return 'success'
-  if (color === 'error') return 'danger'
-  return 'neutral'
+function icon(color: string) {
+  if (color === 'success') return 'check-circle-outline'
+  if (color === 'error') return 'alert-outline'
+  return 'info-outline'
 }
 </script>
 
@@ -20,11 +20,15 @@ function variant(color: string) {
           :key="item.id"
           class="toast-item"
           :class="`toast-item--${item.color}`"
+          role="status"
         >
-          <AkBadge :variant="variant(item.color)" :label="item.title" />
-          <p v-if="item.description" class="toast-item__desc">{{ item.description }}</p>
+          <AkIcon :name="icon(item.color)" :size="18" class="toast-item__icon" />
+          <div class="toast-item__body">
+            <span class="toast-item__title">{{ item.title }}</span>
+            <p v-if="item.description" class="toast-item__desc">{{ item.description }}</p>
+          </div>
           <button
-            class="toast-item__close tap-scale"
+            class="toast-item__close"
             type="button"
             aria-label="Fechar"
             @click="dismiss(item.id)"
@@ -41,44 +45,73 @@ function variant(color: string) {
 .toast-host {
   position: fixed;
   bottom: calc(var(--safe-bottom) + var(--nav-height) + var(--space-4));
-  left: 50%;
-  transform: translateX(-50%);
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-4);
   z-index: 200;
-  width: min(calc(var(--shell-max) - var(--space-8)), calc(100vw - var(--space-8)));
   pointer-events: none;
 }
 
 .toast-item {
   pointer-events: auto;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: calc(var(--shell-max) - var(--space-8));
   padding: var(--space-3) var(--space-4);
-  margin-top: var(--space-2);
   border-radius: var(--radius-md);
   background: var(--toast-bg);
   color: var(--toast-fg);
   box-shadow: var(--shadow-md);
-  position: relative;
+}
+
+.toast-item__icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  opacity: 0.9;
+}
+
+.toast-item--success .toast-item__icon { color: #6dba92; }
+.toast-item--error   .toast-item__icon { color: #e08880; }
+.toast-item--neutral .toast-item__icon { color: var(--toast-fg); opacity: 0.55; }
+
+.toast-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-item__title {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .toast-item__desc {
-  font-size: 12px;
-  opacity: 0.85;
-  padding-right: var(--space-6);
+  margin-top: 2px;
+  font-size: var(--text-xs);
+  opacity: 0.7;
 }
 
 .toast-item__close {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  color: inherit;
-  opacity: 0.7;
-  padding: var(--space-1);
-  background: none;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
   border: none;
+  background: none;
+  color: inherit;
+  opacity: 0.5;
   cursor: pointer;
+  padding: 0;
 }
+.toast-item__close:hover { opacity: 1; }
 
 .toast-pop-enter-active,
 .toast-pop-leave-active {
@@ -88,6 +121,6 @@ function variant(color: string) {
 .toast-pop-enter-from,
 .toast-pop-leave-to {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(6px) scale(0.97);
 }
 </style>
