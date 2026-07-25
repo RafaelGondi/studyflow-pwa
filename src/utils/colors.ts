@@ -1,6 +1,7 @@
 /**
- * Entity colors for subjects/categories — `--cat-*` only (accent stays system chrome).
- * Picker: 6 hue families × 3 shades + neutro, same contract as Habitify.
+ * Entity colors for subjects/categories.
+ * Each swatch maps directly to one of the 8 Akoma accent palettes so the
+ * picker faithfully represents the DS color vocabulary.
  */
 
 export type SubjectColor = {
@@ -8,93 +9,83 @@ export type SubjectColor = {
   value: string
 }
 
-type CatIndex = 1 | 2 | 3 | 4 | 5 | 6
-type Shade = 'light' | 'base' | 'dark'
-
-function catSwatch(name: string, cat: CatIndex, shade: Shade): SubjectColor {
-  const token = `var(--cat-${cat})`
-  const value =
-    shade === 'light'
-      ? `color-mix(in srgb, ${token} 58%, white)`
-      : shade === 'dark'
-        ? `color-mix(in srgb, ${token} 68%, #121612)`
-        : token
-
-  return { name, value }
-}
-
+/** 8 swatches — one per Akoma accent palette (--accent base value). */
 export const AKOMA_CAT_COLORS: SubjectColor[] = [
-  catSwatch('Azul claro', 1, 'light'),
-  catSwatch('Azul', 1, 'base'),
-  catSwatch('Azul profundo', 1, 'dark'),
-
-  catSwatch('Lilás', 2, 'light'),
-  catSwatch('Violeta', 2, 'base'),
-  catSwatch('Uva', 2, 'dark'),
-
-  catSwatch('Areia', 3, 'light'),
-  catSwatch('Âmbar', 3, 'base'),
-  catSwatch('Terracota', 3, 'dark'),
-
-  catSwatch('Menta', 4, 'light'),
-  catSwatch('Botânico', 4, 'base'),
-  catSwatch('Floresta', 4, 'dark'),
-
-  catSwatch('Pêssego', 5, 'light'),
-  catSwatch('Rosé', 5, 'base'),
-  catSwatch('Vinho', 5, 'dark'),
-
-  catSwatch('Névoa', 6, 'light'),
-  catSwatch('Ardósia', 6, 'base'),
-  catSwatch('Pedra', 6, 'dark'),
-
-  {
-    name: 'Neutro',
-    value: 'var(--border-strong)',
-  },
+  { name: 'Violeta',   value: '#8375cc' },
+  { name: 'Ocean',     value: '#5184b1' },
+  { name: 'Teal',      value: '#4b99a4' },
+  { name: 'Ardósia',   value: '#5e7894' },
+  { name: 'Evergreen', value: '#3c8866' },
+  { name: 'Âmbar',     value: '#b68639' },
+  { name: 'Rosé',      value: '#c36d80' },
+  { name: 'Coral',     value: '#ce7659' },
 ]
 
 /** Default for new subjects/categories */
-export const DEFAULT_SUBJECT_COLOR = AKOMA_CAT_COLORS[1].value // Azul base
+export const DEFAULT_SUBJECT_COLOR = AKOMA_CAT_COLORS[1].value // Ocean
 
 /** @deprecated prefer AKOMA_CAT_COLORS — kept for existing imports */
 export const SUBJECT_COLORS = AKOMA_CAT_COLORS
 
 const PALETTE_SET = new Set(AKOMA_CAT_COLORS.map(c => c.value))
 
-/** Legacy hex (Tailwind / old accent swatches) → current `--cat-*` tokens */
+/** Old --cat-* vars and Tailwind-era hexes → current palette hex */
 const LEGACY_COLOR_MAP: Record<string, string> = {
-  '#578eae': 'var(--cat-1)',
-  '#896db9': 'var(--cat-2)',
-  '#bf8230': 'var(--cat-3)',
-  '#518768': 'var(--cat-4)',
-  '#bd697c': 'var(--cat-5)',
-  '#827e6c': 'var(--cat-6)',
-  '#5184b1': 'var(--cat-1)',
-  '#4b99a4': 'var(--cat-4)',
-  '#3c8866': 'var(--cat-4)',
-  '#8375cc': 'var(--cat-2)',
-  '#bc8a3b': 'var(--cat-3)',
-  '#d07b5f': 'var(--cat-5)',
-  '#5e7894': 'var(--cat-1)',
-  '#c36d80': 'var(--cat-5)',
-  '#ef4444': 'var(--cat-5)',
-  '#f43f5e': 'var(--cat-5)',
-  '#ec4899': 'var(--cat-5)',
-  '#d946ef': 'var(--cat-2)',
-  '#a855f7': 'var(--cat-2)',
-  '#8b5cf6': 'var(--cat-2)',
-  '#6366f1': 'var(--cat-2)',
-  '#3b82f6': 'var(--cat-1)',
-  '#0ea5e9': 'var(--cat-1)',
-  '#06b6d4': 'var(--cat-4)',
-  '#14b8a6': 'var(--cat-4)',
-  '#10b981': 'var(--cat-4)',
-  '#84cc16': 'var(--cat-4)',
-  '#f59e0b': 'var(--cat-3)',
-  '#f97316': 'var(--cat-3)',
-  '#78716c': 'var(--cat-6)',
-  '#3d6a94': 'var(--cat-1)',
+  // --cat-* variable references → nearest palette
+  'var(--cat-1)': '#5184b1',
+  'var(--cat-2)': '#8375cc',
+  'var(--cat-3)': '#b68639',
+  'var(--cat-4)': '#3c8866',
+  'var(--cat-5)': '#c36d80',
+  'var(--cat-6)': '#5e7894',
+  // old cat base hex values
+  '#578eae': '#5184b1',
+  '#896db9': '#8375cc',
+  '#bf8230': '#b68639',
+  '#518768': '#3c8866',
+  '#bd697c': '#c36d80',
+  '#827e6c': '#5e7894',
+  // previously used accent base hexes
+  '#5184b1': '#5184b1',
+  '#4b99a4': '#4b99a4',
+  '#3c8866': '#3c8866',
+  '#8375cc': '#8375cc',
+  '#bc8a3b': '#b68639',
+  '#b68639': '#b68639',
+  '#d07b5f': '#ce7659',
+  '#ce7659': '#ce7659',
+  '#5e7894': '#5e7894',
+  '#c36d80': '#c36d80',
+  '#3d6a94': '#5184b1',
+  // Tailwind-era colors
+  '#ef4444': '#c36d80',
+  '#f43f5e': '#ce7659',
+  '#ec4899': '#c36d80',
+  '#d946ef': '#8375cc',
+  '#a855f7': '#8375cc',
+  '#8b5cf6': '#8375cc',
+  '#6366f1': '#5184b1',
+  '#3b82f6': '#5184b1',
+  '#0ea5e9': '#4b99a4',
+  '#06b6d4': '#4b99a4',
+  '#14b8a6': '#4b99a4',
+  '#10b981': '#3c8866',
+  '#84cc16': '#3c8866',
+  '#f59e0b': '#b68639',
+  '#f97316': '#ce7659',
+  '#78716c': '#5e7894',
+}
+
+/** Approximate RGB per palette for nearest-match fallback. */
+const PALETTE_BASE_RGB: Record<string, [number, number, number]> = {
+  '#8375cc': [131, 117, 204],
+  '#5184b1': [ 81, 132, 177],
+  '#4b99a4': [ 75, 153, 164],
+  '#5e7894': [ 94, 120, 148],
+  '#3c8866': [ 60, 136, 102],
+  '#b68639': [182, 134,  57],
+  '#c36d80': [195, 109, 128],
+  '#ce7659': [206, 118,  89],
 }
 
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -108,27 +99,17 @@ function hexToRgb(hex: string): [number, number, number] | null {
   ]
 }
 
-/** Approximate RGB for `--cat-*` bases (from Akoma tokens) for nearest-match. */
-const CAT_BASE_RGB: Record<string, [number, number, number]> = {
-  'var(--cat-1)': [87, 142, 174],
-  'var(--cat-2)': [137, 109, 185],
-  'var(--cat-3)': [191, 130, 48],
-  'var(--cat-4)': [81, 135, 104],
-  'var(--cat-5)': [189, 105, 124],
-  'var(--cat-6)': [130, 126, 108],
-}
-
-function closestCatToken(hex: string): string {
+function closestPalette(hex: string): string {
   const rgb = hexToRgb(hex)
   if (!rgb) return DEFAULT_SUBJECT_COLOR
 
   let best = DEFAULT_SUBJECT_COLOR
   let bestDist = Infinity
-  for (const [token, catRgb] of Object.entries(CAT_BASE_RGB)) {
+  for (const [token, pRgb] of Object.entries(PALETTE_BASE_RGB)) {
     const dist =
-      (rgb[0] - catRgb[0]) ** 2
-      + (rgb[1] - catRgb[1]) ** 2
-      + (rgb[2] - catRgb[2]) ** 2
+      (rgb[0] - pRgb[0]) ** 2
+      + (rgb[1] - pRgb[1]) ** 2
+      + (rgb[2] - pRgb[2]) ** 2
     if (dist < bestDist) {
       bestDist = dist
       best = token
@@ -144,8 +125,13 @@ export function normalizeAkomaColor(color: string | undefined | null): string {
   if (PALETTE_SET.has(c)) return c
   const lower = c.toLowerCase()
   if (LEGACY_COLOR_MAP[lower]) return LEGACY_COLOR_MAP[lower]
-  if (lower.startsWith('var(--cat-') || lower.startsWith('color-mix(')) return c
-  if (lower.startsWith('#')) return closestCatToken(lower)
+  // color-mix(in srgb, var(--cat-*) ...) — extract cat number and remap
+  const catMixMatch = lower.match(/color-mix\(in srgb,\s*var\(--cat-(\d)\)/)
+  if (catMixMatch) {
+    const mapped = LEGACY_COLOR_MAP[`var(--cat-${catMixMatch[1]})`]
+    return mapped ?? DEFAULT_SUBJECT_COLOR
+  }
+  if (lower.startsWith('#')) return closestPalette(lower)
   return DEFAULT_SUBJECT_COLOR
 }
 
@@ -168,7 +154,7 @@ export function resolveSubjectColor(color: string | undefined | null): string {
 export function resolvePaintColor(color: string | undefined | null): string {
   const c = normalizeAkomaColor(color)
   if (c.startsWith('#')) return c
-  if (typeof document === 'undefined') return '#578eae'
+  if (typeof document === 'undefined') return '#5184b1'
 
   const probe = document.createElement('span')
   probe.style.color = c
@@ -176,5 +162,5 @@ export function resolvePaintColor(color: string | undefined | null): string {
   document.body.appendChild(probe)
   const resolved = getComputedStyle(probe).color
   document.body.removeChild(probe)
-  return resolved || '#578eae'
+  return resolved || '#5184b1'
 }

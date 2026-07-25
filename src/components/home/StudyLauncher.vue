@@ -5,7 +5,7 @@
     Uma entidade, um lugar na tela.
   -->
   <section v-if="recentItems.length" class="section-block study-launcher">
-    <AkSectionHeader :title="timerIdle ? 'Recentes' : 'Hoje'" />
+    <AkSectionHeader :title="sectionTitle" />
     <AkList>
       <template v-for="(item, i) in recentItems" :key="item.subjectId">
         <li
@@ -43,16 +43,21 @@
             </span>
 
             <div class="launcher-live__actions">
-              <AkIconButton
-                variant="secondary"
-                size="sm"
-                :label="timerStore.isRunning ? 'Pausar' : 'Retomar'"
-                :icon="timerStore.isRunning ? 'pause-outline' : 'play-outline'"
+              <button
+                type="button"
+                class="live-btn"
+                :aria-label="timerStore.isRunning ? 'Pausar' : 'Retomar'"
                 @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
-              />
-              <AkButton variant="secondary" size="sm" @click="emit('stop')">
+              >
+                <AkIcon :name="timerStore.isRunning ? 'pause-outline' : 'play-outline'" :size="16" />
+              </button>
+              <button
+                type="button"
+                class="live-btn live-btn--text"
+                @click="emit('stop')"
+              >
                 Parar
-              </AkButton>
+              </button>
             </div>
           </div>
         </li>
@@ -118,7 +123,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  AkButton, AkIcon, AkIconButton, AkList, AkListRow, AkSectionHeader,
+  AkIcon, AkList, AkListRow, AkSectionHeader,
 } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
@@ -157,6 +162,15 @@ const secondsBySubject = computed(() => {
 })
 
 /** Subjects touched today (by session order) + last subject, capped. */
+const hasHistory = computed(() =>
+  Boolean(props.activeId || props.lastSubjectId || sessionsStore.todaySessions.some(isStudySession)),
+)
+
+const sectionTitle = computed(() => {
+  if (!props.timerIdle) return 'Hoje'
+  return hasHistory.value ? 'Recentes' : 'Matérias'
+})
+
 const recentItems = computed(() => {
   const seen = new Set<string>()
   const orderedIds: string[] = []
@@ -179,6 +193,19 @@ const recentItems = computed(() => {
 
   if (props.activeId && !seen.has(props.activeId)) {
     orderedIds.unshift(props.activeId)
+  }
+
+  /*
+   * Dia sem nenhuma sessão ainda: sem isso a lista fica vazia e some (o
+   * `v-if` da seção é sobre este array), levando a "Ver todas as matérias"
+   * junto — sem nenhum jeito de começar a estudar. Cai pro catálogo inteiro.
+   */
+  if (orderedIds.length === 0) {
+    for (const s of subjectsStore.subjects) {
+      if (seen.has(s.id)) continue
+      seen.add(s.id)
+      orderedIds.push(s.id)
+    }
   }
 
   return orderedIds
@@ -229,7 +256,8 @@ const recentItems = computed(() => {
 .launcher-live {
   list-style: none;
   padding: var(--space-4);
-  background: var(--bg-tinted);
+  background: var(--bg-soft);
+  border-top: 2px solid color-mix(in srgb, var(--accent-ink) 20%, transparent);
   border-bottom: 1px solid var(--border);
 }
 
@@ -303,5 +331,37 @@ const recentItems = computed(() => {
   align-items: center;
   gap: var(--space-2);
   flex-shrink: 0;
+}
+
+.live-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.live-btn:hover {
+  background: var(--bg-tinted);
+}
+
+.live-btn:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+.live-btn:not(.live-btn--text) {
+  padding: 0;
+  width: 32px;
 }
 </style>

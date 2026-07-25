@@ -346,7 +346,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: var(--space-3) var(--space-1);
+  padding: var(--space-3) 0;
   border: 0;
   background: transparent;
   color: var(--text-tertiary);
