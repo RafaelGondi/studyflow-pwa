@@ -26,7 +26,7 @@
           class="subject-avatar subject-avatar--lg"
           :style="{ background: subjectBgMix(subject.color, 16) }"
         >
-          {{ subject.icon }}
+          <SubjectIcon :icon="subject.icon" :name="subject.name" />
         </div>
       </div>
 
@@ -132,6 +132,7 @@ import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration, localDateStr, todayDateString } from '@/types'
 import { getSubjectStats, formatLongDate, aggregateByDate } from '@/utils/stats'
 import { subjectBgMix } from '@/utils/colors'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import type { StudySession } from '@/types'
 
 const route = useRoute()

@@ -60,7 +60,7 @@
                 class="subject-leading subject-leading--sm"
                 :style="{ background: subjectBgMix(subject.color, 14) }"
               >
-                {{ subject.icon }}
+                <SubjectIcon :icon="subject.icon" :name="subject.name" />
               </div>
               <div class="sheet-picker__content">
                 <span class="sheet-picker__name truncate">{{ subject.name }}</span>
@@ -82,6 +82,7 @@ import { computed, ref, watch } from 'vue'
 import { AkChip, AkEmptyState, AkSheet } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { subjectBgMix } from '@/utils/colors'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 
 const props = defineProps<{
   modelValue: boolean
