@@ -276,8 +276,8 @@ function onTouchEnd(e: TouchEvent) {
   const dy = e.changedTouches[0].clientY - touchStart.y
   // Require mostly-horizontal movement with at least 60px travel
   if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return
-  if (dx < 0) goToPrevDay()
-  else goToNextDay()
+  if (dx < 0) goToNextDay()
+  else goToPrevDay()
 }
 
 /* ─── Face-down / mode watchers ─────────────────────────────── */
