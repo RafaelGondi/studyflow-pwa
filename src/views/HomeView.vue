@@ -1,11 +1,33 @@
 <template>
-  <div class="ak-app-page">
+  <div
+    class="ak-app-page"
+    @touchstart.passive="onTouchStart"
+    @touchend.passive="onTouchEnd"
+  >
     <AkPageHeader
       label="Estudo"
-      title="Hoje"
+      :title="headerTitle"
       :meta="headerMeta"
       size="md"
     >
+      <template #actions>
+        <div class="day-nav">
+          <AkIconButton
+            icon="arrow-left-outline"
+            label="Dia anterior"
+            size="sm"
+            @click="goToPrevDay"
+          />
+          <AkIconButton
+            v-if="!isViewingToday"
+            icon="arrow-right-outline"
+            label="Próximo dia"
+            size="sm"
+            @click="goToNextDay"
+          />
+        </div>
+      </template>
+
       <div v-if="subjectsStore.subjects.length" class="day-header__progress">
         <div class="progress-strip">
           <div class="progress-strip__hero">
@@ -30,7 +52,7 @@
         </AkEmptyState>
 
         <StudyLauncher
-          v-else
+          v-else-if="isViewingToday"
           :active-id="timerStore.activeSubjectId"
           :last-subject-id="lastSubjectId"
           :extra-seconds="liveExtraSeconds"
@@ -43,7 +65,7 @@
         />
 
         <section class="section-block">
-          <AkSectionHeader title="Sessões de hoje">
+          <AkSectionHeader :title="sectionTitle">
             <template #action>
               <div class="section-actions">
                 <AkButton
@@ -60,7 +82,7 @@
                 <AkIconButton
                   v-if="studySessionCount > 0"
                   size="sm"
-                  :label="sessionsExpanded ? 'Ocultar sessões de hoje' : 'Mostrar sessões de hoje'"
+                  :label="sessionsExpanded ? 'Ocultar sessões' : 'Mostrar sessões'"
                   :icon="sessionsExpanded ? 'caret-up-outline' : 'caret-down-outline'"
                   @click="sessionsExpanded = !sessionsExpanded"
                 />
@@ -69,22 +91,22 @@
           </AkSectionHeader>
 
           <AkEmptyState
-            v-if="timeline.length === 0"
+            v-if="timeline.length === 0 && !pastLoading"
             title="Nenhuma sessão ainda"
-            description="Inicie o timer ou adicione um registro manual."
+            :description="isViewingToday ? 'Inicie o timer ou adicione um registro manual.' : 'Nenhum estudo registrado neste dia.'"
           />
 
           <button
-            v-else-if="!sessionsExpanded"
+            v-else-if="!sessionsExpanded && !pastLoading"
             type="button"
             class="sessions-peek"
             @click="sessionsExpanded = true"
           >
-            <span>{{ studySessionCount }} {{ studySessionCount === 1 ? 'sessão registrada' : 'sessões registradas' }} hoje</span>
+            <span>{{ studySessionCount }} {{ studySessionCount === 1 ? 'sessão registrada' : 'sessões registradas' }}</span>
             <AkIcon name="caret-down-outline" :size="14" />
           </button>
 
-          <div v-else class="collapsible-section__body">
+          <div v-else-if="!pastLoading" class="collapsible-section__body">
             <AkList>
               <template
                 v-for="(item, index) in timeline"
@@ -134,11 +156,6 @@
       </div>
     </div>
 
-    <!--
-      Sem FAB: estudar exige escolher uma matéria, então a lista é a própria
-      superfície de controle. Um FAB "Continuar · X" apenas duplicaria a
-      primeira linha e teria que sumir durante a sessão — âncora instável.
-    -->
     <FocusMode
       :active="focusMode"
       :subject="activeSubject"
@@ -161,7 +178,7 @@
 
     <SessionAddModal
       :show="showAddModal"
-      :date="todayStr"
+      :date="viewDate"
       @close="showAddModal = false"
       @saved="onSessionSaved"
     />
@@ -187,7 +204,7 @@ import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
-import { formatDuration, formatTimer, todayDateString } from '@/types'
+import { formatDuration, formatTimer, todayDateString, localDateStr } from '@/types'
 import { buildTimeline, formatSessionTimeRange } from '@/utils/timeline'
 import type { StudySession } from '@/types'
 
@@ -205,27 +222,101 @@ const showAddModal = ref(false)
 const sheetOpen = ref(false)
 const sessionsExpanded = ref(false)
 
+/* ─── Day navigation ─────────────────────────────────────────── */
+const viewDate = ref(todayDateString())
+const isViewingToday = computed(() => viewDate.value === todayDateString())
+const pastSessions = ref<StudySession[]>([])
+const pastLoading = ref(false)
+
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+function dateToStr(d: Date): string {
+  return localDateStr(d)
+}
+
+function goToPrevDay() {
+  const d = parseLocalDate(viewDate.value)
+  d.setDate(d.getDate() - 1)
+  viewDate.value = dateToStr(d)
+  sessionsExpanded.value = true
+}
+
+function goToNextDay() {
+  if (isViewingToday.value) return
+  const d = parseLocalDate(viewDate.value)
+  d.setDate(d.getDate() + 1)
+  const next = dateToStr(d)
+  viewDate.value = next
+  // If we've arrived back at today, reset expansion state
+  if (next === todayDateString()) sessionsExpanded.value = false
+}
+
+watch(viewDate, async (date) => {
+  if (date === todayDateString()) {
+    await sessionsStore.loadToday()
+  } else {
+    pastLoading.value = true
+    pastSessions.value = await sessionsStore.loadDate(date)
+    pastLoading.value = false
+  }
+})
+
+/* ─── Swipe gesture ──────────────────────────────────────────── */
+let touchStart = { x: 0, y: 0 }
+
+function onTouchStart(e: TouchEvent) {
+  touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+}
+
+function onTouchEnd(e: TouchEvent) {
+  const dx = e.changedTouches[0].clientX - touchStart.x
+  const dy = e.changedTouches[0].clientY - touchStart.y
+  // Require mostly-horizontal movement with at least 60px travel
+  if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return
+  if (dx < 0) goToPrevDay()
+  else goToNextDay()
+}
+
+/* ─── Face-down / mode watchers ─────────────────────────────── */
 const { isFaceDown } = useFaceDownFocus()
 watch(isFaceDown, (faceDown) => {
   if (faceDown && timerStore.mode !== 'idle') focusMode.value = true
 })
 
-// Auto-enter focus mode when a study session starts (new session or Pomodoro auto-restart)
 watch(() => timerStore.mode, (mode, prev) => {
   if (mode === 'study' && prev !== 'paused') focusMode.value = true
 })
 
-const todayStr = todayDateString()
-const timeline = computed(() => buildTimeline(sessionsStore.todaySessions))
+/* ─── Derived data ───────────────────────────────────────────── */
+const displayedSessions = computed(() =>
+  isViewingToday.value ? sessionsStore.todaySessions : pastSessions.value,
+)
+
+const timeline = computed(() => buildTimeline(displayedSessions.value))
 const studySessionCount = computed(() => timeline.value.filter(i => i.type === 'study').length)
 
-const headerMeta = computed(() =>
-  new Date().toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }),
-)
+const headerTitle = computed(() => {
+  if (isViewingToday.value) return 'Hoje'
+  const d = parseLocalDate(viewDate.value)
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (viewDate.value === dateToStr(yesterday)) return 'Ontem'
+  return d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })
+})
+
+const headerMeta = computed(() => {
+  const d = isViewingToday.value ? new Date() : parseLocalDate(viewDate.value)
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+})
+
+const sectionTitle = computed(() => {
+  if (isViewingToday.value) return 'Sessões de hoje'
+  if (headerTitle.value === 'Ontem') return 'Sessões de ontem'
+  return `Sessões de ${headerTitle.value}`
+})
 
 const activeSubject = computed(() => {
   const id = timerStore.activeSubjectId
@@ -242,21 +333,31 @@ const todayTotalSeconds = computed(() =>
   sessionsStore.todayStudyTotalSeconds + liveExtraSeconds.value,
 )
 
-const studyTotalFormatted = computed(() => formatTimer(todayTotalSeconds.value))
+const displayedTotalSeconds = computed(() => {
+  if (isViewingToday.value) return todayTotalSeconds.value
+  return pastSessions.value
+    .filter(s => s.kind === 'study')
+    .reduce((acc, s) => acc + s.duration, 0)
+})
+
+const studyTotalFormatted = computed(() => formatTimer(displayedTotalSeconds.value))
 
 const progressCaption = computed(() => {
   const n = studySessionCount.value
-  if (n === 0) return 'ainda sem sessões hoje'
-  if (n === 1) return 'em 1 sessão hoje'
-  return `em ${n} sessões hoje`
+  if (isViewingToday.value) {
+    if (n === 0) return 'ainda sem sessões hoje'
+    if (n === 1) return 'em 1 sessão hoje'
+    return `em ${n} sessões hoje`
+  }
+  if (n === 0) return 'nenhuma sessão neste dia'
+  if (n === 1) return '1 sessão'
+  return `${n} sessões`
 })
 
+/* ─── Actions ────────────────────────────────────────────────── */
 function handleSheetSelect(id: string) {
-  if (timerStore.mode === 'idle') {
-    void startSubject(id)
-  } else {
-    void switchSubject(id)
-  }
+  if (timerStore.mode === 'idle') void startSubject(id)
+  else void switchSubject(id)
 }
 
 async function handleSubjectSelect(id: string) {
@@ -297,13 +398,21 @@ async function deleteSession(id: string) {
   if (!ok) return
   await sessionsStore.remove(id)
   toast.success('Registro excluído')
-  await sessionsStore.loadToday()
+  await reloadCurrentDay()
 }
 
 async function onSessionSaved() {
   editingSession.value = null
   showAddModal.value = false
-  await sessionsStore.loadToday()
+  await reloadCurrentDay()
+}
+
+async function reloadCurrentDay() {
+  if (isViewingToday.value) {
+    await sessionsStore.loadToday()
+  } else {
+    pastSessions.value = await sessionsStore.loadDate(viewDate.value)
+  }
 }
 
 function getSubject(id?: string) {
@@ -323,7 +432,7 @@ onMounted(async () => {
 
 <style scoped>
 .gap-row {
-      padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-4);
   line-height: 1.4;
 }
 
@@ -364,4 +473,9 @@ onMounted(async () => {
   cursor: pointer;
 }
 
+.day-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
 </style>
