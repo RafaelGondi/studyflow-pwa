@@ -38,6 +38,28 @@
       </div>
     </AkPageHeader>
 
+    <div
+      v-if="subjectsStore.categories.length"
+      class="chip-scroll home-category-filter reveal reveal-d1"
+      aria-label="Filtrar resumo por categoria"
+    >
+      <AkChip
+        :active="selectedCategoryFilter === null"
+        @click="selectedCategoryFilter = null"
+      >
+        Todas
+      </AkChip>
+      <AkChip
+        v-for="category in subjectsStore.categories"
+        :key="category.id"
+        :active="selectedCategoryFilter === category.id"
+        :color="category.color"
+        @click="selectedCategoryFilter = category.id"
+      >
+        {{ category.name }}
+      </AkChip>
+    </div>
+
     <div class="ak-app-scroll page-body">
       <div class="day-panel reveal reveal-d2">
         <AkEmptyState
@@ -189,7 +211,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  AkButton, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow,
+  AkButton, AkChip, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow,
   AkPageHeader, AkSectionHeader,
 } from '@rafael_dias/akoma'
 import { useTimerStore } from '@/stores/timer'
@@ -221,6 +243,7 @@ const editingSession = ref<StudySession | null>(null)
 const showAddModal = ref(false)
 const sheetOpen = ref(false)
 const sessionsExpanded = ref(false)
+const selectedCategoryFilter = ref<string | null>(null)
 
 /* ─── Day navigation ─────────────────────────────────────────── */
 const viewDate = ref(todayDateString())
@@ -291,9 +314,17 @@ watch(() => timerStore.mode, (mode, prev) => {
 })
 
 /* ─── Derived data ───────────────────────────────────────────── */
-const displayedSessions = computed(() =>
+const daySessions = computed(() =>
   isViewingToday.value ? sessionsStore.todaySessions : pastSessions.value,
 )
+
+const displayedSessions = computed(() => {
+  if (!selectedCategoryFilter.value) return daySessions.value
+  return daySessions.value.filter((session) => {
+    if (session.kind !== 'study' || !session.subjectId) return false
+    return subjectsStore.getSubject(session.subjectId)?.categoryId === selectedCategoryFilter.value
+  })
+})
 
 const timeline = computed(() => buildTimeline(displayedSessions.value))
 const studySessionCount = computed(() => timeline.value.filter(i => i.type === 'study').length)
@@ -333,26 +364,50 @@ const todayTotalSeconds = computed(() =>
   sessionsStore.todayStudyTotalSeconds + liveExtraSeconds.value,
 )
 
+const displayedLiveExtraSeconds = computed(() => {
+  if (!isViewingToday.value || !liveExtraSeconds.value) return 0
+  if (!selectedCategoryFilter.value) return liveExtraSeconds.value
+  return activeSubject.value?.categoryId === selectedCategoryFilter.value
+    ? liveExtraSeconds.value
+    : 0
+})
+
 const displayedTotalSeconds = computed(() => {
-  if (isViewingToday.value) return todayTotalSeconds.value
-  return pastSessions.value
+  const savedSeconds = displayedSessions.value
     .filter(s => s.kind === 'study')
     .reduce((acc, s) => acc + s.duration, 0)
+  return savedSeconds + displayedLiveExtraSeconds.value
 })
 
 const studyTotalFormatted = computed(() => formatTimer(displayedTotalSeconds.value))
 
 const progressCaption = computed(() => {
   const n = studySessionCount.value
+  const category = selectedCategoryFilter.value
+    ? subjectsStore.getCategory(selectedCategoryFilter.value)
+    : null
+  const categorySuffix = category ? ` · ${category.name}` : ''
   if (isViewingToday.value) {
-    if (n === 0) return 'ainda sem sessões hoje'
-    if (n === 1) return 'em 1 sessão hoje'
-    return `em ${n} sessões hoje`
+    if (n === 0) return `ainda sem sessões hoje${categorySuffix}`
+    if (n === 1) return `em 1 sessão hoje${categorySuffix}`
+    return `em ${n} sessões hoje${categorySuffix}`
   }
-  if (n === 0) return 'nenhuma sessão neste dia'
-  if (n === 1) return '1 sessão'
-  return `${n} sessões`
+  if (n === 0) return `nenhuma sessão neste dia${categorySuffix}`
+  if (n === 1) return `1 sessão${categorySuffix}`
+  return `${n} sessões${categorySuffix}`
 })
+
+watch(
+  () => subjectsStore.categories.map(category => category.id),
+  (categoryIds) => {
+    if (
+      selectedCategoryFilter.value
+      && !categoryIds.includes(selectedCategoryFilter.value)
+    ) {
+      selectedCategoryFilter.value = null
+    }
+  },
+)
 
 /* ─── Actions ────────────────────────────────────────────────── */
 function handleSheetSelect(id: string) {
@@ -477,5 +532,9 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: var(--space-1);
+}
+
+.home-category-filter {
+  border-bottom: 1px solid var(--border);
 }
 </style>
