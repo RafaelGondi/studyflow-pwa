@@ -1,6 +1,6 @@
 /**
  * Entity colors for subjects/categories.
- * Each swatch maps directly to one of the 8 Akoma accent palettes so the
+ * Each swatch maps directly to one of the 11 Akoma accent palettes so the
  * picker faithfully represents the DS color vocabulary.
  */
 
@@ -9,20 +9,23 @@ export type SubjectColor = {
   value: string
 }
 
-/** 8 swatches — one per Akoma accent palette (--accent base value). */
+/** 11 swatches — one per Akoma accent palette (--accent base value). */
 export const AKOMA_CAT_COLORS: SubjectColor[] = [
   { name: 'Violeta',   value: '#8375cc' },
-  { name: 'Ocean',     value: '#5184b1' },
-  { name: 'Teal',      value: '#4b99a4' },
-  { name: 'Ardósia',   value: '#5e7894' },
   { name: 'Evergreen', value: '#3c8866' },
+  { name: 'Sea',       value: '#469f8b' },
+  { name: 'Teal',      value: '#4b99a4' },
+  { name: 'Ocean',     value: '#5184b1' },
   { name: 'Âmbar',     value: '#b68639' },
   { name: 'Rosé',      value: '#c36d80' },
-  { name: 'Coral',     value: '#ce7659' },
+  { name: 'Clay',      value: '#c65b58' },
+  { name: 'Coral',     value: '#cb7954' },
+  { name: 'Plum',      value: '#ab73af' },
+  { name: 'Ardósia',   value: '#5e7894' },
 ]
 
 /** Default for new subjects/categories */
-export const DEFAULT_SUBJECT_COLOR = AKOMA_CAT_COLORS[1].value // Ocean
+export const DEFAULT_SUBJECT_COLOR = '#5184b1' // Ocean
 
 /** @deprecated prefer AKOMA_CAT_COLORS — kept for existing imports */
 export const SUBJECT_COLORS = AKOMA_CAT_COLORS
@@ -52,14 +55,15 @@ const LEGACY_COLOR_MAP: Record<string, string> = {
   '#8375cc': '#8375cc',
   '#bc8a3b': '#b68639',
   '#b68639': '#b68639',
-  '#d07b5f': '#ce7659',
-  '#ce7659': '#ce7659',
+  '#d07b5f': '#cb7954',
+  '#ce7659': '#cb7954',
+  '#cb7954': '#cb7954',
   '#5e7894': '#5e7894',
   '#c36d80': '#c36d80',
   '#3d6a94': '#5184b1',
   // Tailwind-era colors
   '#ef4444': '#c36d80',
-  '#f43f5e': '#ce7659',
+  '#f43f5e': '#cb7954',
   '#ec4899': '#c36d80',
   '#d946ef': '#8375cc',
   '#a855f7': '#8375cc',
@@ -72,20 +76,23 @@ const LEGACY_COLOR_MAP: Record<string, string> = {
   '#10b981': '#3c8866',
   '#84cc16': '#3c8866',
   '#f59e0b': '#b68639',
-  '#f97316': '#ce7659',
+  '#f97316': '#cb7954',
   '#78716c': '#5e7894',
 }
 
 /** Approximate RGB per palette for nearest-match fallback. */
 const PALETTE_BASE_RGB: Record<string, [number, number, number]> = {
   '#8375cc': [131, 117, 204],
-  '#5184b1': [ 81, 132, 177],
-  '#4b99a4': [ 75, 153, 164],
-  '#5e7894': [ 94, 120, 148],
   '#3c8866': [ 60, 136, 102],
+  '#469f8b': [ 70, 159, 139],
+  '#4b99a4': [ 75, 153, 164],
+  '#5184b1': [ 81, 132, 177],
   '#b68639': [182, 134,  57],
   '#c36d80': [195, 109, 128],
-  '#ce7659': [206, 118,  89],
+  '#c65b58': [198,  91,  88],
+  '#cb7954': [203, 121,  84],
+  '#ab73af': [171, 115, 175],
+  '#5e7894': [ 94, 120, 148],
 }
 
 function hexToRgb(hex: string): [number, number, number] | null {
