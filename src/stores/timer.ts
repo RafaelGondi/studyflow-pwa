@@ -361,8 +361,12 @@ export const useTimerStore = defineStore('timer', () => {
       return
     }
 
-    // Counter or Pomodoro early exit
-    reset()
+    /*
+     * Counter or Pomodoro early exit. No Pomodoro a contagem do ciclo sobrevive:
+     * parar no meio do 3º bloco e recomeçar não deveria jogar você de volta pro
+     * 1º — só a pausa longa fecha o ciclo.
+     */
+    reset({ keepCycle: prefs.value.timerType === 'pomodoro' })
     if (subjectId && ms >= 5000) {
       await sessions.saveStudy({
         subjectId, startTime, endTime: Date.now(),
@@ -375,10 +379,12 @@ export const useTimerStore = defineStore('timer', () => {
     if (state.value.mode === 'break') endBreak()
   }
 
-  function reset() {
+  function reset(opts?: { keepCycle?: boolean }) {
     stopTick()
-    state.value = { ...DEFAULT_STATE }
-    localStorage.removeItem(SESSION_KEY)
+    const pomodoroCount = opts?.keepCycle ? state.value.pomodoroCount : 0
+    state.value = { ...DEFAULT_STATE, pomodoroCount }
+    if (pomodoroCount > 0) save()
+    else localStorage.removeItem(SESSION_KEY)
   }
 
   return {

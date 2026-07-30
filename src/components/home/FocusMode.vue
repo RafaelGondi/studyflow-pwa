@@ -25,7 +25,12 @@
             {{ timerStore.breakFormatted }}
           </div>
 
-          <p class="focus-total">{{ breakSubtitle }}</p>
+          <PomodoroCycle
+            v-if="timerStore.timerType === 'pomodoro'"
+            size="lg"
+            class="focus-cycle"
+          />
+          <p v-else-if="breakSubtitle" class="focus-total">{{ breakSubtitle }}</p>
 
           <div class="flex-row" style="gap: var(--space-2); margin-top: var(--space-8)">
             <div class="status-dot status-dot--paused" />
@@ -63,11 +68,12 @@
             {{ timerStore.displayFormatted }}
           </div>
 
-          <!-- Pomodoro count indicator -->
-          <p v-if="timerStore.timerType === 'pomodoro'" class="focus-total">
-            Pomodoro {{ timerStore.pomodoroCount + 1 }}
-            · {{ prefs.pomodoro.workMinutes }} min
-          </p>
+          <!-- Onde estamos no ciclo -->
+          <PomodoroCycle
+            v-if="timerStore.timerType === 'pomodoro'"
+            size="lg"
+            class="focus-cycle"
+          />
           <p v-else-if="props.totalSeconds != null" class="focus-total">
             {{ formatDuration(props.totalSeconds) }} hoje
           </p>
@@ -102,6 +108,7 @@
 import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { AkIcon } from '@rafael_dias/akoma'
 import SubjectIcon from '@/components/ui/SubjectIcon.vue'
+import PomodoroCycle from '@/components/home/PomodoroCycle.vue'
 import { useTimerStore } from '@/stores/timer'
 import { DEFAULT_SUBJECT_COLOR, subjectBgMix } from '@/utils/colors'
 import { formatDuration } from '@/types'
@@ -124,16 +131,12 @@ const breakLabel = computed(() => {
   return 'Pausa curta'
 })
 
-const breakSubtitle = computed(() => {
-  const kind = timerStore.breakKind
-  if (kind === 'flow') {
-    return `1/${prefs.value.flowBreakRatio} do tempo estudado`
-  }
-  const total = timerStore.prefs.pomodoro
-  const interval = total.longBreakInterval
-  const count = timerStore.pomodoroCount
-  return `Pomodoro ${count} de ${interval}`
-})
+/* Pomodoro tem a trilha do ciclo; aqui sobra só a pausa proporcional. */
+const breakSubtitle = computed(() =>
+  timerStore.breakKind === 'flow'
+    ? `1/${prefs.value.flowBreakRatio} do tempo estudado`
+    : '',
+)
 
 watch(() => props.active, async (val) => {
   if (val) {
@@ -244,6 +247,11 @@ onUnmounted(() => {
 
 .focus-timer--break {
   color: color-mix(in srgb, var(--text-inverse) 70%, transparent);
+}
+
+.focus-cycle {
+  margin-top: var(--space-6);
+  color: var(--text-inverse);
 }
 
 .focus-total {

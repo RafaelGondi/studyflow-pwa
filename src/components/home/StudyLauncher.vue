@@ -75,6 +75,12 @@
                 />
                 {{ liveStateLabel }}
               </p>
+              <PomodoroCycle
+                v-if="timerStore.timerType === 'pomodoro'"
+                size="sm"
+                :caption="false"
+                class="launcher-live__cycle"
+              />
             </div>
             <AkIcon name="arrow-right-outline" :size="18" class="launcher-live__chevron" />
           </button>
@@ -186,6 +192,7 @@ import type { TimerType } from '@/stores/timer'
 import { formatDuration, isStudySession } from '@/types'
 import { subjectBgMix } from '@/utils/colors'
 import SubjectIcon from '@/components/ui/SubjectIcon.vue'
+import PomodoroCycle from '@/components/home/PomodoroCycle.vue'
 
 const props = defineProps<{
   activeId?: string | null
@@ -233,9 +240,7 @@ const liveStateLabel = computed(() => {
     if (kind === 'flow')  return 'Pausa proporcional'
     return 'Pausa curta'
   }
-  if (timerStore.timerType === 'pomodoro') {
-    return `Pomodoro ${timerStore.pomodoroCount + 1}`
-  }
+  // No Pomodoro a posição no ciclo fica na trilha logo abaixo, não no rótulo.
   return timerStore.isRunning ? 'Estudando agora' : 'Pausado'
 })
 
@@ -400,6 +405,11 @@ const recentItems = computed(() => {
   margin: 2px 0 0;
   font-size: var(--text-xs);
   color: var(--text-secondary);
+}
+
+.launcher-live__cycle {
+  margin-top: 6px;
+  color: var(--text);
 }
 
 .launcher-live__controls {
