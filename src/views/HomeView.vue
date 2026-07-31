@@ -39,9 +39,11 @@
     </AkPageHeader>
 
     <div
-      v-if="subjectsStore.categories.length"
+      v-if="availableCategoryFilters.length"
       class="chip-scroll home-category-filter reveal reveal-d1"
       aria-label="Filtrar resumo por categoria"
+      @touchstart.stop
+      @touchend.stop
     >
       <AkChip
         :active="selectedCategoryFilter === null"
@@ -50,7 +52,7 @@
         Todas
       </AkChip>
       <AkChip
-        v-for="category in subjectsStore.categories"
+        v-for="category in availableCategoryFilters"
         :key="category.id"
         :active="selectedCategoryFilter === category.id"
         :color="category.color"
@@ -318,6 +320,20 @@ const daySessions = computed(() =>
   isViewingToday.value ? sessionsStore.todaySessions : pastSessions.value,
 )
 
+const registeredCategoryIds = computed(() => {
+  const ids = new Set<string>()
+  for (const session of daySessions.value) {
+    if (session.kind !== 'study' || !session.subjectId) continue
+    const categoryId = subjectsStore.getSubject(session.subjectId)?.categoryId
+    if (categoryId) ids.add(categoryId)
+  }
+  return ids
+})
+
+const availableCategoryFilters = computed(() =>
+  subjectsStore.categories.filter(category => registeredCategoryIds.value.has(category.id)),
+)
+
 const displayedSessions = computed(() => {
   if (!selectedCategoryFilter.value) return daySessions.value
   return daySessions.value.filter((session) => {
@@ -398,11 +414,12 @@ const progressCaption = computed(() => {
 })
 
 watch(
-  () => subjectsStore.categories.map(category => category.id),
-  (categoryIds) => {
+  [availableCategoryFilters, pastLoading],
+  ([categories, loading]) => {
+    if (loading) return
     if (
       selectedCategoryFilter.value
-      && !categoryIds.includes(selectedCategoryFilter.value)
+      && !categories.some(category => category.id === selectedCategoryFilter.value)
     ) {
       selectedCategoryFilter.value = null
     }
@@ -536,5 +553,7 @@ onMounted(async () => {
 
 .home-category-filter {
   border-bottom: 1px solid var(--border);
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
 }
 </style>
