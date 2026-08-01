@@ -1,151 +1,239 @@
 <template>
   <section class="section-block">
-    <AkSectionHeader title="Matérias" />
+    <AkSectionHeader title="Distribuição do tempo" />
 
     <AkEmptyState
-      v-if="rows.length === 0"
-      title="Nenhuma matéria"
-      description="Cadastre matérias para ver a distribuição do seu tempo."
+      v-if="subjectRows.length === 0"
+      title="Sem dados"
+      description="Nenhum estudo corresponde aos filtros selecionados."
     />
 
-    <div v-else class="subject-rank">
-      <div
-        v-for="row in rows"
-        :key="row.id"
-        class="subject-rank__row"
-      >
+    <div v-else class="distribution">
+      <div v-if="categoryRows.length > 1" class="distribution__group">
+        <span class="distribution__label">Categorias</span>
         <div
-          class="subject-leading subject-leading--sm"
-          :style="{ background: subjectBgMix(row.color, 16) }"
+          v-for="row in categoryRows"
+          :key="row.id"
+          class="distribution__row distribution__row--category"
         >
-          {{ row.icon }}
-        </div>
-
-        <div class="subject-rank__mid">
-          <span class="subject-rank__name truncate">{{ row.name }}</span>
-
-          <div class="subject-rank__track">
-            <div
-              class="subject-rank__fill"
-              :style="{
-                width: `${row.share}%`,
-                background: resolveSubjectColor(row.color),
-              }"
-            />
+          <span class="distribution__dot" :style="{ background: resolvePaintColor(row.color) }" />
+          <div class="distribution__content">
+            <div class="distribution__line">
+              <span class="distribution__name truncate">{{ row.name }}</span>
+              <span class="distribution__value numeric">{{ formatDuration(row.seconds) }}</span>
+              <span class="distribution__pct numeric">{{ row.share }}%</span>
+            </div>
+            <div class="distribution__track">
+              <div
+                class="distribution__fill"
+                :style="{ width: `${row.share}%`, background: resolvePaintColor(row.color) }"
+              />
+            </div>
           </div>
+        </div>
+      </div>
 
-          <span v-if="row.seconds === 0" class="subject-rank__idle">
-            sem estudo no período
-          </span>
+      <div class="distribution__group">
+        <span class="distribution__label">Matérias estudadas</span>
+        <div
+          v-for="row in visibleSubjectRows"
+          :key="row.id"
+          class="distribution__row"
+        >
+          <div
+            class="subject-leading subject-leading--sm"
+            :style="{ background: subjectBgMix(row.color, 16) }"
+          >
+            {{ row.icon }}
+          </div>
+          <div class="distribution__content">
+            <div class="distribution__line">
+              <span class="distribution__name truncate">{{ row.name }}</span>
+              <span class="distribution__value numeric">{{ formatDuration(row.seconds) }}</span>
+              <span class="distribution__pct numeric">{{ row.share }}%</span>
+            </div>
+            <div class="distribution__track">
+              <div
+                class="distribution__fill"
+                :style="{ width: `${row.share}%`, background: resolveSubjectColor(row.color) }"
+              />
+            </div>
+          </div>
         </div>
 
-        <span class="subject-rank__value numeric">
-          {{ row.seconds > 0 ? formatDuration(row.seconds) : '—' }}
-        </span>
+        <button
+          v-if="subjectRows.length > INITIAL_ROWS"
+          type="button"
+          class="distribution__more"
+          @click="showAll = !showAll"
+        >
+          {{ showAll ? 'Mostrar menos' : `Ver todas (${subjectRows.length})` }}
+        </button>
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { AkEmptyState, AkSectionHeader } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { formatDuration } from '@/types'
-import { resolveSubjectColor, subjectBgMix } from '@/utils/colors'
+import {
+  AKOMA_CAT_COLORS,
+  normalizeAkomaColor,
+  resolvePaintColor,
+  resolveSubjectColor,
+  subjectBgMix,
+} from '@/utils/colors'
 import { totalsBySubject } from '@/utils/studyProgress'
 import type { StudySession } from '@/types'
 
+const INITIAL_ROWS = 5
 const props = defineProps<{ sessions: StudySession[] }>()
-
 const subjectsStore = useSubjectsStore()
+const showAll = ref(false)
 
-/**
- * Ranking por tempo no período. Matérias sem registro entram no fim marcadas
- * como ociosas — é a informação acionável que o donut não comportava.
- */
-const rows = computed(() => {
-  const totals = totalsBySubject(props.sessions)
-  const secondsById = new Map(totals.map(t => [t.subjectId, t.seconds]))
-  const top = totals[0]?.seconds ?? 0
+const total = computed(() => props.sessions.reduce((sum, session) => sum + session.duration, 0))
 
-  return subjectsStore.subjects
-    .map((subject) => {
-      const seconds = secondsById.get(subject.id) ?? 0
+const subjectRows = computed(() => {
+  const denominator = total.value || 1
+  return totalsBySubject(props.sessions).map(({ subjectId, seconds }) => {
+    const subject = subjectsStore.getSubject(subjectId)
+    return {
+      id: subjectId,
+      name: subject?.name ?? 'Matéria removida',
+      icon: subject?.icon ?? '📚',
+      color: normalizeAkomaColor(subject?.color),
+      categoryId: subject?.categoryId ?? null,
+      seconds,
+      share: Math.round((seconds / denominator) * 100),
+    }
+  })
+})
+
+const categoryRows = computed(() => {
+  const denominator = total.value || 1
+  const totals = new Map<string | null, number>()
+  for (const row of subjectRows.value) {
+    totals.set(row.categoryId, (totals.get(row.categoryId) ?? 0) + row.seconds)
+  }
+  return [...totals.entries()]
+    .map(([categoryId, seconds]) => {
+      const category = categoryId ? subjectsStore.getCategory(categoryId) : null
       return {
-        id: subject.id,
-        name: subject.name,
-        icon: subject.icon,
-        color: subject.color,
+        id: categoryId ?? '__none__',
+        name: category?.name ?? 'Sem categoria',
+        color: normalizeAkomaColor(category?.color ?? AKOMA_CAT_COLORS[5].value),
         seconds,
-        share: top > 0 ? Math.max((seconds / top) * 100, seconds > 0 ? 4 : 0) : 0,
+        share: Math.round((seconds / denominator) * 100),
       }
     })
-    .sort((a, b) => b.seconds - a.seconds || a.name.localeCompare(b.name))
+    .sort((a, b) => b.seconds - a.seconds)
 })
+
+const visibleSubjectRows = computed(() =>
+  showAll.value ? subjectRows.value : subjectRows.value.slice(0, INITIAL_ROWS),
+)
+
+watch(() => props.sessions, () => { showAll.value = false })
 </script>
 
 <style scoped>
-.subject-rank {
+.distribution,
+.distribution__group {
   display: flex;
   flex-direction: column;
 }
 
-.subject-rank__row {
+.distribution {
+  gap: var(--space-5);
+}
+
+.distribution__group {
+  gap: var(--space-3);
+}
+
+.distribution__label {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.distribution__row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) 0;
 }
 
-.subject-rank__row + .subject-rank__row {
-  border-top: 1px solid var(--border);
+.distribution__dot {
+  width: 10px;
+  height: 10px;
+  margin-inline: 13px;
+  border-radius: var(--radius-full);
+  flex: 0 0 auto;
 }
 
-.subject-rank__mid {
+.distribution__content {
   flex: 1;
   min-width: 0;
 }
 
-.subject-rank__name {
-  display: block;
+.distribution__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 36px;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.distribution__name {
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
 }
 
-.subject-rank__track {
-  height: 5px;
-  margin-top: var(--space-2);
-  border-radius: var(--radius-full);
-  background: var(--bg-muted);
-  overflow: hidden;
+.distribution__value {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text);
 }
 
-.subject-rank__fill {
-  height: 100%;
-  border-radius: inherit;
-  transition: width var(--transition);
-}
-
-.subject-rank__idle {
-  display: block;
-  margin-top: var(--space-1);
+.distribution__pct {
+  text-align: right;
   font-size: 11px;
   color: var(--text-tertiary);
 }
 
-.subject-rank__value {
-  flex-shrink: 0;
+.distribution__track {
+  height: 5px;
+  margin-top: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--bg-muted);
+}
+
+.distribution__fill {
+  height: 100%;
+  min-width: 3px;
+  border-radius: inherit;
+  transition: width var(--transition);
+}
+
+.distribution__more {
+  align-self: flex-start;
+  padding: var(--space-1) 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
   font-size: 13px;
   font-weight: 650;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
+  cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .subject-rank__fill {
-    transition: none;
-  }
+  .distribution__fill { transition: none; }
 }
 </style>
