@@ -81,6 +81,12 @@
         </div>
       </section>
 
+      <ProgressInsights
+        :sessions="sessions"
+        :dates="periodDates"
+        :subject-filtered="!!selectedSubjectId"
+      />
+
       <PeriodChart :title="periodMeta.chartTitle" :period="period" :buckets="buckets" />
 
       <SubjectRanking :sessions="sessions" />
@@ -180,6 +186,7 @@ import {
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
 import PeriodChart from '@/components/stats/PeriodChart.vue'
+import ProgressInsights from '@/components/stats/ProgressInsights.vue'
 import SubjectRanking from '@/components/stats/SubjectRanking.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import { useAppToast } from '@/composables/useAppToast'
