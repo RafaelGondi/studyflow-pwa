@@ -3,65 +3,50 @@
     <AkPageHeader
       label="Retrospectiva"
       title="Progresso"
-      meta="Tempo e sessões no período"
+      :meta="periodMeta.meta"
       size="md"
     />
 
     <div class="chip-scroll reveal reveal-d1">
       <AkChip
-        v-for="p in periods"
-        :key="p.value"
-        :active="period === p.value"
-        @click="period = p.value"
+        v-for="p in PERIOD_ORDER"
+        :key="p"
+        :active="period === p"
+        @click="period = p"
       >
-        {{ p.label }}
+        {{ PERIOD_META[p].label }}
       </AkChip>
     </div>
 
     <div class="ak-app-scroll page-body reveal reveal-d2">
-      <section
-        v-if="periodDates.length"
-        class="history-overview reveal reveal-d1"
-        aria-labelledby="consistency-title"
-      >
-        <div class="history-overview__heading">
-          <div>
-            <span id="consistency-title" class="history-overview__eyebrow">Dias com estudo</span>
-            <div class="history-overview__score">{{ activeDayCount }}/{{ periodDates.length }}</div>
-          </div>
-          <AkBadge
-            :variant="trend.delta > 0 ? 'accent' : 'neutral'"
-            :label="trend.label"
-          />
+      <section v-if="periodDates.length" class="progress-hero reveal reveal-d1">
+        <span class="progress-hero__eyebrow">Tempo estudado</span>
+
+        <div class="progress-hero__row">
+          <span class="progress-hero__time numeric">
+            {{ formatDuration(studyTotalSeconds) }}
+          </span>
+          <AkBadge :variant="deltaVariant" :label="deltaLabel" />
         </div>
 
-        <AkProgress
-          :value="activeDayCount"
-          :max="periodDates.length || 1"
-          size="md"
-        />
+        <p class="progress-hero__vs">{{ comparisonMessage }}</p>
 
-        <p class="history-overview__message">{{ trend.message }}</p>
-
-        <div class="history-metrics">
-          <div class="history-metric">
-            <strong>{{ activeDayCount }}</strong>
-            <span>dias ativos</span>
-          </div>
-          <div class="history-metric">
-            <strong>{{ sessions.length }}</strong>
-            <span>sessões</span>
-          </div>
-          <div class="history-metric">
-            <strong>{{ formatDuration(studyTotalSeconds) }}</strong>
-            <span>tempo total</span>
-          </div>
+        <div class="progress-hero__consistency">
+          <p class="progress-hero__days">
+            <strong>{{ activeDayCount }} de {{ periodDates.length }}</strong>
+            dias com estudo
+          </p>
+          <AkProgress
+            :value="activeDayCount"
+            :max="periodDates.length || 1"
+            size="md"
+          />
         </div>
       </section>
 
-      <WeeklyChart :sessions="weekChartSessions" />
+      <PeriodChart :title="periodMeta.chartTitle" :buckets="buckets" />
 
-      <SubjectDonut :sessions="sessions" />
+      <SubjectRanking :sessions="sessions" />
 
       <section class="section-block">
         <AkSectionHeader title="Histórico" />
@@ -145,19 +130,25 @@ import {
 } from '@rafael_dias/akoma'
 import { useSessionsStore } from '@/stores/sessions'
 import { useSubjectsStore } from '@/stores/subjects'
-import WeeklyChart from '@/components/stats/WeeklyChart.vue'
-import SubjectDonut from '@/components/stats/SubjectDonut.vue'
+import PeriodChart from '@/components/stats/PeriodChart.vue'
+import SubjectRanking from '@/components/stats/SubjectRanking.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration, localDateStr, isStudySession } from '@/types'
 import { buildTimeline, formatSessionTimeRange } from '@/utils/timeline'
 import {
-  computeStudyTrend,
+  PERIOD_META,
+  PERIOD_ORDER,
+  buildPeriodBuckets,
+  comparePeriods,
   enumerateDates,
   getActiveStudyDays,
   getPeriodRange,
+  getPreviousPeriodRange,
+  totalStudySeconds,
 } from '@/utils/studyProgress'
+import type { StudyPeriod } from '@/utils/studyProgress'
 import type { StudySession } from '@/types'
 
 const sessionsStore = useSessionsStore()
@@ -166,18 +157,12 @@ const toast = useAppToast()
 const confirmSheet = useConfirmSheet()
 const editingSession = ref<StudySession | null>(null)
 
-type Period = 'today' | 'week' | 'month'
-const period = ref<Period>('week')
-
-const periods = [
-  { value: 'week'  as Period, label: 'Semana' },
-  { value: 'month' as Period, label: 'Mês' },
-  { value: 'today' as Period, label: 'Hoje' },
-]
+const period = ref<StudyPeriod>('week')
+const periodMeta = computed(() => PERIOD_META[period.value])
 
 const sessions = computed(() => sessionsStore.rangeSessions.filter(isStudySession))
-const studyTotalSeconds = computed(() => sessions.value.reduce((a, s) => a + s.duration, 0))
-const weekChartSessions = ref<StudySession[]>([])
+const studyTotalSeconds = computed(() => totalStudySeconds(sessions.value))
+const previousSeconds = ref(0)
 
 const periodRange = computed(() => getPeriodRange(period.value))
 const periodDates = computed(() => enumerateDates(periodRange.value.from, periodRange.value.to))
@@ -185,7 +170,37 @@ const activeDayCount = computed(() => {
   const active = getActiveStudyDays(sessionsStore.rangeSessions)
   return periodDates.value.filter(date => active.has(date)).length
 })
-const trend = computed(() => computeStudyTrend(sessionsStore.rangeSessions, periodDates.value))
+
+const buckets = computed(() =>
+  buildPeriodBuckets(period.value, periodDates.value, sessions.value),
+)
+
+const comparison = computed(() =>
+  comparePeriods(studyTotalSeconds.value, previousSeconds.value),
+)
+
+const deltaVariant = computed(() => {
+  if (!comparison.value.hasBaseline) return 'neutral' as const
+  if (comparison.value.direction === 'up') return 'success' as const
+  if (comparison.value.direction === 'down') return 'warning' as const
+  return 'neutral' as const
+})
+
+const deltaLabel = computed(() => {
+  const { hasBaseline, direction, deltaSeconds } = comparison.value
+  if (!hasBaseline) return 'primeiro registro'
+  if (direction === 'flat') return 'estável'
+  return `${direction === 'up' ? '▲' : '▼'} ${formatDuration(Math.abs(deltaSeconds))}`
+})
+
+const comparisonMessage = computed(() => {
+  const { hasBaseline, direction, previousSeconds: prev } = comparison.value
+  const meta = periodMeta.value
+  if (!hasBaseline) return `Sem registro ${meta.prevPrep} ${meta.prevName} para comparar.`
+  if (direction === 'flat') return `praticamente igual ${meta.prevArticle} ${meta.prevName}`
+  const word = direction === 'up' ? 'a mais' : 'a menos'
+  return `${word} que ${meta.prevPrep} ${meta.prevName} (${formatDuration(prev)})`
+})
 
 const groupedTimeline = computed(() => {
   const map = new Map<string, StudySession[]>()
@@ -229,16 +244,15 @@ async function loadRange() {
   await sessionsStore.loadRange(from, to)
 }
 
-async function loadWeekChart() {
-  const now = new Date()
-  const to = localDateStr(now)
-  const d = new Date(now); d.setDate(now.getDate() - 6)
-  const all = await sessionsStore.fetchRange(localDateStr(d), to)
-  weekChartSessions.value = all.filter(isStudySession)
+/** Janela anterior de mesmo tamanho — base da comparação do herói. */
+async function loadPreviousPeriod() {
+  const { from, to } = getPreviousPeriodRange(period.value)
+  const all = await sessionsStore.fetchRange(from, to)
+  previousSeconds.value = totalStudySeconds(all)
 }
 
 async function reloadAll() {
-  await Promise.all([loadRange(), loadWeekChart()])
+  await Promise.all([loadRange(), loadPreviousPeriod()])
 }
 
 watch(period, reloadAll)
@@ -246,6 +260,56 @@ onMounted(reloadAll)
 </script>
 
 <style scoped>
+/* ── Herói: tempo do período + comparação com o anterior ── */
+.progress-hero__eyebrow {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+
+.progress-hero__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
+
+.progress-hero__time {
+  font-family: var(--font-display);
+  font-size: clamp(38px, 11vw, 46px);
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.progress-hero__vs {
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.progress-hero__consistency {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.progress-hero__days {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.progress-hero__days strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
 /* .ak-list-row__trailing agora vive em styles/app.css — Home e Progresso
    compartilham o mesmo alinhamento. */
 .gap-row {

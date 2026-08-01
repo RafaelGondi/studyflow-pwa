@@ -126,79 +126,10 @@
   color: var(--text-tertiary);
 }
 
-/* ── Period overview (Progresso) ────────────────────────── */
-.history-overview {
-  padding: 0 0 var(--space-2);
-  background: transparent;
-  border: none;
-}
-
-.history-overview__heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-
-.history-overview__eyebrow {
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.history-overview__score {
-  margin-top: 2px;
-  color: var(--text);
-  font-family: var(--font-display);
-  font-size: clamp(38px, 10vw, 48px);
-  font-weight: 650;
-  letter-spacing: -0.055em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.history-overview__message {
-  margin-top: var(--space-4);
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.history-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border);
-}
-
-.history-metric {
-  min-width: 0;
-  padding: 0 var(--space-2);
-  text-align: center;
-}
-
-.history-metric:not(:last-child) {
-  border-right: 1px solid var(--border);
-}
-
-.history-metric strong,
-.history-metric span {
-  display: block;
-}
-
-.history-metric strong {
-  font-size: 17px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.history-metric span {
-  margin-top: 2px;
-  color: var(--text-secondary);
-  font-size: 10px;
-  line-height: 1.25;
-}
+/*
+ * O herói antigo da Progresso (.history-overview / .history-metrics) saiu com o
+ * redesenho — o bloco virou `.progress-hero`, scoped em StatsView.vue.
+ */
 
 .metric-strip {
   display: grid;
