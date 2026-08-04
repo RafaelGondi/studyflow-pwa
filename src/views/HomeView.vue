@@ -196,6 +196,7 @@
       :subject="activeSubject"
       :total-seconds="todayTotalSeconds"
       @close="focusMode = false"
+      @stop="handleFocusStop"
     />
 
     <SubjectBottomSheet
@@ -467,6 +468,11 @@ async function handleStop() {
   lastSubjectId.value = timerStore.activeSubjectId ?? lastSubjectId.value
   await timerStore.stop()
   await sessionsStore.loadToday()
+}
+
+async function handleFocusStop() {
+  await handleStop()
+  if (!timerStore.isInBreak) focusMode.value = false
 }
 
 async function switchSubject(id: string) {

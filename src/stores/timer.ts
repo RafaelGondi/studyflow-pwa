@@ -22,12 +22,16 @@ export interface TimerPrefs {
   timerType:      TimerType
   pomodoro:       PomodoroPrefs
   flowBreakRatio: number   // break = workTime / ratio  (default 5)
+  flowNotificationEnabled: boolean
+  flowNotificationMinutes: number
 }
 
 const DEFAULT_PREFS: TimerPrefs = {
   timerType: 'counter',
   pomodoro: { workMinutes: 25, shortBreakMinutes: 5, longBreakMinutes: 15, longBreakInterval: 4 },
   flowBreakRatio: 5,
+  flowNotificationEnabled: false,
+  flowNotificationMinutes: 25,
 }
 
 interface TimerState {
@@ -43,6 +47,7 @@ interface TimerState {
   breakKind:       BreakKind | null
   // pomodoro series
   pomodoroCount: number
+  flowNotificationSent: boolean
 }
 
 const DEFAULT_STATE: TimerState = {
@@ -50,6 +55,7 @@ const DEFAULT_STATE: TimerState = {
   originalStartedAt: 0, startedAt: 0, accumulatedMs: 0, segments: [],
   breakStartedAt: 0, breakDurationMs: 0, breakKind: null,
   pomodoroCount: 0,
+  flowNotificationSent: false,
 }
 
 /* ─── Persistent AudioContext (survives background via resume()) ─── */
@@ -209,6 +215,17 @@ export const useTimerStore = defineStore('timer', () => {
     } catch {}
   }
 
+  function notifyFlowMilestone(minutes: number) {
+    state.value.flowNotificationSent = true
+    save()
+    vibrate([180, 100, 180])
+    playChime('break-done')
+    notify(
+      `${minutes} ${minutes === 1 ? 'minuto' : 'minutos'} de foco`,
+      'O Flowmodoro continua correndo. Pare quando quiser.',
+    )
+  }
+
   function notify(title: string, body: string) {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
     navigator.serviceWorker?.ready
@@ -268,6 +285,16 @@ export const useTimerStore = defineStore('timer', () => {
     await completePomodoro()
   })
 
+  watch(studyElapsedMs, (ms) => {
+    if (prefs.value.timerType !== 'flowmodoro') return
+    if (state.value.mode !== 'study') return
+    if (!prefs.value.flowNotificationEnabled || state.value.flowNotificationSent) return
+    const rawMinutes = prefs.value.flowNotificationMinutes
+    const minutes = Number.isFinite(rawMinutes) ? Math.min(240, Math.max(1, rawMinutes)) : 25
+    if (ms < minutes * 60_000) return
+    notifyFlowMilestone(minutes)
+  })
+
   async function completePomodoro() {
     const ms        = studyElapsedMs.value
     const subjectId = state.value.subjectId
@@ -311,6 +338,7 @@ export const useTimerStore = defineStore('timer', () => {
     state.value.startedAt          = now_
     state.value.accumulatedMs      = 0
     state.value.segments           = []
+    state.value.flowNotificationSent = false
     startTick()
     save()
   }

@@ -88,14 +88,24 @@
             </span>
           </div>
 
-          <button
-            type="button"
-            class="focus-control"
-            :aria-label="timerStore.isRunning ? 'Pausar' : 'Retomar'"
-            @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
-          >
-            <AkIcon :name="timerStore.isRunning ? 'pause-outline' : 'play-outline'" :size="26" />
-          </button>
+          <div class="focus-controls">
+            <button
+              type="button"
+              class="focus-control"
+              :aria-label="timerStore.isRunning ? 'Pausar' : 'Retomar'"
+              @click="timerStore.isRunning ? timerStore.pause() : timerStore.resume()"
+            >
+              <AkIcon :name="timerStore.isRunning ? 'pause-outline' : 'play-outline'" :size="26" />
+            </button>
+            <button
+              type="button"
+              class="focus-control focus-control--stop"
+              aria-label="Parar sessão"
+              @click.stop="$emit('stop')"
+            >
+              Parar
+            </button>
+          </div>
 
           <p class="focus-hint">toque duas vezes para sair</p>
         </template>
@@ -120,7 +130,7 @@ const props = defineProps<{
   totalSeconds?: number
 }>()
 
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: []; stop: [] }>()
 const timerStore = useTimerStore()
 const prefs = computed(() => timerStore.prefs)
 
@@ -264,6 +274,13 @@ onUnmounted(() => {
   color: color-mix(in srgb, var(--text-inverse) 35%, transparent);
 }
 
+.focus-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-14);
+}
+
 .focus-control {
   display: flex;
   align-items: center;
@@ -276,6 +293,19 @@ onUnmounted(() => {
   background: var(--accent-ink);
   color: var(--accent-contrast);
   cursor: pointer;
+}
+
+.focus-controls .focus-control {
+  margin-top: 0;
+}
+
+.focus-control--stop {
+  background: color-mix(in srgb, var(--text-inverse) 12%, transparent);
+  color: var(--text-inverse);
+  border: 1px solid color-mix(in srgb, var(--text-inverse) 18%, transparent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
 }
 
 .focus-control--skip {

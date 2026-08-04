@@ -149,7 +149,7 @@
         </AkList>
 
         <AkList v-else-if="timerStore.timerType === 'flowmodoro'">
-          <AkListRow :divider="false">
+          <AkListRow :divider="true">
             <span>Proporção da pausa</span>
             <template #subtitle>
               <span class="text-xs text-muted">Pausa = tempo de foco ÷ proporção</span>
@@ -165,6 +165,34 @@
                   aria-label="Proporção da pausa"
                   @change="e => timerStore.updatePrefs({ flowBreakRatio: Number((e.target as HTMLInputElement).value) })"
                 />
+              </div>
+            </template>
+          </AkListRow>
+          <AkListRow :divider="timerStore.prefs.flowNotificationEnabled">
+            <AkSwitch
+              :model-value="timerStore.prefs.flowNotificationEnabled"
+              label="Aviso de tempo"
+              description="Avisa uma vez e mantém o timer correndo"
+              @update:model-value="timerStore.updatePrefs({ flowNotificationEnabled: $event })"
+            />
+          </AkListRow>
+          <AkListRow v-if="timerStore.prefs.flowNotificationEnabled" :divider="false">
+            <span>Avisar após</span>
+            <template #subtitle>
+              <span class="text-xs text-muted">Som, vibração e notificação quando disponíveis</span>
+            </template>
+            <template #trailing>
+              <div class="duration-input-row">
+                <input
+                  type="number"
+                  class="duration-input"
+                  :value="timerStore.prefs.flowNotificationMinutes"
+                  min="1"
+                  max="240"
+                  aria-label="Minutos até o aviso do Flowmodoro"
+                  @change="handleFlowNotificationMinutesChange"
+                />
+                <span class="duration-unit">min</span>
               </div>
             </template>
           </AkListRow>
@@ -281,6 +309,13 @@ const faceDown = useFaceDownFocus()
 
 const updating = ref(false)
 const signingOut = ref(false)
+
+function handleFlowNotificationMinutesChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const value = Math.min(240, Math.max(1, Math.round(Number(input.value) || 25)))
+  input.value = String(value)
+  timerStore.updatePrefs({ flowNotificationMinutes: value })
+}
 
 async function handleCoinsPerHourChange(event: Event) {
   const input = event.target as HTMLInputElement
