@@ -69,7 +69,7 @@
                 v-else
                 label="Arquivar"
                 size="sm"
-                icon="archive-outline"
+                icon="box-outline"
                 @click.stop="confirmArchiveSubject(subject)"
               />
               <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click.stop="confirmDeleteSubject(subject.id)" />
@@ -205,6 +205,8 @@ async function confirmArchiveSubject(subject: Subject) {
   const ok = await confirmSheet.ask({
     title: 'Arquivar matéria',
     message: `${subject.name} não aparecerá mais para iniciar novas sessões. O histórico será mantido.`,
+    confirmLabel: 'Arquivar',
+    confirmVariant: 'primary',
   })
   if (!ok) return
   await subjectsStore.archiveSubject(subject.id)

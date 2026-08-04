@@ -15,7 +15,7 @@ const { state, confirm, cancel } = useConfirmSheet()
     <div class="confirm-sheet">
       <p class="confirm-sheet__message">{{ state.message }}</p>
       <div class="confirm-sheet__actions">
-        <AkButton variant="danger" block @click="confirm">
+        <AkButton :variant="state.confirmVariant" block @click="confirm">
           {{ state.confirmLabel }}
         </AkButton>
         <AkButton variant="secondary" block @click="cancel">
