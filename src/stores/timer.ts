@@ -224,9 +224,11 @@ export const useTimerStore = defineStore('timer', () => {
   }
 
   function enterBreak(durationMs: number, kind: BreakKind) {
+    const startedAt = Date.now()
     stopTick()
+    now.value                   = startedAt
     state.value.mode            = 'break'
-    state.value.breakStartedAt  = Date.now()
+    state.value.breakStartedAt  = startedAt
     state.value.breakDurationMs = durationMs
     state.value.breakKind       = kind
     state.value.accumulatedMs   = 0
@@ -349,8 +351,10 @@ export const useTimerStore = defineStore('timer', () => {
 
     // Flowmodoro: save session then enforce a proportional break
     if (prefs.value.timerType === 'flowmodoro' && ms >= 5000) {
-      const endTime = Date.now()
-      const breakMs = Math.max(60_000, Math.floor(ms / prefs.value.flowBreakRatio))
+      const endTime   = Date.now()
+      const rawRatio  = prefs.value.flowBreakRatio
+      const flowRatio = Number.isFinite(rawRatio) && rawRatio > 0 ? rawRatio : DEFAULT_PREFS.flowBreakRatio
+      const breakMs   = Math.max(1000, Math.floor(ms / flowRatio))
       enterBreak(breakMs, 'flow')   // mode → 'break' before async save
       if (subjectId) {
         await sessions.saveStudy({
