@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useAuthStore } from './auth'
+import { useGamificationStore } from './gamification'
 import * as db from '@/firebase/db'
 import type { StudySession } from '@/types'
 import { todayDateString, localDateStr, isStudySession, isBreakSession } from '@/types'
 
 export const useSessionsStore = defineStore('sessions', () => {
   const auth = useAuthStore()
+  const gamification = useGamificationStore()
   const todaySessions = ref<StudySession[]>([])
   const rangeSessions = ref<StudySession[]>([])
 
@@ -54,15 +56,28 @@ export const useSessionsStore = defineStore('sessions', () => {
     duration: number
     segments?: StudySession['segments']
   }) {
-    return save({ kind: 'study', ...data })
+    const coinRatePerHour = gamification.settings.coinsPerHour
+    return save({
+      kind: 'study',
+      ...data,
+      coinRatePerHour,
+      coinsEarned: gamification.calculateCoins(data.duration, coinRatePerHour),
+    })
   }
 
   async function update(id: string, data: Partial<StudySession>) {
     if (!auth.uid) return
-    await db.updateSession(auth.uid, id, data)
+    const current = [...todaySessions.value, ...rangeSessions.value].find(s => s.id === id)
+    const patchData = { ...data }
+    if (current && isStudySession(current) && current.coinsEarned != null && data.duration != null) {
+      const rate = current.coinRatePerHour ?? gamification.settings.coinsPerHour
+      patchData.coinRatePerHour = rate
+      patchData.coinsEarned = gamification.calculateCoins(data.duration, rate)
+    }
+    await db.updateSession(auth.uid, id, patchData)
     const patch = (list: StudySession[]) => {
       const idx = list.findIndex(s => s.id === id)
-      if (idx !== -1) list[idx] = { ...list[idx], ...data }
+      if (idx !== -1) list[idx] = { ...list[idx], ...patchData }
     }
     patch(todaySessions.value)
     patch(rangeSessions.value)

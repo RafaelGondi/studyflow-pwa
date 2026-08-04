@@ -24,6 +24,7 @@ import { AkAmbientBg, AkShimmer } from '@rafael_dias/akoma'
 import { useAuthStore } from '@/stores/auth'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
+import { useGamificationStore } from '@/stores/gamification'
 import { useAppTheme } from '@/composables/useAppTheme'
 import AppTabBar from '@/components/layout/AppTabBar.vue'
 import UpdateBanner from '@/components/ui/UpdateBanner.vue'
@@ -36,20 +37,20 @@ const route = useRoute()
 const authStore = useAuthStore()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
+const gamificationStore = useGamificationStore()
 
 const appReady = ref(false)
 
 watch(() => authStore.uid, (newUid, oldUid) => {
   if (newUid && oldUid && newUid !== oldUid) {
-    subjectsStore.load()
-    sessionsStore.loadToday()
+    void Promise.all([subjectsStore.load(), sessionsStore.loadToday(), gamificationStore.load()])
   }
 })
 
 onMounted(async () => {
   await authStore.init()
   try {
-    await Promise.all([subjectsStore.load(), sessionsStore.loadToday()])
+    await Promise.all([subjectsStore.load(), sessionsStore.loadToday(), gamificationStore.load()])
   } catch (e) {
     console.error('[StudyFlow] Erro ao carregar dados iniciais:', e)
   } finally {

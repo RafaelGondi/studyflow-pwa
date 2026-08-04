@@ -34,8 +34,16 @@ export interface StudySession {
   date: string    // YYYY-MM-DD
   userId: string
   segments?: StudySegment[]
+  coinsEarned?: number
+  coinRatePerHour?: number
   kind?: SessionKind // ausente = estudo (retrocompatível)
 }
+
+export interface GamificationSettings {
+  coinsPerHour: number
+  updatedAt: number
+}
+
 
 export function isStudySession(s: StudySession): boolean {
   return s.kind !== 'break'

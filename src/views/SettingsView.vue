@@ -186,6 +186,32 @@
       </section>
 
       <section class="section-block">
+        <AkSectionHeader title="Recompensas" />
+        <AkList>
+          <AkListRow :divider="false">
+            <span>Moedas por hora</span>
+            <template #subtitle>
+              <span class="text-xs text-muted">Aplicada às próximas sessões de estudo</span>
+            </template>
+            <template #trailing>
+              <div class="duration-input-row">
+                <input
+                  type="number"
+                  class="duration-input"
+                  :value="gamificationStore.settings.coinsPerHour"
+                  min="1"
+                  max="1000"
+                  aria-label="Moedas ganhas por hora de estudo"
+                  @change="handleCoinsPerHourChange"
+                />
+                <span class="duration-unit">moedas/h</span>
+              </div>
+            </template>
+          </AkListRow>
+        </AkList>
+      </section>
+
+      <section class="section-block">
         <AkSectionHeader title="Aplicativo" />
         <AkList>
           <AkListRow v-if="isInstallable && !isInstalled" interactive :divider="true" @click="install()">
@@ -234,10 +260,12 @@ import { usePwaInstall } from '@/composables/usePwaInstall'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { useTimerStore } from '@/stores/timer'
+import { useGamificationStore } from '@/stores/gamification'
 import type { TimerType } from '@/stores/timer'
 
 const { mode, setMode } = useAppTheme()
 const timerStore = useTimerStore()
+const gamificationStore = useGamificationStore()
 
 const timerModes: { value: TimerType; label: string }[] = [
   { value: 'counter',    label: 'Contador' },
@@ -253,6 +281,13 @@ const faceDown = useFaceDownFocus()
 
 const updating = ref(false)
 const signingOut = ref(false)
+
+async function handleCoinsPerHourChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const value = Math.min(1000, Math.max(1, Math.round(Number(input.value) || 50)))
+  input.value = String(value)
+  await gamificationStore.updateSettings({ coinsPerHour: value })
+}
 
 async function handleFaceDownToggle(next: boolean) {
   if (next === faceDown.enabled.value) return

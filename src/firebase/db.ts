@@ -1,15 +1,16 @@
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
-  getDocs, query, where, orderBy, Timestamp, writeBatch,
+  getDoc, getDocs, query, where, orderBy, Timestamp, writeBatch, setDoc,
 } from 'firebase/firestore'
 import { db } from './config'
-import type { Subject, Category, StudySession } from '@/types'
+import type { Subject, Category, StudySession, GamificationSettings } from '@/types'
 
 // ── Collections ──────────────────────────────────────────────────────────────
 
 function subjectsCol(uid: string) { return collection(db, 'users', uid, 'subjects') }
 function categoriesCol(uid: string) { return collection(db, 'users', uid, 'categories') }
 function sessionsCol(uid: string) { return collection(db, 'users', uid, 'sessions') }
+function gamificationDoc(uid: string) { return doc(db, 'users', uid, 'settings', 'gamification') }
 
 // ── Subjects ─────────────────────────────────────────────────────────────────
 
@@ -102,4 +103,16 @@ export async function saveSession(uid: string, data: Omit<StudySession, 'id' | '
 
 export async function deleteSession(uid: string, id: string): Promise<void> {
   await deleteDoc(doc(sessionsCol(uid), id))
+}
+
+export async function fetchGamificationSettings(uid: string): Promise<GamificationSettings | null> {
+  const snap = await getDoc(gamificationDoc(uid))
+  return snap.exists() ? snap.data() as GamificationSettings : null
+}
+
+export async function saveGamificationSettings(
+  uid: string,
+  settings: GamificationSettings,
+): Promise<void> {
+  await setDoc(gamificationDoc(uid), settings, { merge: true })
 }
