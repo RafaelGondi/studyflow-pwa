@@ -97,8 +97,8 @@ const emit = defineEmits<{
 const subjectsStore = useSubjectsStore()
 const filterId = ref<string | null>(null)
 
-const subjects = computed(() => subjectsStore.subjects)
-const categories = computed(() => subjectsStore.categories)
+const subjects = computed(() => subjectsStore.activeSubjects)
+const categories = computed(() => subjectsStore.categories.filter(cat => subjects.value.some(s => s.categoryId === cat.id)))
 
 const filteredSubjects = computed(() => {
   if (!filterId.value) return subjects.value

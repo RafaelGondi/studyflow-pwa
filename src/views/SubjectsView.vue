@@ -3,22 +3,25 @@
     <AkPageHeader
       label="Catálogo"
       title="Matérias"
-      :meta="`${subjectsStore.subjects.length} matérias · ${subjectsStore.categories.length} categorias`"
+      :meta="`${activeSubjects.length} ativas · ${archivedSubjects.length} arquivadas · ${subjectsStore.categories.length} categorias`"
       size="md"
     />
 
     <div class="chip-scroll reveal reveal-d1">
-      <AkChip :active="selectedCategoryFilter === null" @click="selectedCategoryFilter = null">
+      <AkChip :active="listMode === 'active' && selectedCategoryFilter === null" @click="showActive(null)">
         Todas
       </AkChip>
       <AkChip
-        v-for="cat in subjectsStore.categories"
+        v-for="cat in visibleCategories"
         :key="cat.id"
-        :active="selectedCategoryFilter === cat.id"
+        :active="listMode === 'active' && selectedCategoryFilter === cat.id"
         :color="cat.color"
-        @click="selectedCategoryFilter = cat.id"
+        @click="showActive(cat.id)"
       >
         {{ cat.name }}
+      </AkChip>
+      <AkChip v-if="archivedSubjects.length > 0" :active="listMode === 'archived'" @click="showArchived">
+        Arquivadas
       </AkChip>
     </div>
 
@@ -28,8 +31,8 @@
 
         <AkEmptyState
           v-if="filteredSubjects.length === 0"
-          title="Nenhuma matéria"
-          description="Toque no + para adicionar."
+          :title="listMode === 'archived' ? 'Nenhuma matéria arquivada' : 'Nenhuma matéria'"
+          :description="listMode === 'archived' ? 'Quando você arquivar algo, ele aparece aqui.' : 'Toque no + para adicionar.'"
         />
 
         <AkList v-else>
@@ -48,12 +51,27 @@
 
             <template #subtitle>
               <span class="text-xs text-muted truncate">
-                {{ getSubjectCategory(subject)?.name ?? 'Sem categoria' }}
+                {{ subject.archivedAt ? 'Arquivada · ' : '' }}{{ getSubjectCategory(subject)?.name ?? 'Sem categoria' }}
               </span>
             </template>
 
             <template #trailing>
+              <AkBadge v-if="subject.archivedAt" variant="neutral" label="Arquivada" />
               <AkIconButton label="Editar" size="sm" icon="edit-outline" @click.stop="openEditSubject(subject)" />
+              <AkIconButton
+                v-if="subject.archivedAt"
+                label="Restaurar"
+                size="sm"
+                icon="refresh-outline"
+                @click.stop="restoreSubject(subject.id)"
+              />
+              <AkIconButton
+                v-else
+                label="Arquivar"
+                size="sm"
+                icon="archive-outline"
+                @click.stop="confirmArchiveSubject(subject)"
+              />
               <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click.stop="confirmDeleteSubject(subject.id)" />
             </template>
           </AkListRow>
@@ -145,11 +163,29 @@ const showCategoryModal = ref(false)
 const editingSubject = ref<Subject | null>(null)
 const editingCategory = ref<Category | null>(null)
 const selectedCategoryFilter = ref<string | null>(null)
+const listMode = ref<'active' | 'archived'>('active')
+
+const activeSubjects = computed(() => subjectsStore.activeSubjects)
+const archivedSubjects = computed(() => subjectsStore.archivedSubjects)
 
 const filteredSubjects = computed(() => {
-  if (!selectedCategoryFilter.value) return subjectsStore.subjects
-  return subjectsStore.subjects.filter(s => s.categoryId === selectedCategoryFilter.value)
+  if (listMode.value === 'archived') return archivedSubjects.value
+  if (!selectedCategoryFilter.value) return activeSubjects.value
+  return activeSubjects.value.filter(s => s.categoryId === selectedCategoryFilter.value)
 })
+
+const visibleCategories = computed(() =>
+  subjectsStore.categories.filter(cat => activeSubjects.value.some(s => s.categoryId === cat.id)),
+)
+
+function showActive(categoryId: string | null) {
+  listMode.value = 'active'
+  selectedCategoryFilter.value = categoryId
+}
+
+function showArchived() {
+  listMode.value = 'archived'
+}
 
 function openSubjectStats(id: string) {
   router.push(`/subjects/${id}`)
@@ -163,6 +199,22 @@ function openAddSubject() {
 function openEditSubject(subject: Subject) {
   editingSubject.value = subject
   showSubjectModal.value = true
+}
+
+async function confirmArchiveSubject(subject: Subject) {
+  const ok = await confirmSheet.ask({
+    title: 'Arquivar matéria',
+    message: `${subject.name} não aparecerá mais para iniciar novas sessões. O histórico será mantido.`,
+  })
+  if (!ok) return
+  await subjectsStore.archiveSubject(subject.id)
+  toast.success('Matéria arquivada')
+}
+
+async function restoreSubject(id: string) {
+  await subjectsStore.restoreSubject(id)
+  toast.success('Matéria restaurada')
+  listMode.value = 'active'
 }
 
 async function confirmDeleteSubject(id: string) {
@@ -185,7 +237,7 @@ function getSubjectCategory(subject: Subject) {
 }
 
 function countInCategory(catId: string) {
-  const n = subjectsStore.subjects.filter(s => s.categoryId === catId).length
+  const n = activeSubjects.value.filter(s => s.categoryId === catId).length
   return n === 1 ? '1' : String(n)
 }
 

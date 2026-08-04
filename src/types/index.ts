@@ -14,6 +14,7 @@ export interface Subject {
   categoryId: string | null
   userId: string
   createdAt: number
+  archivedAt?: number | null
 }
 
 export interface StudySegment {

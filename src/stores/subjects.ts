@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useAuthStore } from './auth'
 import * as db from '@/firebase/db'
 import type { Subject, Category } from '@/types'
@@ -14,6 +14,8 @@ export const useSubjectsStore = defineStore('subjects', () => {
   const subjects = ref<Subject[]>([])
   const categories = ref<Category[]>([])
   const loading = ref(false)
+  const activeSubjects = computed(() => subjects.value.filter(s => !s.archivedAt))
+  const archivedSubjects = computed(() => subjects.value.filter(s => !!s.archivedAt))
 
   async function load() {
     if (!auth.uid) return
@@ -56,6 +58,14 @@ export const useSubjectsStore = defineStore('subjects', () => {
     subjects.value = subjects.value.filter(s => s.id !== id)
   }
 
+  async function archiveSubject(id: string) {
+    await updateSubject(id, { archivedAt: Date.now() })
+  }
+
+  async function restoreSubject(id: string) {
+    await updateSubject(id, { archivedAt: null })
+  }
+
   async function addCategory(data: Omit<Category, 'id' | 'userId' | 'createdAt'>) {
     if (!auth.uid) return
     const payload = { ...data, color: normalizeAkomaColor(data.color) }
@@ -92,8 +102,8 @@ export const useSubjectsStore = defineStore('subjects', () => {
   }
 
   return {
-    subjects, categories, loading,
-    load, addSubject, updateSubject, removeSubject,
+    subjects, activeSubjects, archivedSubjects, categories, loading,
+    load, addSubject, updateSubject, removeSubject, archiveSubject, restoreSubject,
     addCategory, updateCategory, removeCategory,
     getSubject, getCategory,
   }

@@ -295,7 +295,7 @@ const recentItems = computed(() => {
    * junto — sem nenhum jeito de começar a estudar. Cai pro catálogo inteiro.
    */
   if (orderedIds.length === 0) {
-    for (const s of subjectsStore.subjects) {
+    for (const s of subjectsStore.activeSubjects) {
       if (seen.has(s.id)) continue
       seen.add(s.id)
       orderedIds.push(s.id)
@@ -306,7 +306,7 @@ const recentItems = computed(() => {
     .slice(0, 5)
     .map((subjectId) => {
       const subject = subjectsStore.getSubject(subjectId)
-      if (!subject) return null
+      if (!subject || (subject.archivedAt && props.timerIdle)) return null
       const seconds = secondsBySubject.value.get(subjectId) ?? 0
       const cat = subject.categoryId
         ? subjectsStore.getCategory(subject.categoryId)?.name

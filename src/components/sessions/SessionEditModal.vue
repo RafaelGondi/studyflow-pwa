@@ -67,7 +67,13 @@ const saving = ref(false)
 
 const form = ref({ startTime: '', endTime: '', subjectId: '' })
 
-const subjects = computed(() => subjectsStore.subjects)
+const subjects = computed(() => {
+  const active = subjectsStore.activeSubjects
+  const currentId = props.session?.subjectId
+  if (!currentId || active.some(s => s.id === currentId)) return active
+  const current = subjectsStore.getSubject(currentId)
+  return current ? [current, ...active] : active
+})
 const isBreak = computed(() => props.session ? isBreakSession(props.session) : false)
 
 const dateLabel = computed(() => {

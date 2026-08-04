@@ -69,7 +69,7 @@ const form = ref({
   endTime: '10:00',
 })
 
-const subjects = computed(() => subjectsStore.subjects)
+const subjects = computed(() => subjectsStore.activeSubjects)
 
 function applyTimeToDate(dateStr: string, timeStr: string): number {
   const [h, m] = timeStr.split(':').map(Number)

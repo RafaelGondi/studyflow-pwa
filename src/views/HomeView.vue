@@ -76,7 +76,7 @@
         </AkEmptyState>
 
         <StudyLauncher
-          v-else-if="isViewingToday"
+          v-else-if="isViewingToday && activeSubjects.length > 0"
           :active-id="timerStore.activeSubjectId"
           :last-subject-id="lastSubjectId"
           :extra-seconds="liveExtraSeconds"
@@ -88,12 +88,23 @@
           @focus="focusMode = true"
         />
 
+        <AkEmptyState
+          v-else-if="isViewingToday && subjectsStore.subjects.length > 0 && activeSubjects.length === 0"
+          title="Nenhuma matéria ativa"
+          description="Restaure uma matéria arquivada ou crie uma nova para iniciar o timer."
+        >
+          <template #icon>📚</template>
+          <AkButton variant="primary" @click="router.push('/subjects')">
+            Abrir Matérias
+          </AkButton>
+        </AkEmptyState>
+
         <section class="section-block">
           <AkSectionHeader :title="sectionTitle">
             <template #action>
               <div class="section-actions">
                 <AkButton
-                  v-if="subjectsStore.subjects.length"
+                  v-if="activeSubjects.length"
                   size="sm"
                   variant="ghost"
                   @click="showAddModal = true"
@@ -246,6 +257,7 @@ const showAddModal = ref(false)
 const sheetOpen = ref(false)
 const sessionsExpanded = ref(false)
 const selectedCategoryFilter = ref<string | null>(null)
+const activeSubjects = computed(() => subjectsStore.activeSubjects)
 
 /* ─── Day navigation ─────────────────────────────────────────── */
 const viewDate = ref(todayDateString())
@@ -441,6 +453,11 @@ async function handleSubjectSelect(id: string) {
 }
 
 async function startSubject(id: string) {
+  const subject = subjectsStore.getSubject(id)
+  if (!subject || subject.archivedAt) {
+    toast.error('Matéria arquivada', 'Restaure a matéria para iniciar novas sessões.')
+    return
+  }
   await timerStore.startStudy(id)
   lastSubjectId.value = id
   await sessionsStore.loadToday()
@@ -455,6 +472,10 @@ async function handleStop() {
 async function switchSubject(id: string) {
   if (id === timerStore.activeSubjectId) return
   const nextSubject = subjectsStore.getSubject(id)
+  if (!nextSubject || nextSubject.archivedAt) {
+    toast.error('Matéria arquivada', 'Restaure a matéria para iniciar novas sessões.')
+    return
+  }
   lastSubjectId.value = id
   await timerStore.stop()
   await sessionsStore.loadToday()
