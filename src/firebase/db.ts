@@ -3,7 +3,7 @@ import {
   getDoc, getDocs, query, where, orderBy, Timestamp, writeBatch, setDoc,
 } from 'firebase/firestore'
 import { db } from './config'
-import type { Subject, Category, StudySession, GamificationSettings } from '@/types'
+import type { Subject, Category, StudySession, GamificationSettings, Reward, RewardRedemption } from '@/types'
 
 // ── Collections ──────────────────────────────────────────────────────────────
 
@@ -11,6 +11,8 @@ function subjectsCol(uid: string) { return collection(db, 'users', uid, 'subject
 function categoriesCol(uid: string) { return collection(db, 'users', uid, 'categories') }
 function sessionsCol(uid: string) { return collection(db, 'users', uid, 'sessions') }
 function gamificationDoc(uid: string) { return doc(db, 'users', uid, 'settings', 'gamification') }
+function rewardsCol(uid: string) { return collection(db, 'users', uid, 'rewards') }
+function redemptionsCol(uid: string) { return collection(db, 'users', uid, 'rewardRedemptions') }
 
 // ── Subjects ─────────────────────────────────────────────────────────────────
 
@@ -96,6 +98,11 @@ export async function updateSession(uid: string, id: string, data: Partial<Study
   await updateDoc(doc(sessionsCol(uid), id), data)
 }
 
+export async function fetchSession(uid: string, id: string): Promise<StudySession | null> {
+  const snap = await getDoc(doc(sessionsCol(uid), id))
+  return snap.exists() ? { id: snap.id, ...snap.data() } as StudySession : null
+}
+
 export async function saveSession(uid: string, data: Omit<StudySession, 'id' | 'userId'>): Promise<StudySession> {
   const ref = await addDoc(sessionsCol(uid), { ...data, userId: uid })
   return { id: ref.id, ...data, userId: uid }
@@ -104,6 +111,7 @@ export async function saveSession(uid: string, data: Omit<StudySession, 'id' | '
 export async function deleteSession(uid: string, id: string): Promise<void> {
   await deleteDoc(doc(sessionsCol(uid), id))
 }
+
 export async function fetchRewardedSessions(uid: string): Promise<StudySession[]> {
   const snap = await getDocs(query(sessionsCol(uid)))
   return snap.docs
@@ -111,7 +119,6 @@ export async function fetchRewardedSessions(uid: string): Promise<StudySession[]
     .filter(session => (session.coinsEarned ?? 0) > 0)
     .sort((a, b) => b.endTime - a.endTime)
 }
-
 
 export async function fetchGamificationSettings(uid: string): Promise<GamificationSettings | null> {
   const snap = await getDoc(gamificationDoc(uid))
@@ -123,4 +130,54 @@ export async function saveGamificationSettings(
   settings: GamificationSettings,
 ): Promise<void> {
   await setDoc(gamificationDoc(uid), settings, { merge: true })
+}
+
+export async function fetchRewards(uid: string): Promise<Reward[]> {
+  const snap = await getDocs(query(rewardsCol(uid)))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as Reward))
+    .sort((a, b) => a.createdAt - b.createdAt)
+}
+
+export async function addReward(
+  uid: string,
+  data: Omit<Reward, 'id' | 'userId' | 'createdAt' | 'updatedAt'>,
+): Promise<Reward> {
+  const now = Date.now()
+  const payload = { ...data, userId: uid, createdAt: now, updatedAt: now }
+  const ref = await addDoc(rewardsCol(uid), payload)
+  return { id: ref.id, ...payload }
+}
+
+export async function updateReward(uid: string, id: string, data: Partial<Reward>): Promise<void> {
+  await updateDoc(doc(rewardsCol(uid), id), { ...data, updatedAt: Date.now() })
+}
+
+export async function deleteReward(uid: string, id: string): Promise<void> {
+  await deleteDoc(doc(rewardsCol(uid), id))
+}
+
+export async function fetchRedemptions(uid: string): Promise<RewardRedemption[]> {
+  const snap = await getDocs(query(redemptionsCol(uid)))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as RewardRedemption))
+    .sort((a, b) => b.createdAt - a.createdAt)
+}
+
+export async function addRedemption(uid: string, reward: Reward): Promise<RewardRedemption> {
+  const payload = {
+    rewardId: reward.id,
+    rewardName: reward.name,
+    rewardIcon: reward.icon,
+    cost: reward.cost,
+    userId: uid,
+    createdAt: Date.now(),
+    undoneAt: null,
+  }
+  const ref = await addDoc(redemptionsCol(uid), payload)
+  return { id: ref.id, ...payload }
+}
+
+export async function undoRedemption(uid: string, id: string, undoneAt: number): Promise<void> {
+  await updateDoc(doc(redemptionsCol(uid), id), { undoneAt })
 }

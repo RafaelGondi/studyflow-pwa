@@ -72,7 +72,10 @@ export const useSessionsStore = defineStore('sessions', () => {
 
   async function update(id: string, data: Partial<StudySession>) {
     if (!auth.uid) return
-    const current = [...todaySessions.value, ...rangeSessions.value].find(s => s.id === id)
+    let current = [...todaySessions.value, ...rangeSessions.value].find(s => s.id === id)
+    if (!current) {
+      current = await db.fetchSession(auth.uid, id) ?? undefined
+    }
     const patchData = { ...data }
     if (current && isStudySession(current) && current.coinsEarned != null && data.duration != null) {
       const rate = current.coinRatePerHour ?? gamification.settings.coinsPerHour

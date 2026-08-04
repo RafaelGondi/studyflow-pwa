@@ -47,6 +47,31 @@ export interface GamificationSettings {
   updatedAt: number
 }
 
+export interface Reward {
+  id: string
+  name: string
+  description?: string
+  cost: number
+  icon: string
+  color: string
+  repeatable: boolean
+  archivedAt?: number | null
+  userId: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface RewardRedemption {
+  id: string
+  rewardId: string
+  rewardName: string
+  rewardIcon: string
+  cost: number
+  userId: string
+  createdAt: number
+  undoneAt?: number | null
+}
+
 
 export function isStudySession(s: StudySession): boolean {
   return s.kind !== 'break'
