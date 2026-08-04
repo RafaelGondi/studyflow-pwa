@@ -81,7 +81,14 @@
       <section class="section-block">
         <AkSectionHeader title="Categorias">
           <template #action>
-        <AkButton size="sm" variant="ghost" @click="showCategoryModal = true">Nova categoria</AkButton>
+            <div class="category-header-actions">
+              <AkButton v-if="subjectsStore.categories.length > 1" size="sm" variant="ghost" @click="reorderingCategories = !reorderingCategories">
+                {{ reorderingCategories ? 'Concluir' : 'Reordenar' }}
+              </AkButton>
+              <AkButton v-if="!reorderingCategories" size="sm" variant="ghost" @click="showCategoryModal = true">
+                Nova categoria
+              </AkButton>
+            </div>
           </template>
         </AkSectionHeader>
 
@@ -91,7 +98,11 @@
           description="Organize suas matérias em grupos."
         />
 
-        <AkList v-else>
+        <p v-if="subjectsStore.categories.length > 0 && reorderingCategories" class="category-order-hint">
+          Mova as categorias para definir a ordem em que aparecem nos filtros.
+        </p>
+
+        <AkList v-if="subjectsStore.categories.length > 0">
           <AkListRow
             v-for="(cat, i) in subjectsStore.categories"
             :key="cat.id"
@@ -107,8 +118,26 @@
 
             <template #trailing>
               <AkBadge variant="neutral" :label="countInCategory(cat.id)" />
-              <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="openEditCategory(cat)" />
-              <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="confirmDeleteCategory(cat.id)" />
+              <template v-if="reorderingCategories">
+                <AkIconButton
+                  :label="`Mover ${cat.name} para cima`"
+                  size="sm"
+                  icon="arrow-up-outline"
+                  :disabled="i === 0 || movingCategoryId !== null"
+                  @click="moveCategory(cat.id, -1)"
+                />
+                <AkIconButton
+                  :label="`Mover ${cat.name} para baixo`"
+                  size="sm"
+                  icon="arrow-down-outline"
+                  :disabled="i === subjectsStore.categories.length - 1 || movingCategoryId !== null"
+                  @click="moveCategory(cat.id, 1)"
+                />
+              </template>
+              <template v-else>
+                <AkIconButton label="Editar" size="sm" icon="edit-outline" @click="openEditCategory(cat)" />
+                <AkIconButton label="Excluir" size="sm" icon="trash-outline" @click="confirmDeleteCategory(cat.id)" />
+              </template>
             </template>
           </AkListRow>
         </AkList>
@@ -164,6 +193,8 @@ const editingSubject = ref<Subject | null>(null)
 const editingCategory = ref<Category | null>(null)
 const selectedCategoryFilter = ref<string | null>(null)
 const listMode = ref<'active' | 'archived'>('active')
+const reorderingCategories = ref(false)
+const movingCategoryId = ref<string | null>(null)
 
 const activeSubjects = computed(() => subjectsStore.activeSubjects)
 const archivedSubjects = computed(() => subjectsStore.archivedSubjects)
@@ -234,6 +265,18 @@ function openEditCategory(cat: Category) {
   showCategoryModal.value = true
 }
 
+async function moveCategory(id: string, direction: -1 | 1) {
+  movingCategoryId.value = id
+  try {
+    await subjectsStore.moveCategory(id, direction)
+  } catch (error) {
+    console.error('[StudyFlow] Erro ao reordenar categorias:', error)
+    toast.error('Não foi possível salvar a nova ordem')
+  } finally {
+    movingCategoryId.value = null
+  }
+}
+
 function getSubjectCategory(subject: Subject) {
   return subject.categoryId ? subjectsStore.getCategory(subject.categoryId) : null
 }
@@ -253,3 +296,19 @@ async function confirmDeleteCategory(id: string) {
   toast.success('Categoria excluída')
 }
 </script>
+
+<style scoped>
+.category-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.category-order-hint {
+  margin: 0 0 var(--space-3);
+  padding: 0 var(--space-1);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+</style>

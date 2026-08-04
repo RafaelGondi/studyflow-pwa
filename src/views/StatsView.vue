@@ -248,17 +248,25 @@ const scopedPreviousSessions = computed(() => applyScope(previousSessions.value)
 
 const availableCategoryFilters = computed(() => {
   const activeIds = new Set(rawStudySessions.value.map(categoryIdFor))
-  return [...activeIds].map((id) => {
-    if (id === UNCATEGORIZED) {
-      return { id, name: 'Sem categoria', color: AKOMA_CAT_COLORS[5].value }
+  const knownIds = new Set(subjectsStore.categories.map(category => category.id))
+  const filters = subjectsStore.categories
+    .filter(category => activeIds.has(category.id))
+    .map(category => ({
+      id: category.id,
+      name: category.name,
+      color: normalizeAkomaColor(category.color),
+    }))
+
+  for (const id of activeIds) {
+    if (id !== UNCATEGORIZED && !knownIds.has(id)) {
+      filters.push({ id, name: 'Categoria removida', color: normalizeAkomaColor(undefined) })
     }
-    const category = subjectsStore.getCategory(id)
-    return {
-      id,
-      name: category?.name ?? 'Categoria removida',
-      color: normalizeAkomaColor(category?.color),
-    }
-  }).sort((a, b) => a.name.localeCompare(b.name))
+  }
+  if (activeIds.has(UNCATEGORIZED)) {
+    filters.push({ id: UNCATEGORIZED, name: 'Sem categoria', color: AKOMA_CAT_COLORS[5].value })
+  }
+
+  return filters
 })
 
 const availableSubjectFilters = computed(() => {

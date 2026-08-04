@@ -84,6 +84,26 @@ export const useSubjectsStore = defineStore('subjects', () => {
     if (idx !== -1) categories.value[idx] = { ...categories.value[idx], ...patch }
   }
 
+  async function moveCategory(id: string, direction: -1 | 1) {
+    if (!auth.uid) return
+    const currentIndex = categories.value.findIndex(c => c.id === id)
+    const targetIndex = currentIndex + direction
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= categories.value.length) return
+
+    const previous = categories.value
+    const reordered = [...categories.value]
+    const [category] = reordered.splice(currentIndex, 1)
+    reordered.splice(targetIndex, 0, category)
+    categories.value = reordered.map((item, order) => ({ ...item, order }))
+
+    try {
+      await db.reorderCategories(auth.uid, categories.value.map(c => c.id))
+    } catch (error) {
+      categories.value = previous
+      throw error
+    }
+  }
+
   async function removeCategory(id: string) {
     if (!auth.uid) return
     await db.deleteCategory(auth.uid, id)
@@ -104,7 +124,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
   return {
     subjects, activeSubjects, archivedSubjects, categories, loading,
     load, addSubject, updateSubject, removeSubject, archiveSubject, restoreSubject,
-    addCategory, updateCategory, removeCategory,
+    addCategory, updateCategory, moveCategory, removeCategory,
     getSubject, getCategory,
   }
 })

@@ -4,6 +4,7 @@ export interface Category {
   color: string
   userId: string
   createdAt: number
+  order?: number
 }
 
 export interface Subject {

@@ -1,6 +1,6 @@
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
-  getDocs, query, where, orderBy, Timestamp,
+  getDocs, query, where, orderBy, Timestamp, writeBatch,
 } from 'firebase/firestore'
 import { db } from './config'
 import type { Subject, Category, StudySession } from '@/types'
@@ -39,7 +39,12 @@ export async function fetchCategories(uid: string): Promise<Category[]> {
   const snap = await getDocs(query(categoriesCol(uid)))
   return snap.docs
     .map(d => ({ id: d.id, ...d.data() } as Category))
-    .sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
+    .sort((a, b) => {
+      if (a.order == null && b.order == null) return (a.createdAt ?? 0) - (b.createdAt ?? 0)
+      if (a.order == null) return 1
+      if (b.order == null) return -1
+      return a.order - b.order
+    })
 }
 
 export async function addCategory(uid: string, data: Omit<Category, 'id' | 'userId' | 'createdAt'>): Promise<Category> {
@@ -49,6 +54,14 @@ export async function addCategory(uid: string, data: Omit<Category, 'id' | 'user
 
 export async function updateCategory(uid: string, id: string, data: Partial<Category>): Promise<void> {
   await updateDoc(doc(categoriesCol(uid), id), data)
+}
+
+export async function reorderCategories(uid: string, orderedIds: string[]): Promise<void> {
+  const batch = writeBatch(db)
+  orderedIds.forEach((id, order) => {
+    batch.update(doc(categoriesCol(uid), id), { order })
+  })
+  await batch.commit()
 }
 
 export async function deleteCategory(uid: string, id: string): Promise<void> {
