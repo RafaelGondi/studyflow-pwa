@@ -294,6 +294,7 @@ function formatCoins(value: number) {
 <style scoped>
 .wallet-card {
   position: relative;
+  flex: 0 0 auto;
   overflow: hidden;
   padding: var(--space-6);
   border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));

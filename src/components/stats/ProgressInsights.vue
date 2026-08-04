@@ -4,7 +4,9 @@
 
     <div class="insights">
       <article v-for="insight in insights" :key="insight.key" class="insight">
-        <span class="insight__icon" aria-hidden="true">{{ insight.icon }}</span>
+        <span class="insight__icon" aria-hidden="true">
+          <SubjectIcon :icon="insight.icon" :name="insight.title" />
+        </span>
         <div class="insight__content">
           <span class="insight__label">{{ insight.label }}</span>
           <strong>{{ insight.title }}</strong>
@@ -18,6 +20,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { AkSectionHeader } from '@rafael_dias/akoma'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import { formatDuration } from '@/types'
 import { totalsBySubject } from '@/utils/studyProgress'

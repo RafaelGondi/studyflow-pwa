@@ -44,7 +44,7 @@
             class="subject-leading subject-leading--sm"
             :style="{ background: subjectBgMix(row.color, 16) }"
           >
-            {{ row.icon }}
+            <SubjectIcon :icon="row.icon" :name="row.name" />
           </div>
           <div class="distribution__content">
             <div class="distribution__line">
@@ -77,6 +77,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { AkEmptyState, AkSectionHeader } from '@rafael_dias/akoma'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import { useSubjectsStore } from '@/stores/subjects'
 import { formatDuration } from '@/types'
 import {

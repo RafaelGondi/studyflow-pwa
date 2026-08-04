@@ -130,7 +130,10 @@
                 <AkListRow v-else-if="item.type === 'study'" :divider="i < group.items.length - 1">
                   <template #leading>
                     <div class="subject-leading subject-leading--sm">
-                      {{ getSubject(item.session.subjectId)?.icon ?? '📚' }}
+                      <SubjectIcon
+                        :icon="getSubject(item.session.subjectId)?.icon ?? '📚'"
+                        :name="getSubject(item.session.subjectId)?.name"
+                      />
                     </div>
                   </template>
 
@@ -189,6 +192,7 @@ import PeriodChart from '@/components/stats/PeriodChart.vue'
 import ProgressInsights from '@/components/stats/ProgressInsights.vue'
 import SubjectRanking from '@/components/stats/SubjectRanking.vue'
 import SessionEditModal from '@/components/sessions/SessionEditModal.vue'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration, localDateStr, isStudySession } from '@/types'
