@@ -8,6 +8,7 @@ const router = createRouter({
     { path: '/subjects', name: 'subjects', component: () => import('@/views/SubjectsView.vue') },
     { path: '/subjects/:id', name: 'subject-stats', component: () => import('@/views/SubjectStatsView.vue') },
     { path: '/stats',    name: 'stats',    component: () => import('@/views/StatsView.vue') },
+    { path: '/rewards', name: 'rewards', component: () => import('@/views/RewardsView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
   ],
 })

@@ -10,6 +10,7 @@
     </AkTabBarItem>
     <AkTabBarItem value="/subjects" label="Matérias" icon="open-book-outline" />
     <AkTabBarItem value="/stats" label="Progresso" icon="chart-column-outline" />
+    <AkTabBarItem value="/rewards" label="Moedas" icon="trophy-outline" />
     <AkTabBarItem value="/settings" label="Ajustes" icon="settings-outline" />
   </AkTabBar>
 </template>
@@ -24,7 +25,7 @@ const route = useRoute()
 const router = useRouter()
 const timerStore = useTimerStore()
 
-const TAB_PATHS = ['/', '/subjects', '/stats', '/settings'] as const
+const TAB_PATHS = ['/', '/subjects', '/stats', '/rewards', '/settings'] as const
 
 function pathToTab(path: string): string {
   if (path === '/') return '/'

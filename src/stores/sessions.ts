@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useAuthStore } from './auth'
 import { useGamificationStore } from './gamification'
+import { useSubjectsStore } from './subjects'
 import * as db from '@/firebase/db'
 import type { StudySession } from '@/types'
 import { todayDateString, localDateStr, isStudySession, isBreakSession } from '@/types'
@@ -9,6 +10,7 @@ import { todayDateString, localDateStr, isStudySession, isBreakSession } from '@
 export const useSessionsStore = defineStore('sessions', () => {
   const auth = useAuthStore()
   const gamification = useGamificationStore()
+  const subjects = useSubjectsStore()
   const todaySessions = ref<StudySession[]>([])
   const rangeSessions = ref<StudySession[]>([])
 
@@ -36,6 +38,7 @@ export const useSessionsStore = defineStore('sessions', () => {
     if (!auth.uid) return
     const date = localDateStr(new Date(data.startTime))
     const session = await db.saveSession(auth.uid, { ...data, date })
+    gamification.trackSession(session)
     if (date === todayDateString()) todaySessions.value.unshift(session)
     return session
   }
@@ -57,11 +60,13 @@ export const useSessionsStore = defineStore('sessions', () => {
     segments?: StudySession['segments']
   }) {
     const coinRatePerHour = gamification.settings.coinsPerHour
+    const coinsEligible = subjects.subjectEarnsCoins(data.subjectId)
     return save({
       kind: 'study',
       ...data,
       coinRatePerHour,
-      coinsEarned: gamification.calculateCoins(data.duration, coinRatePerHour),
+      coinsEligible,
+      coinsEarned: coinsEligible ? gamification.calculateCoins(data.duration, coinRatePerHour) : 0,
     })
   }
 
@@ -72,7 +77,9 @@ export const useSessionsStore = defineStore('sessions', () => {
     if (current && isStudySession(current) && current.coinsEarned != null && data.duration != null) {
       const rate = current.coinRatePerHour ?? gamification.settings.coinsPerHour
       patchData.coinRatePerHour = rate
-      patchData.coinsEarned = gamification.calculateCoins(data.duration, rate)
+      patchData.coinsEarned = current.coinsEligible === false
+        ? 0
+        : gamification.calculateCoins(data.duration, rate)
     }
     await db.updateSession(auth.uid, id, patchData)
     const patch = (list: StudySession[]) => {
@@ -81,6 +88,8 @@ export const useSessionsStore = defineStore('sessions', () => {
     }
     patch(todaySessions.value)
     patch(rangeSessions.value)
+    const updated = current ? { ...current, ...patchData } : undefined
+    gamification.trackSession(updated)
   }
 
   async function fetchBySubject(subjectId: string): Promise<StudySession[]> {
@@ -92,6 +101,7 @@ export const useSessionsStore = defineStore('sessions', () => {
     if (!auth.uid) return
     await db.deleteSession(auth.uid, id)
     todaySessions.value = todaySessions.value.filter(s => s.id !== id)
+    gamification.forgetSession(id)
     rangeSessions.value = rangeSessions.value.filter(s => s.id !== id)
   }
 

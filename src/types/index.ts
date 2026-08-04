@@ -5,6 +5,7 @@ export interface Category {
   userId: string
   createdAt: number
   order?: number
+  earnsCoins?: boolean
 }
 
 export interface Subject {
@@ -15,6 +16,7 @@ export interface Subject {
   categoryId: string | null
   userId: string
   createdAt: number
+  earnsCoins?: boolean | null
   archivedAt?: number | null
 }
 
@@ -37,6 +39,7 @@ export interface StudySession {
   coinsEarned?: number
   coinRatePerHour?: number
   kind?: SessionKind // ausente = estudo (retrocompatível)
+  coinsEligible?: boolean
 }
 
 export interface GamificationSettings {

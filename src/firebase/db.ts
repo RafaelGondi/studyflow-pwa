@@ -104,6 +104,14 @@ export async function saveSession(uid: string, data: Omit<StudySession, 'id' | '
 export async function deleteSession(uid: string, id: string): Promise<void> {
   await deleteDoc(doc(sessionsCol(uid), id))
 }
+export async function fetchRewardedSessions(uid: string): Promise<StudySession[]> {
+  const snap = await getDocs(query(sessionsCol(uid)))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as StudySession))
+    .filter(session => (session.coinsEarned ?? 0) > 0)
+    .sort((a, b) => b.endTime - a.endTime)
+}
+
 
 export async function fetchGamificationSettings(uid: string): Promise<GamificationSettings | null> {
   const snap = await getDoc(gamificationDoc(uid))

@@ -41,6 +41,13 @@
           </div>
         </div>
 
+        <AkSwitch
+          :model-value="form.earnsCoins"
+          label="Acumula moedas"
+          description="Novas sessões desta categoria podem gerar moedas"
+          @update:model-value="form.earnsCoins = $event"
+        />
+
         <AkButton
           type="submit"
           form="category-form"
@@ -59,7 +66,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { AkButton, AkInput, AkSheet } from '@rafael_dias/akoma'
+import { AkButton, AkInput, AkSheet, AkSwitch } from '@rafael_dias/akoma'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useAppToast } from '@/composables/useAppToast'
 import { SUBJECT_COLORS } from '@/types'
@@ -72,13 +79,17 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 const subjectsStore = useSubjectsStore()
 const toast = useAppToast()
 const saving = ref(false)
-const form = ref<{ name: string; color: string }>({ name: '', color: DEFAULT_SUBJECT_COLOR })
+const form = ref<{ name: string; color: string; earnsCoins: boolean }>({
+  name: '',
+  color: DEFAULT_SUBJECT_COLOR,
+  earnsCoins: true,
+})
 
 watch(() => props.show, (val) => {
   if (val) {
     form.value = props.category
-      ? { name: props.category.name, color: props.category.color }
-      : { name: '', color: DEFAULT_SUBJECT_COLOR }
+      ? { name: props.category.name, color: props.category.color, earnsCoins: props.category.earnsCoins !== false }
+      : { name: '', color: DEFAULT_SUBJECT_COLOR, earnsCoins: true }
   }
 })
 

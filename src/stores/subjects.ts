@@ -116,6 +116,14 @@ export const useSubjectsStore = defineStore('subjects', () => {
   function getSubject(id: string) {
     return subjects.value.find(s => s.id === id)
   }
+  function subjectEarnsCoins(id: string): boolean {
+    const subject = getSubject(id)
+    if (!subject) return false
+    if (subject.earnsCoins != null) return subject.earnsCoins
+    if (!subject.categoryId) return true
+    return getCategory(subject.categoryId)?.earnsCoins !== false
+  }
+
 
   function getCategory(id: string) {
     return categories.value.find(c => c.id === id)
@@ -125,6 +133,6 @@ export const useSubjectsStore = defineStore('subjects', () => {
     subjects, activeSubjects, archivedSubjects, categories, loading,
     load, addSubject, updateSubject, removeSubject, archiveSubject, restoreSubject,
     addCategory, updateCategory, moveCategory, removeCategory,
-    getSubject, getCategory,
+    getSubject, getCategory, subjectEarnsCoins,
   }
 })

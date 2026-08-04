@@ -86,6 +86,20 @@
           </select>
         </div>
 
+        <div class="ak-field">
+          <span class="ak-field__label" id="subject-coins-label">Acúmulo de moedas</span>
+          <select
+            id="subject-coins"
+            v-model="form.coinRule"
+            class="ak-field__control ak-field__control--md field-select"
+            aria-labelledby="subject-coins-label"
+          >
+            <option value="inherit">{{ inheritedCoinRuleLabel }}</option>
+            <option value="enabled">Sempre acumular</option>
+            <option value="disabled">Não acumular</option>
+          </select>
+        </div>
+
         <div class="form-field">
           <label class="form-label">Cor</label>
           <div class="color-grid">
@@ -176,6 +190,7 @@ const form = ref({
   icon:       SUBJECT_ICONS[0] as string,
   color:      DEFAULT_SUBJECT_COLOR as string,
   categoryId: null as string | null,
+  coinRule:   'inherit' as 'inherit' | 'enabled' | 'disabled',
 })
 
 const categories  = computed(() => subjectsStore.categories)
@@ -183,6 +198,12 @@ const categoryName = computed(() => {
   if (!form.value.categoryId) return null
   return subjectsStore.getCategory(form.value.categoryId)?.name ?? null
 })
+const inheritedCoinRuleLabel = computed(() => {
+  if (!form.value.categoryId) return 'Usar padrão (acumula)'
+  const category = subjectsStore.getCategory(form.value.categoryId)
+  return `Herdar da categoria (${category?.earnsCoins === false ? 'não acumula' : 'acumula'})`
+})
+
 
 const previewBg = computed(() => ({
   background: iconMode.value === 'image' && imagePreview.value
@@ -251,6 +272,7 @@ watch(() => props.show, (val) => {
       icon:       props.subject.icon,
       color:      normalizeAkomaColor(props.subject.color),
       categoryId: props.subject.categoryId,
+      coinRule:   props.subject.earnsCoins == null ? 'inherit' : props.subject.earnsCoins ? 'enabled' : 'disabled',
     }
   } else {
     iconMode.value    = 'emoji'
@@ -260,6 +282,7 @@ watch(() => props.show, (val) => {
       icon:       SUBJECT_ICONS[0],
       color:      DEFAULT_SUBJECT_COLOR,
       categoryId: null,
+      coinRule:   'inherit',
     }
   }
 })
@@ -268,11 +291,16 @@ async function handleSubmit() {
   if (!form.value.name.trim()) return
   saving.value = true
   try {
+    const { coinRule, ...subjectData } = form.value
+    const payload = {
+      ...subjectData,
+      earnsCoins: coinRule === 'inherit' ? null : coinRule === 'enabled',
+    }
     if (props.subject) {
-      await subjectsStore.updateSubject(props.subject.id, form.value)
+      await subjectsStore.updateSubject(props.subject.id, payload)
       toast.success('Matéria atualizada')
     } else {
-      await subjectsStore.addSubject(form.value)
+      await subjectsStore.addSubject(payload)
       toast.success('Matéria criada')
     }
     emit('saved')
