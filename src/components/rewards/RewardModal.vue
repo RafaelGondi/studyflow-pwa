@@ -133,7 +133,25 @@ import {
 } from '@/utils/coins'
 import type { Reward } from '@/types'
 
-const REWARD_ICONS = ['🍫', '🎮', '📚', '☕', '🎬', '🍕', '🎁', '🛍️', '🎧', '🍰', '🎟️', '✨']
+/*
+ * Agrupados por tema, seis por linha — a ordem das linhas é o que torna
+ * uma lista longa varrível em vez de um caça-palavras.
+ */
+const REWARD_ICONS = [
+  // comer
+  '🍫', '☕', '🍕', '🍰', '🍔', '🍦',
+  '🍺', '🍷', '🍣', '🧋', '🍿', '🥐',
+  // lazer
+  '🎮', '🕹️', '🎬', '🎧', '🎤', '🎸',
+  '📚', '🎟️', '🧩', '🎨', '✨', '🏋️',
+  // comprar
+  '🎁', '🛍️', '👟', '👕', '👗', '👜',
+  '🕶️', '⌚', '💎', '💍', '🧢', '🖊️',
+  // cuidar
+  '📱', '💻', '🧴', '💅', '💇', '🛁',
+  // sair
+  '✈️', '🏖️', '🌴', '🏨', '🚗', '🛌',
+]
 
 const props = defineProps<{ show: boolean; reward?: Reward | null }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -271,10 +289,15 @@ async function handleSubmit() {
   font-size: var(--text-xs);
 }
 
+/* 48 ícones em bloco tomariam a folha inteira; rola dentro do próprio campo. */
 .reward-icon-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: var(--space-2);
+  max-height: 216px;
+  padding-right: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .reward-icon-pick {
