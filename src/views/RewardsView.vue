@@ -31,6 +31,23 @@
 
         <p class="wallet__meta">{{ walletSummary }}</p>
 
+        <!-- De onde o saldo veio. Só aparece quando há mais de uma fonte. -->
+        <div v-if="composition.length > 1" class="wallet__mix">
+          <div class="mix-bar" aria-hidden="true">
+            <span
+              v-for="part in composition"
+              :key="part.id"
+              :style="{ width: `${part.pct}%`, background: `var(--metal-${part.token}-lo)` }"
+            />
+          </div>
+          <ul class="mix-key">
+            <li v-for="part in composition" :key="part.id">
+              <span class="mix-dot" :style="{ background: `var(--metal-${part.token}-lo)` }" />
+              {{ part.label }} {{ Math.round(part.pct) }}%
+            </li>
+          </ul>
+        </div>
+
         <!--
           Ponte entre estudar e resgatar. "Faltam 320 moedas" não move ninguém;
           "faltam ~38 min de estudo" é uma meta que cabe numa tarde.
@@ -178,9 +195,13 @@
             :divider="index < gamification.recentLedger.length - 1"
           >
             <template #leading>
-              <div class="ledger-icon" :class="`ledger-icon--${entry.type}`">
+              <div
+                class="ledger-icon"
+                :class="`ledger-icon--${entry.type}`"
+                :style="entryMetalVars(entry)"
+              >
                 <span v-if="entry.type !== 'earning'">{{ entry.redemption.rewardIcon }}</span>
-                <CoinIcon v-else :size="18" />
+                <CoinIcon v-else :size="18" :metal="entryMetal(entry)" />
               </div>
             </template>
 
@@ -195,7 +216,11 @@
               >Desfazer</button>
             </template>
             <template #trailing>
-              <span class="ledger-value numeric" :class="{ 'ledger-value--spent': entry.amount < 0 }">
+              <span
+                class="ledger-value numeric"
+                :class="{ 'ledger-value--spent': entry.amount < 0 }"
+                :style="entryMetalVars(entry)"
+              >
                 {{ entry.amount > 0 ? '+' : '' }}{{ formatCoins(entry.amount) }}
               </span>
             </template>
@@ -224,7 +249,7 @@ import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { useAppToast } from '@/composables/useAppToast'
 import { useCoinBurst } from '@/composables/useCoinBurst'
 import { formatDuration } from '@/types'
-import { coinsAsStudyTime, formatCoins } from '@/utils/coins'
+import { ACTIVITIES, activityMeta, coinsAsStudyTime, formatCoins, type ActivityMeta } from '@/utils/coins'
 import type { Reward, RewardRedemption } from '@/types'
 
 const router = useRouter()
@@ -241,6 +266,29 @@ const visibleRewards = computed(() => rewardFilter.value === 'active'
   ? gamification.activeRewards
   : gamification.archivedRewards,
 )
+
+/* Sessão sem `activityKind` é anterior aos pesos — vale como estudo. */
+function entryMetal(entry: WalletEntry): ActivityMeta['token'] {
+  if (entry.type !== 'earning') return 'ouro'
+  return activityMeta(entry.session.activityKind).token
+}
+
+function entryMetalVars(entry: WalletEntry) {
+  const token = entryMetal(entry)
+  return {
+    '--metal-bg': `var(--metal-${token}-bg)`,
+    '--metal-tx': `var(--metal-${token}-tx)`,
+  }
+}
+
+const composition = computed(() => {
+  const totals = gamification.earningsByActivity
+  const sum = ACTIVITIES.reduce((acc, a) => acc + totals[a.id], 0)
+  if (sum <= 0) return []
+  return ACTIVITIES
+    .filter(a => totals[a.id] > 0)
+    .map(a => ({ id: a.id, label: a.label, token: a.token, pct: totals[a.id] / sum * 100 }))
+})
 
 const walletSummary = computed(() => {
   const earned = Math.floor(gamification.earnedCoins)
@@ -523,6 +571,38 @@ function formatEntryDate(timestamp: number) {
   transition: width 0.6s var(--ease-out-expo);
 }
 
+/* ── Composição do saldo por origem ───────────────────── */
+.wallet__mix { margin-top: var(--space-4); }
+
+.mix-bar {
+  display: flex;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.mix-bar span { transition: width 0.5s var(--ease-out-expo); }
+
+.mix-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--text-2xs);
+}
+
+.mix-key li { display: flex; align-items: center; gap: 5px; }
+
+.mix-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+}
+
 .balance-warning {
   display: flex;
   gap: var(--space-3);
@@ -687,14 +767,14 @@ function formatEntryDate(timestamp: number) {
   width: 34px;
   height: 34px;
   border-radius: var(--radius-md);
-  background: var(--coin-soft);
+  background: var(--metal-bg, var(--coin-soft));
 }
 
 .ledger-icon--redemption { background: var(--danger-soft); }
 .ledger-icon--refund     { background: var(--success-soft); }
 
 .ledger-value {
-  color: var(--coin-text);
+  color: var(--metal-tx, var(--coin-text));
   font-size: var(--text-md);
   font-weight: 650;
   white-space: nowrap;

@@ -2,7 +2,8 @@ import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import { useAuthStore } from './auth'
 import * as db from '@/firebase/db'
-import type { GamificationSettings, Reward, RewardRedemption, StudySession } from '@/types'
+import type { ActivityKind, GamificationSettings, Reward, RewardRedemption, StudySession } from '@/types'
+import { DEFAULT_ACTIVITY } from '@/utils/coins'
 
 /*
  * 60 faz 1 moeda valer exatamente 1 minuto de estudo. Isso torna todo custo
@@ -37,6 +38,20 @@ export const useGamificationStore = defineStore('gamification', () => {
       redemption.undoneAt ? total : total + redemption.cost, 0),
   )
   const balance = computed(() => Math.floor(earnedCoins.value) - spentCoins.value)
+  /**
+   * Quanto do que foi ganho veio de cada tipo de atividade. Sessões antigas
+   * não têm `activityKind` — caem em estudo, que é o que valiam quando foram
+   * gravadas (tudo era 1x antes dos pesos existirem).
+   */
+  const earningsByActivity = computed(() => {
+    const totals: Record<ActivityKind, number> = { estudo: 0, leitura: 0, trabalho: 0 }
+    for (const session of rewardedSessions.value) {
+      const kind = session.activityKind ?? DEFAULT_ACTIVITY
+      totals[kind] += session.coinsEarned ?? 0
+    }
+    return totals
+  })
+
   const activeRewards = computed(() => rewards.value.filter(reward => !reward.archivedAt))
   const archivedRewards = computed(() => rewards.value.filter(reward => !!reward.archivedAt))
   const recentLedger = computed<WalletEntry[]>(() => {
@@ -205,6 +220,7 @@ export const useGamificationStore = defineStore('gamification', () => {
   return {
     settings, loading, rewardedSessions, rewards, redemptions,
     earnedCoins, spentCoins, balance, activeRewards, archivedRewards, recentLedger,
+    earningsByActivity,
     load, refreshWallet, updateSettings, calculateCoins, trackSession, forgetSession,
     addReward, updateReward, archiveReward, restoreReward, removeReward,
     hasActiveRedemption, canRedeem, redeemReward, undoRedemption,
