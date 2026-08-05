@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
+import { DEFAULT_ACTIVITY, activityMultiplier } from '@/utils/coins'
 import { computed, ref } from 'vue'
 import { useAuthStore } from './auth'
 import * as db from '@/firebase/db'
-import type { Subject, Category } from '@/types'
+import type { ActivityKind, Subject, Category } from '@/types'
 import { normalizeAkomaColor } from '@/utils/colors'
 
 function withAkomaColor<T extends { color: string }>(item: T): T {
@@ -116,6 +117,16 @@ export const useSubjectsStore = defineStore('subjects', () => {
   function getSubject(id: string) {
     return subjects.value.find(s => s.id === id)
   }
+  /** Tipo da matéria. Ausente = estudo, para não mexer no que já existe. */
+  function subjectActivityKind(id: string): ActivityKind {
+    return getSubject(id)?.activityKind ?? DEFAULT_ACTIVITY
+  }
+
+  /** Peso da hora dessa matéria: 1x estudo, 0,25x leitura, 0,1x trabalho. */
+  function subjectCoinMultiplier(id: string): number {
+    return activityMultiplier(subjectActivityKind(id))
+  }
+
   function subjectEarnsCoins(id: string): boolean {
     const subject = getSubject(id)
     if (!subject) return false
@@ -133,6 +144,6 @@ export const useSubjectsStore = defineStore('subjects', () => {
     subjects, activeSubjects, archivedSubjects, categories, loading,
     load, addSubject, updateSubject, removeSubject, archiveSubject, restoreSubject,
     addCategory, updateCategory, moveCategory, removeCategory,
-    getSubject, getCategory, subjectEarnsCoins,
+    getSubject, getCategory, subjectEarnsCoins, subjectActivityKind, subjectCoinMultiplier,
   }
 })

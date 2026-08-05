@@ -8,6 +8,13 @@ export interface Category {
   earnsCoins?: boolean
 }
 
+/**
+ * O que uma matéria é. Define o metal que ela rende e o peso da hora:
+ * estudo vale 1x, leitura 1/4 e trabalho 1/10 — a mesma escada de
+ * 1 ouro = 4 prata = 10 cobre. Ausente = estudo (retrocompatível).
+ */
+export type ActivityKind = 'estudo' | 'leitura' | 'trabalho'
+
 export interface Subject {
   id: string
   name: string
@@ -17,6 +24,7 @@ export interface Subject {
   userId: string
   createdAt: number
   earnsCoins?: boolean | null
+  activityKind?: ActivityKind
   archivedAt?: number | null
 }
 
@@ -40,6 +48,10 @@ export interface StudySession {
   coinRatePerHour?: number
   kind?: SessionKind // ausente = estudo (retrocompatível)
   coinsEligible?: boolean
+  /* Congelados no momento em que a sessão foi salva, como coinRatePerHour:
+     mudar o tipo de uma matéria não deve reescrever o que já foi ganho. */
+  activityKind?: ActivityKind
+  coinMultiplier?: number
 }
 
 export interface GamificationSettings {

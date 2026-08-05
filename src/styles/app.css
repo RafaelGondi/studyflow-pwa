@@ -875,6 +875,22 @@
   --coin-edge:    #7d5613;
   --coin-soft:    #f6ecd8;
   --coin-text:    #6d4a10;
+
+  /* Aliases: o ouro É a moeda de estudo. */
+  --metal-ouro-hi:  var(--coin-face-hi);
+  --metal-ouro-lo:  var(--coin-face-lo);
+  --metal-ouro-tx:  var(--coin-text);
+  --metal-ouro-bg:  var(--coin-soft);
+
+  --metal-prata-hi: #dcdfe3;
+  --metal-prata-lo: #929ba4;
+  --metal-prata-tx: #4e5860;
+  --metal-prata-bg: #ecedef;
+
+  --metal-cobre-hi: #e0a985;
+  --metal-cobre-lo: #b06d43;
+  --metal-cobre-tx: #6f3d22;
+  --metal-cobre-bg: #f6e6db;
 }
 
 /*
@@ -889,4 +905,9 @@
   --coin-edge:    #3d2a09;
   --coin-soft:    #2f2718;
   --coin-text:    #e6c483;
+
+  --metal-prata-tx: #d3d8dd;
+  --metal-prata-bg: #262a2d;
+  --metal-cobre-tx: #e0aa87;
+  --metal-cobre-bg: #2e211a;
 }

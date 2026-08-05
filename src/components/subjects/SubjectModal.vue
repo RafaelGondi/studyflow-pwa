@@ -128,6 +128,38 @@
           </div>
         </div>
 
+        <!--
+          Tipo da matéria. Define o metal que ela rende e o peso da hora — uma
+          hora de leitura vale 1/4 de uma de estudo, uma de trabalho 1/10.
+        -->
+        <div class="form-field">
+          <label class="form-label">Tipo de atividade</label>
+          <div class="activity-row">
+            <button
+              v-for="activity in ACTIVITIES"
+              :key="activity.id"
+              type="button"
+              class="activity-pick"
+              :class="{ 'activity-pick--active': form.activityKind === activity.id }"
+              :style="{ '--metal-hi': `var(--metal-${activity.token}-hi)`,
+                        '--metal-lo': `var(--metal-${activity.token}-lo)`,
+                        '--metal-tx': `var(--metal-${activity.token}-tx)`,
+                        '--metal-bg': `var(--metal-${activity.token}-bg)` }"
+              :aria-pressed="form.activityKind === activity.id"
+              @click="form.activityKind = activity.id"
+            >
+              <span class="activity-pick__coin" />
+              <span class="activity-pick__name">{{ activity.label }}</span>
+              <span class="activity-pick__rate">
+                {{ activity.multiplier === 1 ? '1h → 1 ouro' : `1h → 1 ${activity.metal.toLowerCase()}` }}
+              </span>
+            </button>
+          </div>
+          <p class="activity-hint">
+            {{ activityHint }}
+          </p>
+        </div>
+
         <div class="form-preview">
           <div class="subject-avatar" :style="previewBg">
             <SubjectIcon :icon="form.icon" :name="form.name" />
@@ -164,7 +196,8 @@ import { useSubjectsStore } from '@/stores/subjects'
 import { useAppToast } from '@/composables/useAppToast'
 import { INITIAL_ICON, SUBJECT_COLORS, SUBJECT_ICONS } from '@/types'
 import { DEFAULT_SUBJECT_COLOR, normalizeAkomaColor, subjectBgMix } from '@/utils/colors'
-import type { Subject } from '@/types'
+import { ACTIVITIES, DEFAULT_ACTIVITY, activityMeta } from '@/utils/coins'
+import type { ActivityKind, Subject } from '@/types'
 import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 
 const props = defineProps<{ show: boolean; subject?: Subject | null }>()
@@ -191,6 +224,14 @@ const form = ref({
   color:      DEFAULT_SUBJECT_COLOR as string,
   categoryId: null as string | null,
   coinRule:   'inherit' as 'inherit' | 'enabled' | 'disabled',
+  activityKind: DEFAULT_ACTIVITY as ActivityKind,
+})
+
+const activityHint = computed(() => {
+  const meta = activityMeta(form.value.activityKind)
+  if (meta.multiplier === 1) return 'Vale integral — é a referência das outras.'
+  const share = meta.multiplier === 0.25 ? 'um quarto' : 'um décimo'
+  return `Uma hora aqui vale ${share} de uma hora de estudo.`
 })
 
 const categories  = computed(() => subjectsStore.categories)
@@ -273,6 +314,7 @@ watch(() => props.show, (val) => {
       color:      normalizeAkomaColor(props.subject.color),
       categoryId: props.subject.categoryId,
       coinRule:   props.subject.earnsCoins == null ? 'inherit' : props.subject.earnsCoins ? 'enabled' : 'disabled',
+      activityKind: props.subject.activityKind ?? DEFAULT_ACTIVITY,
     }
   } else {
     iconMode.value    = 'emoji'
@@ -283,6 +325,7 @@ watch(() => props.show, (val) => {
       color:      DEFAULT_SUBJECT_COLOR,
       categoryId: null,
       coinRule:   'inherit',
+      activityKind: DEFAULT_ACTIVITY,
     }
   }
 })
@@ -295,6 +338,7 @@ async function handleSubmit() {
     const payload = {
       ...subjectData,
       earnsCoins: coinRule === 'inherit' ? null : coinRule === 'enabled',
+      activityKind: form.value.activityKind,
     }
     if (props.subject) {
       await subjectsStore.updateSubject(props.subject.id, payload)
@@ -310,3 +354,65 @@ async function handleSubmit() {
   }
 }
 </script>
+
+<style scoped>
+/* ── Tipo de atividade ─────────────────────────────────── */
+.activity-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.activity-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: var(--space-3) 4px var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.14s var(--ease-out-expo), border-color 0.14s var(--ease-smooth);
+}
+
+.activity-pick:active { transform: scale(0.95); }
+
+.activity-pick:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.activity-pick--active {
+  border-color: color-mix(in srgb, var(--metal-lo) 60%, transparent);
+  background: var(--metal-bg);
+  color: var(--metal-tx);
+}
+
+/* A moeda do metal, desenhada em CSS — três discos, nenhum asset. */
+.activity-pick__coin {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle at 32% 28%, var(--metal-hi), var(--metal-lo));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--metal-lo) 75%, #000);
+}
+
+.activity-pick__name {
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.activity-pick__rate {
+  font-size: var(--text-2xs);
+  opacity: 0.75;
+}
+
+.activity-hint {
+  margin-top: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+</style>

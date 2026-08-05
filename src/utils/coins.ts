@@ -1,8 +1,42 @@
+import type { ActivityKind } from '@/types'
+
 /**
  * Utilidades de moeda. O ponto central aqui é `coinsAsStudyTime`: moeda solta
  * não diz nada ("faltam 320") — traduzida em tempo de estudo ela vira uma meta
  * ("faltam ~38 min"), que é a informação que faz alguém sentar pra estudar.
  */
+
+/**
+ * Metais. A escada de câmbio É a tabela de pesos: uma hora de qualquer fonte
+ * rende exatamente uma moeda do metal dela, e 1 ouro = 4 prata = 10 cobre.
+ * Não são carteiras separadas — a conversão é automática e sem perda, então
+ * o saldo continua sendo um número só e a recompensa, um preço só.
+ */
+export interface ActivityMeta {
+  id: ActivityKind
+  label: string
+  metal: string
+  /** Fração de uma hora de estudo que uma hora desta fonte vale. */
+  multiplier: number
+  /** Chave dos tokens CSS: --metal-{key}-hi / -lo / -tx / -bg */
+  token: 'ouro' | 'prata' | 'cobre'
+}
+
+export const ACTIVITIES: ActivityMeta[] = [
+  { id: 'estudo',   label: 'Estudo',   metal: 'Ouro',  multiplier: 1,    token: 'ouro' },
+  { id: 'leitura',  label: 'Leitura',  metal: 'Prata', multiplier: 0.25, token: 'prata' },
+  { id: 'trabalho', label: 'Trabalho', metal: 'Cobre', multiplier: 0.1,  token: 'cobre' },
+]
+
+export const DEFAULT_ACTIVITY: ActivityKind = 'estudo'
+
+export function activityMeta(kind: ActivityKind | undefined | null): ActivityMeta {
+  return ACTIVITIES.find(a => a.id === kind) ?? ACTIVITIES[0]
+}
+
+export function activityMultiplier(kind: ActivityKind | undefined | null): number {
+  return activityMeta(kind).multiplier
+}
 
 export function formatCoins(value: number): string {
   if (value > 0 && value < 0.01) return '<0,01'

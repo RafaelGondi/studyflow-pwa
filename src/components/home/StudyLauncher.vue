@@ -91,8 +91,12 @@
                 {{ timerStore.displayFormatted }}
               </span>
               <!-- Moedas subindo enquanto estuda: o retorno chega durante o esforço. -->
-              <span v-if="showLiveCoins" class="launcher-live__coins">
-                <CoinIcon :size="13" />
+              <span
+                v-if="showLiveCoins"
+                class="launcher-live__coins"
+                :style="metalVars"
+              >
+                <CoinIcon :size="13" :metal="activeMetal.token" />
                 <AnimatedNumber :value="Math.floor(liveCoins)" :duration="450" />
               </span>
             </div>
@@ -225,7 +229,11 @@ const timerStore = useTimerStore()
 
 const modePickerOpen = ref(false)
 
-const { liveCoins } = useLiveCoins()
+const { liveCoins, activeMetal } = useLiveCoins()
+const metalVars = computed(() => ({
+  '--metal-bg': `var(--metal-${activeMetal.value.token}-bg)`,
+  '--metal-tx': `var(--metal-${activeMetal.value.token}-tx)`,
+}))
 /* Abaixo de 1 moeda o contador ficaria parado no zero — pior que não aparecer. */
 const showLiveCoins = computed(() => liveCoins.value >= 1)
 
@@ -447,8 +455,8 @@ const recentItems = computed(() => {
   gap: 4px;
   padding: 2px var(--space-2);
   border-radius: var(--radius-full);
-  background: var(--coin-soft);
-  color: var(--coin-text);
+  background: var(--metal-bg);
+  color: var(--metal-tx);
   font-size: var(--text-xs);
   font-weight: 500;
 }

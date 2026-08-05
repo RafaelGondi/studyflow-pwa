@@ -16,31 +16,40 @@
     focusable="false"
   >
     <circle cx="12" cy="12" r="10.25" :fill="`url(#${gradientId})`" />
-    <circle cx="12" cy="12" r="10.25" stroke="var(--coin-edge)" stroke-width="1.5" />
-    <circle cx="12" cy="12" r="7" stroke="var(--coin-edge)" stroke-width="1" opacity="0.55" />
+    <circle cx="12" cy="12" r="10.25" :stroke="edge" stroke-width="1.5" />
+    <circle cx="12" cy="12" r="7" :stroke="edge" stroke-width="1" opacity="0.55" />
     <path
       d="M12 7.4l1.32 2.85 3.03.4-2.23 2.12.58 3.03L12 14.36l-2.7 1.44.58-3.03-2.23-2.12 3.03-.4L12 7.4z"
-      fill="var(--coin-edge)"
+      :fill="edge"
     />
     <defs>
       <linearGradient :id="gradientId" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
-        <stop stop-color="var(--coin-face-hi)" />
-        <stop offset="1" stop-color="var(--coin-face-lo)" />
+        <stop :stop-color="`var(--metal-${metal}-hi)`" />
+        <stop offset="1" :stop-color="`var(--metal-${metal}-lo)`" />
       </linearGradient>
     </defs>
   </svg>
 </template>
 
 <script setup lang="ts">
-import { useId } from 'vue'
+import { computed, useId } from 'vue'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   size?: number
   spinning?: boolean
+  /** Ouro = estudo, prata = leitura, cobre = trabalho. */
+  metal?: 'ouro' | 'prata' | 'cobre'
 }>(), {
   size: 18,
   spinning: false,
+  metal: 'ouro',
 })
+
+/* Prata e cobre são escuros no claro e no escuro; só o ouro tem borda
+   que inverte, então a borda vem do token do próprio metal. */
+const edge = computed(() =>
+  props.metal === 'ouro' ? 'var(--coin-edge)' : `var(--metal-${props.metal}-tx)`,
+)
 
 /* Vários ícones na mesma tela: id de gradiente duplicado faz um vazar no outro. */
 const gradientId = `coin-face-${useId()}`

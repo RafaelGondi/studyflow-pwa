@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { useTimerStore } from '@/stores/timer'
 import { useGamificationStore } from '@/stores/gamification'
 import { useSubjectsStore } from '@/stores/subjects'
+import { activityMeta } from '@/utils/coins'
 
 /**
  * Moedas da sessão em andamento, ao vivo.
@@ -22,7 +23,11 @@ export function useLiveCoins() {
   const liveCoins = computed(() => {
     if (!eligible.value) return 0
     if (timer.mode === 'idle' || timer.isInBreak) return 0
-    return gamification.calculateCoins(timer.studyElapsedSeconds)
+    return gamification.calculateCoins(
+      timer.studyElapsedSeconds,
+      gamification.settings.coinsPerHour,
+      subjects.subjectCoinMultiplier(timer.activeSubjectId!),
+    )
   })
 
   /** Saldo como ficará ao encerrar — o número que o usuário está perseguindo. */
@@ -30,5 +35,10 @@ export function useLiveCoins() {
     Math.floor(gamification.earnedCoins + liveCoins.value) - gamification.spentCoins,
   )
 
-  return { liveCoins, projectedBalance, coinsEligible: eligible }
+  /** Metal que a sessão em andamento está rendendo. */
+  const activeMetal = computed(() =>
+    activityMeta(timer.activeSubjectId ? subjects.subjectActivityKind(timer.activeSubjectId) : null),
+  )
+
+  return { liveCoins, projectedBalance, coinsEligible: eligible, activeMetal }
 }

@@ -80,7 +80,7 @@
 
           <!-- Moedas da sessão, ao vivo. -->
           <p v-if="showLiveCoins" class="focus-coins">
-            <CoinIcon :size="16" />
+            <CoinIcon :size="16" :metal="activeMetal.token" />
             <AnimatedNumber :value="Math.floor(liveCoins)" :duration="450" />
           </p>
 
@@ -143,7 +143,7 @@ const emit = defineEmits<{ close: []; stop: [] }>()
 const timerStore = useTimerStore()
 const prefs = computed(() => timerStore.prefs)
 
-const { liveCoins } = useLiveCoins()
+const { liveCoins, activeMetal } = useLiveCoins()
 const showLiveCoins = computed(() => liveCoins.value >= 1)
 
 const breakLabel = computed(() => {
@@ -283,8 +283,8 @@ onUnmounted(() => {
   margin-top: var(--space-5);
   padding: 5px var(--space-3);
   border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--coin-face-hi) 16%, transparent);
-  color: color-mix(in srgb, var(--coin-face-hi) 90%, var(--text-inverse));
+  background: color-mix(in srgb, var(--text-inverse) 12%, transparent);
+  color: var(--text-inverse);
   font-size: var(--text-sm);
   font-weight: 500;
 }

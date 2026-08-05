@@ -187,9 +187,14 @@ export const useGamificationStore = defineStore('gamification', () => {
     redemption.undoneAt = undoneAt
   }
 
-  function calculateCoins(durationSeconds: number, rate = settings.coinsPerHour): number {
+  function calculateCoins(
+    durationSeconds: number,
+    rate = settings.coinsPerHour,
+    multiplier = 1,
+  ): number {
     if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) return 0
-    return Math.max(0, (durationSeconds * normalizeRate(rate)) / 3600)
+    if (!Number.isFinite(multiplier) || multiplier <= 0) return 0
+    return Math.max(0, (durationSeconds * normalizeRate(rate) * multiplier) / 3600)
   }
 
   function normalizeRate(value: number | undefined): number {

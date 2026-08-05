@@ -61,12 +61,18 @@ export const useSessionsStore = defineStore('sessions', () => {
   }) {
     const coinRatePerHour = gamification.settings.coinsPerHour
     const coinsEligible = subjects.subjectEarnsCoins(data.subjectId)
+    const activityKind = subjects.subjectActivityKind(data.subjectId)
+    const coinMultiplier = subjects.subjectCoinMultiplier(data.subjectId)
     return save({
       kind: 'study',
       ...data,
       coinRatePerHour,
       coinsEligible,
-      coinsEarned: coinsEligible ? gamification.calculateCoins(data.duration, coinRatePerHour) : 0,
+      activityKind,
+      coinMultiplier,
+      coinsEarned: coinsEligible
+        ? gamification.calculateCoins(data.duration, coinRatePerHour, coinMultiplier)
+        : 0,
     })
   }
 
@@ -79,10 +85,12 @@ export const useSessionsStore = defineStore('sessions', () => {
     const patchData = { ...data }
     if (current && isStudySession(current) && current.coinsEarned != null && data.duration != null) {
       const rate = current.coinRatePerHour ?? gamification.settings.coinsPerHour
+      const multiplier = current.coinMultiplier ?? 1
       patchData.coinRatePerHour = rate
+      patchData.coinMultiplier = multiplier
       patchData.coinsEarned = current.coinsEligible === false
         ? 0
-        : gamification.calculateCoins(data.duration, rate)
+        : gamification.calculateCoins(data.duration, rate, multiplier)
     }
     await db.updateSession(auth.uid, id, patchData)
     const patch = (list: StudySession[]) => {
