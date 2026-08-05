@@ -78,7 +78,13 @@
             {{ formatDuration(props.totalSeconds) }} hoje
           </p>
 
-          <div class="flex-row" style="gap: var(--space-2); margin-top: var(--space-8)">
+          <!-- Moedas da sessão, ao vivo. -->
+          <p v-if="showLiveCoins" class="focus-coins">
+            <CoinIcon :size="16" />
+            <AnimatedNumber :value="Math.floor(liveCoins)" :duration="450" />
+          </p>
+
+          <div class="flex-row" style="gap: var(--space-2); margin-top: var(--space-6)">
             <div
               class="status-dot"
               :class="timerStore.isRunning ? 'status-dot--live' : 'status-dot--paused'"
@@ -119,6 +125,9 @@ import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { AkIcon } from '@rafael_dias/akoma'
 import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import PomodoroCycle from '@/components/home/PomodoroCycle.vue'
+import CoinIcon from '@/components/ui/CoinIcon.vue'
+import AnimatedNumber from '@/components/ui/AnimatedNumber.vue'
+import { useLiveCoins } from '@/composables/useLiveCoins'
 import { useTimerStore } from '@/stores/timer'
 import { DEFAULT_SUBJECT_COLOR, subjectBgMix } from '@/utils/colors'
 import { formatDuration } from '@/types'
@@ -133,6 +142,9 @@ const props = defineProps<{
 const emit = defineEmits<{ close: []; stop: [] }>()
 const timerStore = useTimerStore()
 const prefs = computed(() => timerStore.prefs)
+
+const { liveCoins } = useLiveCoins()
+const showLiveCoins = computed(() => liveCoins.value >= 1)
 
 const breakLabel = computed(() => {
   const kind = timerStore.breakKind
@@ -262,6 +274,19 @@ onUnmounted(() => {
 .focus-cycle {
   margin-top: var(--space-6);
   color: var(--text-inverse);
+}
+
+.focus-coins {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-5);
+  padding: 5px var(--space-3);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--coin-face-hi) 16%, transparent);
+  color: color-mix(in srgb, var(--coin-face-hi) 90%, var(--text-inverse));
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
 .focus-total {

@@ -185,12 +185,15 @@ async function handleSubmit() {
   min-height: 44px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--bg-elevated);
   font-size: 22px;
+  transition: transform 0.14s var(--ease-out-expo), border-color 0.14s var(--ease-smooth);
 }
+
+.reward-icon-pick:active { transform: scale(0.92); }
 
 .reward-icon-pick--active {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  background: var(--accent-soft);
 }
 </style>

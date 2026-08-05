@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-export type ToastColor = 'success' | 'error' | 'neutral'
+export type ToastColor = 'success' | 'error' | 'neutral' | 'coin'
 
 export interface AppToastItem {
   id: string
@@ -40,5 +40,6 @@ export function useAppToast() {
     success: (title: string, description?: string) => add({ title, description, color: 'success' }),
     error: (title: string, description?: string) => add({ title, description, color: 'error' }),
     neutral: (title: string, description?: string) => add({ title, description, color: 'neutral' }),
+    coin: (title: string, description?: string) => add({ title, description, color: 'coin', duration: 4200 }),
   }
 }

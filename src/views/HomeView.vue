@@ -240,6 +240,7 @@ import SessionAddModal from '@/components/sessions/SessionAddModal.vue'
 import { useFaceDownFocus } from '@/composables/useFaceDownFocus'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
+import { useCoinBurst } from '@/composables/useCoinBurst'
 import { formatDuration, formatTimer, todayDateString, localDateStr } from '@/types'
 import { buildTimeline, formatSessionTimeRange } from '@/utils/timeline'
 import type { StudySession } from '@/types'
@@ -250,6 +251,23 @@ const sessionsStore = useSessionsStore()
 const subjectsStore = useSubjectsStore()
 const toast = useAppToast()
 const confirmSheet = useConfirmSheet()
+const coinBurst = useCoinBurst()
+
+/*
+ * O ganho de moedas era invisível: a sessão era salva e o saldo mudava numa
+ * outra aba, sem nada ligando esforço a recompensa. Observar a última sessão
+ * gravada cobre os três caminhos de uma vez — parar, Flowmodoro e o fim
+ * automático de um bloco de Pomodoro.
+ */
+watch(() => timerStore.lastSavedSession, (session) => {
+  const coins = Math.floor(session?.coinsEarned ?? 0)
+  if (!session || coins <= 0) return
+  coinBurst.fire({ kind: 'earn', amount: coins })
+  toast.coin(
+    `+${coins} ${coins === 1 ? 'moeda' : 'moedas'}`,
+    `${formatDuration(session.duration)} de ${subjectsStore.getSubject(session.subjectId ?? '')?.name ?? 'estudo'}`,
+  )
+})
 
 const lastSubjectId = ref<string | null>(null)
 const focusMode = ref(false)

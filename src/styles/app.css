@@ -858,3 +858,35 @@
 }
 .page-enter-from { opacity: 0; transform: translateY(6px); }
 .page-leave-to { opacity: 0; transform: translateY(-4px); }
+
+/* ── Moeda ───────────────────────────────────────────────
+ *
+ * A moeda precisa de cor própria: o accent (ocean) é a cor de "ação" do app,
+ * e pintar o saldo com ela faria a recompensa competir com os botões em vez
+ * de virar uma moeda. Ouro dessaturado o suficiente pra conviver com a
+ * paleta quente do Akoma.
+ *
+ * Não usa `--warning` de propósito — aviso e prêmio não devem parecer a
+ * mesma coisa (a própria tela tem um aviso de saldo negativo em warning).
+ */
+:root {
+  --coin-face-hi: #e8c274;
+  --coin-face-lo: #c28a2c;
+  --coin-edge:    #7d5613;
+  --coin-soft:    #f6ecd8;
+  --coin-text:    #6d4a10;
+}
+
+/*
+ * `--coin-edge` e `--coin-text` divergem no escuro de propósito. A borda é
+ * traço sobre a face dourada da moeda (que não muda de tema, senão a moeda
+ * deixa de parecer metal); o texto vive sobre `--coin-soft`, que inverte.
+ * Usar um só token deixava custo escuro sobre fundo escuro, ilegível.
+ */
+[data-theme='dark'] {
+  --coin-face-hi: #e2bd77;
+  --coin-face-lo: #b8842f;
+  --coin-edge:    #3d2a09;
+  --coin-soft:    #2f2718;
+  --coin-text:    #e6c483;
+}

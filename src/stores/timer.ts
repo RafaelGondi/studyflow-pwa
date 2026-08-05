@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useSessionsStore } from './sessions'
 import { formatTimer } from '@/types'
-import type { StudySegment } from '@/types'
+import type { StudySegment, StudySession } from '@/types'
 
 const SESSION_KEY = 'studyflow_timer'
 const PREFS_KEY   = 'studyflow_timer_prefs'
@@ -100,6 +100,14 @@ export const useTimerStore = defineStore('timer', () => {
 
   /* ─── Session state ──────────────────────────────────────────── */
   const state = ref<TimerState>({ ...DEFAULT_STATE })
+
+  /*
+   * Última sessão gravada. Existe pra UI poder celebrar o ganho de moedas sem
+   * duplicar a lógica em cada caminho de saída: parar no contador, parar no
+   * Flowmodoro e o fim automático de um bloco de Pomodoro passam todos por
+   * aqui. Quem observa decide o que mostrar — o store não conhece a tela.
+   */
+  const lastSavedSession = ref<StudySession | null>(null)
   const now = ref(Date.now())
   let tick: ReturnType<typeof setInterval> | null = null
 
@@ -312,10 +320,10 @@ export const useTimerStore = defineStore('timer', () => {
     enterBreak(breakMs, isLong ? 'long' : 'short')
 
     if (subjectId && ms >= 5000) {
-      await sessions.saveStudy({
+      lastSavedSession.value = await sessions.saveStudy({
         subjectId, startTime, endTime,
         duration: Math.floor(ms / 1000), segments,
-      })
+      }) ?? null
     }
   }
 
@@ -385,10 +393,10 @@ export const useTimerStore = defineStore('timer', () => {
       const breakMs   = Math.max(1000, Math.floor(ms / flowRatio))
       enterBreak(breakMs, 'flow')   // mode → 'break' before async save
       if (subjectId) {
-        await sessions.saveStudy({
+        lastSavedSession.value = await sessions.saveStudy({
           subjectId, startTime, endTime,
           duration: Math.floor(ms / 1000), segments,
-        })
+        }) ?? null
       }
       return
     }
@@ -400,10 +408,10 @@ export const useTimerStore = defineStore('timer', () => {
      */
     reset({ keepCycle: prefs.value.timerType === 'pomodoro' })
     if (subjectId && ms >= 5000) {
-      await sessions.saveStudy({
+      lastSavedSession.value = await sessions.saveStudy({
         subjectId, startTime, endTime: Date.now(),
         duration: Math.floor(ms / 1000), segments,
-      })
+      }) ?? null
     }
   }
 
@@ -420,7 +428,7 @@ export const useTimerStore = defineStore('timer', () => {
   }
 
   return {
-    state, mode, activeSubjectId,
+    state, mode, activeSubjectId, lastSavedSession,
     isRunning, isPaused, isInBreak,
     studyElapsedMs, studyElapsedSeconds, studyFormatted,
     breakRemainingMs, breakRemainingSeconds, breakFormatted,

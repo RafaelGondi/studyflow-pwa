@@ -14,6 +14,7 @@
     <AppTabBar v-if="appReady" />
     <AppToastHost />
     <AppConfirmSheet />
+    <CoinBurstHost />
   </div>
 </template>
 
@@ -30,6 +31,7 @@ import AppTabBar from '@/components/layout/AppTabBar.vue'
 import UpdateBanner from '@/components/ui/UpdateBanner.vue'
 import AppToastHost from '@/components/ui/AppToastHost.vue'
 import AppConfirmSheet from '@/components/ui/AppConfirmSheet.vue'
+import CoinBurstHost from '@/components/ui/CoinBurstHost.vue'
 
 useAppTheme()
 

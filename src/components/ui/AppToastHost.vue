@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { AkIcon } from '@rafael_dias/akoma'
+import CoinIcon from '@/components/ui/CoinIcon.vue'
 import { useAppToast } from '@/composables/useAppToast'
 
 const { toasts, dismiss } = useAppToast()
@@ -22,7 +23,8 @@ function icon(color: string) {
           :class="`toast-item--${item.color}`"
           role="status"
         >
-          <AkIcon :name="icon(item.color)" :size="18" class="toast-item__icon" />
+          <CoinIcon v-if="item.color === 'coin'" :size="20" class="toast-item__icon" />
+          <AkIcon v-else :name="icon(item.color)" :size="18" class="toast-item__icon" />
           <div class="toast-item__body">
             <span class="toast-item__title">{{ item.title }}</span>
             <p v-if="item.description" class="toast-item__desc">{{ item.description }}</p>
@@ -78,6 +80,17 @@ function icon(color: string) {
 .toast-item--success .toast-item__icon { color: #6dba92; }
 .toast-item--error   .toast-item__icon { color: #e08880; }
 .toast-item--neutral .toast-item__icon { color: var(--toast-fg); opacity: 0.55; }
+
+/* Ganho de moeda: o toast tem que parecer prêmio, não notificação de sistema. */
+.toast-item--coin {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--coin-face-lo) 24%, var(--toast-bg)),
+    var(--toast-bg) 62%
+  );
+}
+
+.toast-item--coin .toast-item__title { font-weight: 650; }
 
 .toast-item__body {
   flex: 1;
