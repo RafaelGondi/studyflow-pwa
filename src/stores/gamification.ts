@@ -4,7 +4,12 @@ import { useAuthStore } from './auth'
 import * as db from '@/firebase/db'
 import type { GamificationSettings, Reward, RewardRedemption, StudySession } from '@/types'
 
-const DEFAULT_COINS_PER_HOUR = 50
+/*
+ * 60 faz 1 moeda valer exatamente 1 minuto de estudo. Isso torna todo custo
+ * autoexplicativo — "90 moedas" lê-se "1h30 de estudo" sem conta — e é a
+ * unidade em que as faixas de recompensa e a carteira já falam.
+ */
+const DEFAULT_COINS_PER_HOUR = 60
 
 export type WalletEntry =
   | { id: string; type: 'earning'; amount: number; createdAt: number; session: StudySession }

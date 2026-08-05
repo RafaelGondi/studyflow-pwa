@@ -219,7 +219,7 @@
           <AkListRow :divider="false">
             <span>Moedas por hora</span>
             <template #subtitle>
-              <span class="text-xs text-muted">Aplicada às próximas sessões de estudo</span>
+              <span class="text-xs text-muted">Aplicada às próximas sessões · 60 = 1 moeda por minuto</span>
             </template>
             <template #trailing>
               <div class="duration-input-row">
@@ -319,7 +319,7 @@ function handleFlowNotificationMinutesChange(event: Event) {
 
 async function handleCoinsPerHourChange(event: Event) {
   const input = event.target as HTMLInputElement
-  const value = Math.min(1000, Math.max(1, Math.round(Number(input.value) || 50)))
+  const value = Math.min(1000, Math.max(1, Math.round(Number(input.value) || 60)))
   input.value = String(value)
   await gamificationStore.updateSettings({ coinsPerHour: value })
 }
