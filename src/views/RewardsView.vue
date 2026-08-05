@@ -188,19 +188,28 @@
           <template #icon>⭐</template>
         </AkEmptyState>
 
-        <div v-else class="ledger-groups">
-          <div v-for="group in ledgerGroups" :key="group.key" class="ledger-day">
-            <!--
-              O total do dia é o que torna o agrupamento útil: dá pra varrer o
-              extrato e ver quanto cada dia rendeu sem somar linha por linha.
-            -->
-            <div class="ledger-day__head">
-              <span class="ledger-day__label">{{ group.label }}</span>
+        <!--
+          Mesmo padrão do histórico do Progresso: <details> por dia, o de cima
+          aberto. O total no cabeçalho é o que faz o dia fechado ainda informar
+          — senão dobrar a lista só esconderia.
+        -->
+        <div v-else class="ledger-days">
+          <details
+            v-for="(group, groupIndex) in ledgerGroups"
+            :key="group.key"
+            class="ledger-day"
+            :open="groupIndex === 0"
+          >
+            <summary class="ledger-day__summary">
+              <span>
+                <strong>{{ group.label }}</strong>
+                <small>{{ group.entries.length }} {{ group.entries.length === 1 ? 'movimentação' : 'movimentações' }}</small>
+              </span>
               <span
                 class="ledger-day__total numeric"
                 :class="{ 'ledger-day__total--spent': group.total < 0 }"
               >{{ group.total > 0 ? '+' : '' }}{{ formatCoins(group.total) }}</span>
-            </div>
+            </summary>
 
             <AkList>
               <AkListRow
@@ -240,7 +249,7 @@
                 </template>
               </AkListRow>
             </AkList>
-          </div>
+          </details>
         </div>
       </section>
     </div>
@@ -808,32 +817,73 @@ const ledgerGroups = computed(() => {
 }
 
 /* ── Extrato ──────────────────────────────────────────── */
-.ledger-groups {
+.ledger-days {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-2);
 }
 
-.ledger-day__head {
+.ledger-day {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+}
+
+.ledger-day__summary {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 0 var(--space-1) var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  list-style: none;
 }
 
-.ledger-day__label {
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.ledger-day__summary::-webkit-details-marker { display: none; }
+
+.ledger-day__summary::before {
+  content: '›';
+  color: var(--text-tertiary);
+  font-size: 20px;
+  line-height: 1;
+  transition: transform var(--transition);
+}
+
+.ledger-day[open] .ledger-day__summary::before { transform: rotate(90deg); }
+
+.ledger-day__summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.ledger-day__summary > span:first-of-type {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ledger-day__summary strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ledger-day__summary small {
+  color: var(--text-tertiary);
+  font-size: 11px;
 }
 
 .ledger-day__total {
+  flex-shrink: 0;
   color: var(--coin-text);
-  font-size: var(--text-xs);
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .ledger-day__total--spent { color: var(--danger); }
