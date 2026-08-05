@@ -33,7 +33,7 @@
 
       <section class="section-block">
         <AkSectionHeader title="Minhas recompensas">
-          <template #actions>
+          <template #action>
             <AkButton size="sm" variant="primary" @click="openNewReward">Nova</AkButton>
           </template>
         </AkSectionHeader>
