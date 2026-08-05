@@ -188,44 +188,60 @@
           <template #icon>⭐</template>
         </AkEmptyState>
 
-        <AkList v-else>
-          <AkListRow
-            v-for="(entry, index) in gamification.recentLedger"
-            :key="entry.id"
-            :divider="index < gamification.recentLedger.length - 1"
-          >
-            <template #leading>
-              <div
-                class="ledger-icon"
-                :class="`ledger-icon--${entry.type}`"
-                :style="entryMetalVars(entry)"
-              >
-                <span v-if="entry.type !== 'earning'">{{ entry.redemption.rewardIcon }}</span>
-                <CoinIcon v-else :size="18" :metal="entryMetal(entry)" />
-              </div>
-            </template>
-
-            <span class="truncate">{{ ledgerTitle(entry) }}</span>
-            <template #subtitle>
-              <span class="text-xs text-muted">{{ ledgerSubtitle(entry) }}</span>
-              <button
-                v-if="entry.type === 'redemption' && !entry.redemption.undoneAt"
-                type="button"
-                class="undo-button"
-                @click="confirmUndo(entry.redemption)"
-              >Desfazer</button>
-            </template>
-            <template #trailing>
+        <div v-else class="ledger-groups">
+          <div v-for="group in ledgerGroups" :key="group.key" class="ledger-day">
+            <!--
+              O total do dia é o que torna o agrupamento útil: dá pra varrer o
+              extrato e ver quanto cada dia rendeu sem somar linha por linha.
+            -->
+            <div class="ledger-day__head">
+              <span class="ledger-day__label">{{ group.label }}</span>
               <span
-                class="ledger-value numeric"
-                :class="{ 'ledger-value--spent': entry.amount < 0 }"
-                :style="entryMetalVars(entry)"
+                class="ledger-day__total numeric"
+                :class="{ 'ledger-day__total--spent': group.total < 0 }"
+              >{{ group.total > 0 ? '+' : '' }}{{ formatCoins(group.total) }}</span>
+            </div>
+
+            <AkList>
+              <AkListRow
+                v-for="(entry, index) in group.entries"
+                :key="entry.id"
+                :divider="index < group.entries.length - 1"
               >
-                {{ entry.amount > 0 ? '+' : '' }}{{ formatCoins(entry.amount) }}
-              </span>
-            </template>
-          </AkListRow>
-        </AkList>
+                <template #leading>
+                  <div
+                    class="ledger-icon"
+                    :class="`ledger-icon--${entry.type}`"
+                    :style="entryMetalVars(entry)"
+                  >
+                    <span v-if="entry.type !== 'earning'">{{ entry.redemption.rewardIcon }}</span>
+                    <CoinIcon v-else :size="18" :metal="entryMetal(entry)" />
+                  </div>
+                </template>
+
+                <span class="truncate">{{ ledgerTitle(entry) }}</span>
+                <template #subtitle>
+                  <span class="text-xs text-muted">{{ ledgerSubtitle(entry) }}</span>
+                  <button
+                    v-if="entry.type === 'redemption' && !entry.redemption.undoneAt"
+                    type="button"
+                    class="undo-button"
+                    @click="confirmUndo(entry.redemption)"
+                  >Desfazer</button>
+                </template>
+                <template #trailing>
+                  <span
+                    class="ledger-value numeric"
+                    :class="{ 'ledger-value--spent': entry.amount < 0 }"
+                    :style="entryMetalVars(entry)"
+                  >
+                    {{ entry.amount > 0 ? '+' : '' }}{{ formatCoins(entry.amount) }}
+                  </span>
+                </template>
+              </AkListRow>
+            </AkList>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -248,7 +264,7 @@ import { useSubjectsStore } from '@/stores/subjects'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { useAppToast } from '@/composables/useAppToast'
 import { useCoinBurst } from '@/composables/useCoinBurst'
-import { formatDuration } from '@/types'
+import { formatDuration, localDateStr } from '@/types'
 import { ACTIVITIES, activityMeta, coinsAsStudyTime, formatCoins, type ActivityMeta } from '@/utils/coins'
 import type { Reward, RewardRedemption } from '@/types'
 
@@ -413,17 +429,48 @@ function ledgerTitle(entry: WalletEntry) {
   return entry.redemption.rewardName
 }
 
+/* Só a hora: o dia agora vive no cabeçalho do grupo. */
 function ledgerSubtitle(entry: WalletEntry) {
-  const date = formatEntryDate(entry.createdAt)
-  if (entry.type === 'earning') return `${date} · ${formatDuration(entry.session.duration)}`
-  return entry.type === 'refund' ? `${date} · Resgate desfeito` : `${date} · Recompensa resgatada`
+  const time = formatEntryTime(entry.createdAt)
+  if (entry.type === 'earning') return `${time} · ${formatDuration(entry.session.duration)}`
+  return entry.type === 'refund' ? `${time} · Resgate desfeito` : `${time} · Recompensa resgatada`
 }
 
-function formatEntryDate(timestamp: number) {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-  }).format(new Date(timestamp))
+function formatEntryTime(timestamp: number) {
+  return new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    .format(new Date(timestamp))
 }
+
+function dayLabel(date: string) {
+  if (date === localDateStr()) return 'Hoje'
+  if (date === localDateStr(new Date(Date.now() - 86_400_000))) return 'Ontem'
+  const [y, m, d] = date.split('-').map(Number)
+  const parsed = new Date(y, m - 1, d)
+  const sameYear = parsed.getFullYear() === new Date().getFullYear()
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit', month: 'long', year: sameYear ? undefined : 'numeric',
+  }).format(parsed)
+}
+
+/**
+ * Extrato por dia. `recentLedger` já vem ordenado do mais recente pro mais
+ * antigo, então basta quebrar em blocos — um Map preserva essa ordem.
+ */
+const ledgerGroups = computed(() => {
+  const groups = new Map<string, WalletEntry[]>()
+  for (const entry of gamification.recentLedger) {
+    const key = localDateStr(new Date(entry.createdAt))
+    const bucket = groups.get(key)
+    if (bucket) bucket.push(entry)
+    else groups.set(key, [entry])
+  }
+  return [...groups].map(([key, entries]) => ({
+    key,
+    label: dayLabel(key),
+    total: entries.reduce((sum, entry) => sum + entry.amount, 0),
+    entries,
+  }))
+})
 </script>
 
 <style scoped>
@@ -761,6 +808,36 @@ function formatEntryDate(timestamp: number) {
 }
 
 /* ── Extrato ──────────────────────────────────────────── */
+.ledger-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.ledger-day__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-1) var(--space-2);
+}
+
+.ledger-day__label {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ledger-day__total {
+  color: var(--coin-text);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.ledger-day__total--spent { color: var(--danger); }
+
 .ledger-icon {
   display: grid;
   place-items: center;
