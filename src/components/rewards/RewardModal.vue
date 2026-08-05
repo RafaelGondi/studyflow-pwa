@@ -150,7 +150,7 @@ async function handleSubmit() {
   try {
     const payload = {
       name: form.value.name.trim(),
-      description: form.value.description.trim() || undefined,
+      description: form.value.description.trim(),
       cost: Math.max(1, Math.round(form.value.cost)),
       icon: form.value.icon,
       color: normalizeAkomaColor(form.value.color),
