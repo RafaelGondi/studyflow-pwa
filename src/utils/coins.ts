@@ -7,26 +7,37 @@ import type { ActivityKind } from '@/types'
  */
 
 /**
- * Metais. A escada de câmbio É a tabela de pesos: uma hora de qualquer fonte
- * rende exatamente uma moeda do metal dela, e 1 ouro = 4 prata = 10 cobre.
- * Não são carteiras separadas — a conversão é automática e sem perda, então
- * o saldo continua sendo um número só e a recompensa, um preço só.
+ * Metais.
+ *
+ * A taxa é a mesma para todas as fontes — uma hora rende 60 moedas, sempre.
+ * O que faz uma hora de estudo valer mais que uma de trabalho não é render
+ * mais moedas, é render moedas de um metal melhor. A escada carrega o peso:
+ *
+ *   1 ouro = 4 prata = 8 bronze
+ *
+ * Oito, e não dez, porque com dez a escada não fecha: 1 prata valeria 2,5
+ * bronze e nenhuma quantidade inteira expressaria os três metais. Com oito o
+ * bronze é a unidade base (1 prata = 2 bronze) e um minuto de trabalho vale
+ * exatamente um bronze.
  */
 export interface ActivityMeta {
   id: ActivityKind
   label: string
   metal: string
-  /** Fração de uma hora de estudo que uma hora desta fonte vale. */
-  multiplier: number
-  /** Chave dos tokens CSS: --metal-{key}-hi / -lo / -tx / -bg */
-  token: 'ouro' | 'prata' | 'cobre'
+  /** Quantas moedas deste metal valem um ouro. É a escada. */
+  perGold: number
+  /** Chave dos tokens CSS: --metal-{token}-hi / -lo / -tx / -bg */
+  token: 'ouro' | 'prata' | 'bronze'
 }
 
 export const ACTIVITIES: ActivityMeta[] = [
-  { id: 'estudo',   label: 'Estudo',   metal: 'Ouro',  multiplier: 1,    token: 'ouro' },
-  { id: 'leitura',  label: 'Leitura',  metal: 'Prata', multiplier: 0.25, token: 'prata' },
-  { id: 'trabalho', label: 'Trabalho', metal: 'Cobre', multiplier: 0.1,  token: 'cobre' },
+  { id: 'estudo',   label: 'Estudo',   metal: 'Ouro',   perGold: 1, token: 'ouro' },
+  { id: 'leitura',  label: 'Leitura',  metal: 'Prata',  perGold: 4, token: 'prata' },
+  { id: 'trabalho', label: 'Trabalho', metal: 'Bronze', perGold: 8, token: 'bronze' },
 ]
+
+/** Texto do câmbio, para as telas que precisam ensiná-lo. */
+export const EXCHANGE_LABEL = '1 ouro = 4 prata = 8 bronze'
 
 export const DEFAULT_ACTIVITY: ActivityKind = 'estudo'
 
@@ -34,8 +45,17 @@ export function activityMeta(kind: ActivityKind | undefined | null): ActivityMet
   return ACTIVITIES.find(a => a.id === kind) ?? ACTIVITIES[0]
 }
 
+/**
+ * Quantas moedas do metal daquela fonte correspondem a um valor em ouro.
+ * O banco guarda tudo em ouro-equivalente; a tela conta no metal certo.
+ */
+export function coinsInMetal(goldValue: number, kind: ActivityKind | undefined | null): number {
+  return goldValue * activityMeta(kind).perGold
+}
+
+/** Peso da hora. Derivado da escada, para os dois nunca saírem de sincronia. */
 export function activityMultiplier(kind: ActivityKind | undefined | null): number {
-  return activityMeta(kind).multiplier
+  return 1 / activityMeta(kind).perGold
 }
 
 export function formatCoins(value: number): string {

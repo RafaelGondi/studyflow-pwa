@@ -30,6 +30,8 @@
         </div>
 
         <p class="wallet__meta">{{ walletSummary }}</p>
+        <!-- A escada não estava em lugar nenhum da tela; sem ela o extrato não se lê. -->
+        <p class="wallet__rate">{{ EXCHANGE_LABEL }}</p>
 
         <!-- De onde o saldo veio. Só aparece quando há mais de uma fonte. -->
         <div v-if="composition.length > 1" class="wallet__mix">
@@ -196,7 +198,7 @@
                     :class="{ 'ledger-value--spent': entry.amount < 0 }"
                     :style="entryMetalVars(entry)"
                   >
-                    {{ entry.amount > 0 ? '+' : '' }}{{ formatCoins(entry.amount) }}
+                    {{ entry.amount > 0 ? '+' : '' }}{{ entryAmount(entry) }}
                   </span>
                 </template>
               </AkListRow>
@@ -222,7 +224,10 @@ import { useSubjectsStore } from '@/stores/subjects'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { useAppToast } from '@/composables/useAppToast'
 import { formatDuration, localDateStr } from '@/types'
-import { ACTIVITIES, activityMeta, coinsAsStudyTime, formatCoins, type ActivityMeta } from '@/utils/coins'
+import {
+  ACTIVITIES, EXCHANGE_LABEL, activityMeta, coinsAsStudyTime, coinsInMetal, formatCoins,
+  type ActivityMeta,
+} from '@/utils/coins'
 import type { Reward, RewardRedemption } from '@/types'
 
 const router = useRouter()
@@ -230,6 +235,17 @@ const gamification = useGamificationStore()
 const subjects = useSubjectsStore()
 const confirmSheet = useConfirmSheet()
 const toast = useAppToast()
+
+/**
+ * O ganho é contado no metal que a fonte rende, não convertido em ouro sem
+ * avisar: uma hora de trabalho aparece como "+60 bronze", não como "+7,5".
+ * O banco guarda ouro-equivalente; a escada faz a volta.
+ */
+function entryAmount(entry: WalletEntry) {
+  if (entry.type !== 'earning') return `${formatCoins(Math.abs(entry.amount))} ouro`
+  const meta = activityMeta(entry.session.activityKind)
+  return `${formatCoins(coinsInMetal(entry.amount, entry.session.activityKind))} ${meta.metal.toLowerCase()}`
+}
 
 /* Sessão sem `activityKind` é anterior aos pesos — vale como estudo. */
 function entryMetal(entry: WalletEntry): ActivityMeta['token'] {
@@ -439,6 +455,13 @@ const ledgerGroups = computed(() => {
   margin-top: var(--space-2);
   color: var(--text-secondary);
   font-size: var(--text-xs);
+}
+
+.wallet__rate {
+  margin-top: 2px;
+  color: var(--text-tertiary);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.02em;
 }
 
 .wallet__next {

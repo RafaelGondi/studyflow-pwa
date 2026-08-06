@@ -887,10 +887,10 @@
   --metal-prata-tx: #4e5860;
   --metal-prata-bg: #ecedef;
 
-  --metal-cobre-hi: #e0a985;
-  --metal-cobre-lo: #b06d43;
-  --metal-cobre-tx: #6f3d22;
-  --metal-cobre-bg: #f6e6db;
+  --metal-bronze-hi: #e0a985;
+  --metal-bronze-lo: #b06d43;
+  --metal-bronze-tx: #6f3d22;
+  --metal-bronze-bg: #f6e6db;
 }
 
 /*
@@ -908,6 +908,6 @@
 
   --metal-prata-tx: #d3d8dd;
   --metal-prata-bg: #262a2d;
-  --metal-cobre-tx: #e0aa87;
-  --metal-cobre-bg: #2e211a;
+  --metal-bronze-tx: #e0aa87;
+  --metal-bronze-bg: #2e211a;
 }

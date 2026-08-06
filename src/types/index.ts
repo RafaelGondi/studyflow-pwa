@@ -10,8 +10,8 @@ export interface Category {
 
 /**
  * O que uma matéria é. Define o metal que ela rende e o peso da hora:
- * estudo vale 1x, leitura 1/4 e trabalho 1/10 — a mesma escada de
- * 1 ouro = 4 prata = 10 cobre. Ausente = estudo (retrocompatível).
+ * estudo vale 1x, leitura 1/4 e trabalho 1/8 — a mesma escada de
+ * 1 ouro = 4 prata = 8 bronze. Ausente = estudo (retrocompatível).
  */
 export type ActivityKind = 'estudo' | 'leitura' | 'trabalho'
 

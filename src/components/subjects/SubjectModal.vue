@@ -129,8 +129,8 @@
         </div>
 
         <!--
-          Tipo da matéria. Define o metal que ela rende e o peso da hora — uma
-          hora de leitura vale 1/4 de uma de estudo, uma de trabalho 1/10.
+          Tipo da matéria. A taxa é a mesma para todas — 60 moedas por hora.
+          O que muda é o metal, e a escada é que carrega o peso.
         -->
         <div class="form-field">
           <label class="form-label">Tipo de atividade</label>
@@ -150,9 +150,7 @@
             >
               <span class="activity-pick__coin" />
               <span class="activity-pick__name">{{ activity.label }}</span>
-              <span class="activity-pick__rate">
-                {{ activity.multiplier === 1 ? '1h → 1 ouro' : `1h → 1 ${activity.metal.toLowerCase()}` }}
-              </span>
+              <span class="activity-pick__rate">60 {{ activity.metal.toLowerCase() }}/h</span>
             </button>
           </div>
           <p class="activity-hint">
@@ -196,7 +194,7 @@ import { useSubjectsStore } from '@/stores/subjects'
 import { useAppToast } from '@/composables/useAppToast'
 import { INITIAL_ICON, SUBJECT_COLORS, SUBJECT_ICONS } from '@/types'
 import { DEFAULT_SUBJECT_COLOR, normalizeAkomaColor, subjectBgMix } from '@/utils/colors'
-import { ACTIVITIES, DEFAULT_ACTIVITY, activityMeta } from '@/utils/coins'
+import { ACTIVITIES, DEFAULT_ACTIVITY, EXCHANGE_LABEL, activityMeta, formatCoins } from '@/utils/coins'
 import type { ActivityKind, Subject } from '@/types'
 import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 
@@ -227,11 +225,16 @@ const form = ref({
   activityKind: DEFAULT_ACTIVITY as ActivityKind,
 })
 
+/*
+ * A taxa é a mesma para todas as fontes: 60 moedas por hora. O que muda é o
+ * metal — e é a escada que faz uma hora de estudo valer mais que uma de
+ * trabalho, não a quantidade.
+ */
 const activityHint = computed(() => {
   const meta = activityMeta(form.value.activityKind)
-  if (meta.multiplier === 1) return 'Vale integral — é a referência das outras.'
-  const share = meta.multiplier === 0.25 ? 'um quarto' : 'um décimo'
-  return `Uma hora aqui vale ${share} de uma hora de estudo.`
+  if (meta.perGold === 1) return `Referência da escada. ${EXCHANGE_LABEL}.`
+  return `Uma hora rende 60 moedas de ${meta.metal.toLowerCase()}, que valem `
+    + `${formatCoins(60 / meta.perGold)} de ouro. ${EXCHANGE_LABEL}.`
 })
 
 const categories  = computed(() => subjectsStore.categories)

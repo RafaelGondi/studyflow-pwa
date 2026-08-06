@@ -37,15 +37,15 @@ import { computed, useId } from 'vue'
 const props = withDefaults(defineProps<{
   size?: number
   spinning?: boolean
-  /** Ouro = estudo, prata = leitura, cobre = trabalho. */
-  metal?: 'ouro' | 'prata' | 'cobre'
+  /** Ouro = estudo, prata = leitura, bronze = trabalho. */
+  metal?: 'ouro' | 'prata' | 'bronze'
 }>(), {
   size: 18,
   spinning: false,
   metal: 'ouro',
 })
 
-/* Prata e cobre são escuros no claro e no escuro; só o ouro tem borda
+/* Prata e bronze são escuros no claro e no escuro; só o ouro tem borda
    que inverte, então a borda vem do token do próprio metal. */
 const edge = computed(() =>
   props.metal === 'ouro' ? 'var(--coin-edge)' : `var(--metal-${props.metal}-tx)`,
