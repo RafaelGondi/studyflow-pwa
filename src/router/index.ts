@@ -9,6 +9,7 @@ const router = createRouter({
     { path: '/subjects/:id', name: 'subject-stats', component: () => import('@/views/SubjectStatsView.vue') },
     { path: '/stats',    name: 'stats',    component: () => import('@/views/StatsView.vue') },
     { path: '/rewards', name: 'rewards', component: () => import('@/views/RewardsView.vue') },
+    { path: '/rewards/shop', name: 'reward-shop', component: () => import('@/views/RewardShopView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
   ],
 })

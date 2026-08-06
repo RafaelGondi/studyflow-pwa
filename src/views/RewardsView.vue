@@ -79,102 +79,47 @@
         <p>Seu saldo ficou negativo após uma alteração nos registros. Os próximos ganhos compensarão essa diferença.</p>
       </div>
 
+      <!--
+        A entrada da lojinha. A lista inteira vivia aqui: com dez recompensas
+        eram ~1400px de cromo quase idêntico entre o saldo e o extrato. Agora
+        fica só o que já dá pra levar, e o catálogo atrás de um toque.
+      -->
       <section class="section-block">
-        <AkSectionHeader title="Minhas recompensas">
+        <AkSectionHeader title="Ao seu alcance">
           <template #action>
-            <AkButton size="sm" variant="primary" @click="openNewReward">Nova</AkButton>
+            <button type="button" class="shop-link" @click="router.push('/rewards/shop')">
+              Lojinha
+              <AkIcon name="arrow-right-outline" :size="13" />
+            </button>
           </template>
         </AkSectionHeader>
 
-        <div v-if="gamification.archivedRewards.length" class="reward-filters">
-          <AkChip :selected="rewardFilter === 'active'" @click="rewardFilter = 'active'">Ativas</AkChip>
-          <AkChip :selected="rewardFilter === 'archived'" @click="rewardFilter = 'archived'">
-            Arquivadas ({{ gamification.archivedRewards.length }})
-          </AkChip>
+        <div v-if="unlocked.length" class="shelf">
+          <button
+            v-for="reward in unlocked"
+            :key="reward.id"
+            type="button"
+            class="shelf__card"
+            :style="{ '--reward-color': reward.color }"
+            @click="router.push('/rewards/shop')"
+          >
+            <span class="shelf__icon">{{ reward.icon }}</span>
+            <span class="shelf__name">{{ reward.name }}</span>
+            <span class="shelf__cost">
+              <CoinIcon :size="12" />
+              <span class="numeric">{{ formatCoins(reward.cost) }}</span>
+            </span>
+          </button>
         </div>
 
-        <AkEmptyState
-          v-if="visibleRewards.length === 0"
-          :title="rewardFilter === 'active' ? 'Crie algo para conquistar' : 'Nenhuma recompensa arquivada'"
-          :description="rewardFilter === 'active'
-            ? 'Cadastre pequenos prazeres ou compras que podem ser trocados pelas moedas dos seus estudos.'
-            : 'As recompensas que você arquivar aparecerão aqui.'"
-        >
-          <template #icon>🎁</template>
-          <template v-if="rewardFilter === 'active'" #action>
-            <AkButton variant="primary" @click="openNewReward">Criar recompensa</AkButton>
-          </template>
-        </AkEmptyState>
-
-        <TransitionGroup v-else name="reward-list" tag="div" class="reward-grid">
-          <article
-            v-for="reward in visibleRewards"
-            :key="reward.id"
-            class="reward-card"
-            :class="{
-              'reward-card--unlocked': isUnlocked(reward),
-              'reward-card--archived': !!reward.archivedAt,
-              'reward-card--claimed': isClaimed(reward),
-            }"
-            :style="{ '--reward-color': reward.color }"
-          >
-            <div class="reward-card__top">
-              <div class="reward-card__icon">{{ reward.icon }}</div>
-
-              <div class="reward-card__content">
-                <h3>{{ reward.name }}</h3>
-                <p v-if="reward.description">{{ reward.description }}</p>
-              </div>
-
-              <div class="reward-card__cost">
-                <CoinIcon :size="14" />
-                <strong class="numeric">{{ reward.cost }}</strong>
-              </div>
-            </div>
-
-            <div v-if="!reward.archivedAt" class="reward-card__progress">
-              <div class="coin-bar" :style="{ '--fill': `${progressFor(reward)}%` }" aria-hidden="true">
-                <span />
-              </div>
-              <div class="reward-card__status">
-                <p>
-                  <AkIcon v-if="isUnlocked(reward)" name="check-outline" :size="13" />
-                  {{ rewardStatus(reward) }}
-                </p>
-                <span v-if="reward.repeatable" class="reward-card__tag">repetível</span>
-              </div>
-            </div>
-
-            <div class="reward-card__actions">
-              <AkButton
-                v-if="!reward.archivedAt"
-                size="sm"
-                variant="primary"
-                class="reward-card__redeem"
-                :disabled="!gamification.canRedeem(reward)"
-                @click="confirmRedeem(reward)"
-              >
-                Resgatar
-              </AkButton>
-
-              <!--
-                Editar/arquivar/excluir eram três botões de texto do mesmo peso
-                que "Resgatar", e a ação principal sumia no meio deles. Viraram
-                ícones, à direita, fora do caminho.
-              -->
-              <div class="reward-card__tools">
-                <AkIconButton icon="edit-outline" label="Editar recompensa" size="sm" @click="openEditReward(reward)" />
-                <AkIconButton
-                  :icon="reward.archivedAt ? 'refresh-outline' : 'box-outline'"
-                  :label="reward.archivedAt ? 'Restaurar recompensa' : 'Arquivar recompensa'"
-                  size="sm"
-                  @click="toggleArchive(reward)"
-                />
-                <AkIconButton icon="trash-outline" label="Excluir recompensa" size="sm" @click="confirmDelete(reward)" />
-              </div>
-            </div>
-          </article>
-        </TransitionGroup>
+        <button v-else type="button" class="shop-empty" @click="router.push('/rewards/shop')">
+          <span v-if="nextReward">
+            Falta <strong class="numeric">{{ formatCoins(missingFor(nextReward)) }}</strong>
+            para {{ nextReward.icon }} {{ nextReward.name }}
+          </span>
+          <span v-else>Cadastre sua primeira recompensa</span>
+          <AkIcon name="arrow-right-outline" :size="16" />
+        </button>
       </section>
 
       <section class="section-block">
@@ -254,7 +199,6 @@
       </section>
     </div>
 
-    <RewardModal :show="showRewardModal" :reward="editingReward" @close="closeRewardModal" />
   </div>
 </template>
 
@@ -262,17 +206,14 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  AkButton, AkChip, AkEmptyState, AkIcon, AkIconButton, AkList, AkListRow,
-  AkPageHeader, AkSectionHeader,
+  AkIcon, AkList, AkListRow, AkPageHeader, AkSectionHeader,
 } from '@rafael_dias/akoma'
-import RewardModal from '@/components/rewards/RewardModal.vue'
 import CoinIcon from '@/components/ui/CoinIcon.vue'
 import AnimatedNumber from '@/components/ui/AnimatedNumber.vue'
 import { useGamificationStore, type WalletEntry } from '@/stores/gamification'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { useAppToast } from '@/composables/useAppToast'
-import { useCoinBurst } from '@/composables/useCoinBurst'
 import { formatDuration, localDateStr } from '@/types'
 import { ACTIVITIES, activityMeta, coinsAsStudyTime, formatCoins, type ActivityMeta } from '@/utils/coins'
 import type { Reward, RewardRedemption } from '@/types'
@@ -282,15 +223,6 @@ const gamification = useGamificationStore()
 const subjects = useSubjectsStore()
 const confirmSheet = useConfirmSheet()
 const toast = useAppToast()
-const coinBurst = useCoinBurst()
-const rewardFilter = ref<'active' | 'archived'>('active')
-const showRewardModal = ref(false)
-const editingReward = ref<Reward | null>(null)
-
-const visibleRewards = computed(() => rewardFilter.value === 'active'
-  ? gamification.activeRewards
-  : gamification.archivedRewards,
-)
 
 /* Sessão sem `activityKind` é anterior aos pesos — vale como estudo. */
 function entryMetal(entry: WalletEntry): ActivityMeta['token'] {
@@ -341,79 +273,16 @@ function isUnlocked(reward: Reward) {
   return !reward.archivedAt && gamification.canRedeem(reward)
 }
 
+const unlocked = computed(() => gamification.activeRewards.filter(isUnlocked))
+
 function missingFor(reward: Reward) {
   return Math.max(0, reward.cost - gamification.balance)
 }
 
+/* Alimenta a barra da próxima recompensa na carteira. */
 function progressFor(reward: Reward) {
   if (reward.cost <= 0) return 100
   return Math.min(100, Math.max(0, (gamification.balance / reward.cost) * 100))
-}
-
-function rewardStatus(reward: Reward) {
-  if (isClaimed(reward)) return 'Já resgatada'
-  const missing = missingFor(reward)
-  if (missing <= 0) return 'Pronta para resgatar'
-  const time = coinsAsStudyTime(missing, gamification.settings.coinsPerHour)
-  return `Faltam ${formatCoins(missing)} · ≈ ${time} de estudo`
-}
-
-function openNewReward() {
-  editingReward.value = null
-  showRewardModal.value = true
-}
-
-function openEditReward(reward: Reward) {
-  editingReward.value = reward
-  showRewardModal.value = true
-}
-
-function closeRewardModal() {
-  showRewardModal.value = false
-  editingReward.value = null
-}
-
-async function confirmRedeem(reward: Reward) {
-  const confirmed = await confirmSheet.ask({
-    title: `Resgatar ${reward.name}?`,
-    message: `${reward.cost} moedas serão descontadas do seu saldo.`,
-    confirmLabel: 'Resgatar',
-    confirmVariant: 'primary',
-  })
-  if (!confirmed) return
-  try {
-    await gamification.redeemReward(reward.id)
-    coinBurst.fire({ kind: 'redeem', label: reward.name })
-    toast.success('Recompensa resgatada', `Você usou ${reward.cost} moedas.`)
-  } catch (error) {
-    const message = error instanceof Error && error.message === 'insufficient-balance'
-      ? 'Seu saldo mudou e não é mais suficiente.'
-      : 'Não foi possível concluir o resgate.'
-    toast.error('Falha ao resgatar', message)
-  }
-}
-
-async function toggleArchive(reward: Reward) {
-  if (reward.archivedAt) {
-    await gamification.restoreReward(reward.id)
-    rewardFilter.value = 'active'
-    toast.success('Recompensa restaurada')
-  } else {
-    await gamification.archiveReward(reward.id)
-    toast.success('Recompensa arquivada')
-  }
-}
-
-async function confirmDelete(reward: Reward) {
-  const confirmed = await confirmSheet.ask({
-    title: 'Excluir recompensa?',
-    message: `“${reward.name}” será removida. Os resgates anteriores continuarão no extrato.`,
-    confirmLabel: 'Excluir',
-    confirmVariant: 'danger',
-  })
-  if (!confirmed) return
-  await gamification.removeReward(reward.id)
-  toast.success('Recompensa excluída')
 }
 
 async function confirmUndo(redemption: RewardRedemption) {
@@ -671,150 +540,125 @@ const ledgerGroups = computed(() => {
   line-height: 1.45;
 }
 
-.reward-filters {
+/* ── Prateleira: o que já dá pra levar ────────────────── */
+.shop-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.shop-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Sangra até a borda da tela pra deixar claro que rola. */
+.shelf {
   display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
+  gap: var(--space-3);
+  margin: 0 calc(var(--page-pad-x) * -1);
+  padding: var(--space-1) var(--page-pad-x) var(--space-3);
   overflow-x: auto;
+  scroll-snap-type: x mandatory;
 }
 
-.reward-grid {
-  display: grid;
-  gap: var(--space-3);
-}
-
-/* ── Card de recompensa ───────────────────────────────── */
-.reward-card {
+.shelf__card {
   position: relative;
+  flex: 0 0 152px;
+  scroll-snap-align: start;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   padding: var(--space-4);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--coin-face-lo) 45%, transparent);
   border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
-  transition: border-color 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth);
-}
-
-/*
- * Desbloqueada muda de material, não só de texto: borda dourada e um wash da
- * cor da própria recompensa. Dá pra varrer a lista e ver o que já é seu.
- */
-.reward-card--unlocked {
-  border-color: color-mix(in srgb, var(--coin-face-lo) 45%, transparent);
   background:
-    radial-gradient(130% 100% at 0% 0%, color-mix(in srgb, var(--reward-color) 12%, transparent), transparent 58%),
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--reward-color) 16%, transparent), transparent 60%),
     var(--bg-elevated);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.16s var(--ease-out-expo);
 }
 
-.reward-card--claimed,
-.reward-card--archived { opacity: 0.62; }
+.shelf__card:active { transform: scale(0.965); }
 
-.reward-card__top {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
-  gap: var(--space-3);
-  align-items: start;
+.shelf__card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-.reward-card__icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--reward-color) 16%, var(--bg-soft));
-  font-size: 22px;
+/* Brilho atravessando — o único movimento contínuo da tela. */
+.shelf__card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 40%,
+    color-mix(in srgb, var(--coin-face-hi) 32%, transparent) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  animation: shelf-sheen 5s var(--ease-smooth) infinite;
 }
 
-.reward-card__content { min-width: 0; }
+@keyframes shelf-sheen {
+  0%, 58% { transform: translateX(-100%); }
+  100%    { transform: translateX(100%); }
+}
 
-.reward-card__content h3 {
+.shelf__icon { font-size: 26px; line-height: 1; }
+
+.shelf__name {
   color: var(--text);
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   font-weight: 650;
   letter-spacing: -0.01em;
 }
 
-.reward-card__content p {
-  margin-top: 3px;
-  color: var(--text-secondary);
+.shelf__cost {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--coin-text);
   font-size: var(--text-xs);
-  line-height: 1.4;
+  font-weight: 500;
 }
 
-.reward-card__cost {
+.shop-empty {
   display: flex;
   align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  padding: 4px var(--space-2);
-  border-radius: var(--radius-full);
-  background: var(--coin-soft);
-  color: var(--coin-text);
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
   font-size: var(--text-sm);
-  white-space: nowrap;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.16s var(--ease-out-expo);
 }
 
-.reward-card__progress { margin-top: var(--space-4); }
+.shop-empty:active { transform: scale(0.98); }
 
-.reward-card__status {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  color: var(--text-secondary);
-  font-size: var(--text-2xs);
-}
-
-.reward-card__status p {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-}
-
-.reward-card--unlocked .reward-card__status {
-  color: var(--coin-text);
-  font-weight: 500;
-}
-
-.reward-card__actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-}
-
-.reward-card__tools {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: auto;
-}
-
-.reward-card__redeem { transition: transform 0.14s var(--ease-out-expo); }
-.reward-card__redeem:active:not(:disabled) { transform: scale(0.95); }
-
-/* Pulso lento no botão liberado — chama sem gritar. */
-.reward-card--unlocked .reward-card__redeem {
-  animation: redeem-pulse 2.8s var(--ease-smooth) infinite;
-}
-
-@keyframes redeem-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--coin-face-lo) 42%, transparent); }
-  55%      { box-shadow: 0 0 0 7px transparent; }
-}
-
-/* Antes ficava absoluto no canto — em cima do chip de custo. */
-.reward-card__tag {
-  flex-shrink: 0;
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  background: var(--bg-soft);
-  color: var(--text-secondary);
-  font-size: var(--text-2xs);
-  font-weight: 500;
-}
+.shop-empty strong { color: var(--text); font-weight: 650; }
 
 /* ── Extrato ──────────────────────────────────────────── */
 .ledger-days {
@@ -940,11 +784,8 @@ const ledgerGroups = computed(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .wallet--unlocked::after,
-  .reward-card--unlocked .reward-card__redeem { animation: none; }
+  .shelf__card::after { animation: none; }
   .coin-bar span { transition: none; }
 }
 
-@media (min-width: 720px) {
-  .reward-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 </style>
