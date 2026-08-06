@@ -109,6 +109,13 @@
               <CoinIcon :size="12" />
               <span class="numeric">{{ formatCoins(reward.cost) }}</span>
             </span>
+            <!--
+              Custo em tempo, não só em moeda. Escolher entre 90 e 360 não diz
+              nada; escolher entre 1h30 e 6h de estudo é a comparação real.
+            -->
+            <span class="shelf__time">
+              {{ coinsAsStudyTime(reward.cost, gamification.settings.coinsPerHour) }} de estudo
+            </span>
           </button>
         </div>
 
@@ -636,6 +643,11 @@ const ledgerGroups = computed(() => {
   color: var(--coin-text);
   font-size: var(--text-xs);
   font-weight: 500;
+}
+
+.shelf__time {
+  color: var(--text-secondary);
+  font-size: var(--text-2xs);
 }
 
 .shop-empty {
