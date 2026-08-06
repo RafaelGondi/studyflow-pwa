@@ -144,6 +144,14 @@ const REWARD_ICONS = [
   // lazer
   '🎮', '🕹️', '🎬', '🎧', '🎤', '🎸',
   '📚', '🎟️', '🧩', '🎨', '✨', '🏋️',
+  /*
+   * Amigos. O resto do lazer é solitário — 🎮 🎬 📚 se faz sozinho, e 🍺 é
+   * uma caneca só. Aqui tudo vem no plural: duas canecas, duas taças, duas
+   * pessoas. 🧑‍🤝‍🧑 é sequência ZWJ, mas renderiza como glifo único nos
+   * alvos do app (verificado); em fonte muito antiga cairia em três figuras.
+   */
+  '🍻', '🥂', '🎉', '🍽️', '🎳', '🎱',
+  '🧑‍🤝‍🧑', '👯', '🫂', '🎊', '🍹', '🎂',
   // comprar
   '🎁', '🛍️', '👟', '👕', '👗', '👜',
   '🕶️', '⌚', '💎', '💍', '🧢', '🖊️',
