@@ -44,7 +44,7 @@
           coisa da tela com movimento contínuo, porque é a única que pede ação.
         -->
         <section v-if="filter === 'active'" class="section-block">
-          <AkSectionHeader title="Ao seu alcance">
+          <AkSectionHeader title="Disponíveis para resgate">
             <template v-if="unlocked.length" #action>
               <span class="text-xs text-muted">
                 {{ unlocked.length }} {{ unlocked.length === 1 ? 'liberada' : 'liberadas' }}
@@ -104,7 +104,7 @@
           </TransitionGroup>
 
           <p v-if="filter === 'active' && pending.length === 0" class="text-xs text-muted">
-            Tudo ao seu alcance agora.
+            Tudo disponível para resgate.
           </p>
         </section>
       </template>
@@ -261,6 +261,12 @@ async function confirmDelete(reward: Reward) {
   padding: var(--space-1) var(--page-pad-x) var(--space-3);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  /*
+   * Sem isto o snap come o padding do bleed: `scroll-padding` vale `auto`, o
+   * snapport ignora os 20px, e o navegador rola exatamente eles para encostar
+   * o primeiro card na borda da tela. O padding existe; o snap o desfaz.
+   */
+  scroll-padding-inline: var(--page-pad-x);
 }
 
 .shelf__card {

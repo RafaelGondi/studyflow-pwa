@@ -87,7 +87,7 @@
         fica só o que já dá pra levar, e o catálogo atrás de um toque.
       -->
       <section class="section-block">
-        <AkSectionHeader title="Ao seu alcance">
+        <AkSectionHeader title="Disponíveis para resgate">
           <template #action>
             <button type="button" class="shop-link" @click="router.push('/rewards/shop')">
               Lojinha
@@ -599,6 +599,12 @@ const ledgerGroups = computed(() => {
   padding: var(--space-1) var(--page-pad-x) var(--space-3);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  /*
+   * Sem isto o snap come o padding do bleed: `scroll-padding` vale `auto`, o
+   * snapport ignora os 20px, e o navegador rola exatamente eles para encostar
+   * o primeiro card na borda da tela. O padding existe; o snap o desfaz.
+   */
+  scroll-padding-inline: var(--page-pad-x);
 }
 
 .shelf__card {
