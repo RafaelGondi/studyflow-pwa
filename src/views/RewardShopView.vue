@@ -267,7 +267,12 @@ async function confirmDelete(reward: Reward) {
    * o primeiro card na borda da tela. O padding existe; o snap o desfaz.
    */
   scroll-padding-inline: var(--page-pad-x);
+  /* Mesma convenção de .chip-row e .chip-scroll: o corte do último card à
+     direita já diz que rola, então a barra só suja. */
+  scrollbar-width: none;
 }
+
+.shelf::-webkit-scrollbar { display: none; }
 
 .shelf__card {
   position: relative;
