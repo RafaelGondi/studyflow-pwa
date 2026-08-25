@@ -1,9 +1,9 @@
 <template>
   <Transition name="global-pet">
     <div v-if="visible" class="global-pet">
-      <button type="button" class="global-pet__button" :aria-label="ariaLabel" @click="router.push('/rewards/pet')">
+      <button type="button" class="global-pet__button" :aria-label="ariaLabel" @click="handleTap">
         <span v-if="attentionMessage" class="global-pet__bubble">{{ attentionMessage }}</span>
-        <PixelPet :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="74" />
+        <PixelPet ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="74" />
         <span v-if="pet.isAway || pet.missedDays > 0" class="global-pet__alert" aria-hidden="true">!</span>
       </button>
     </div>
@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PixelPet from './PixelPet.vue'
 import { usePetStore } from '@/stores/pet'
@@ -19,9 +19,13 @@ import { usePetStore } from '@/stores/pet'
 const route = useRoute()
 const router = useRouter()
 const pet = usePetStore()
+const sprite = ref<InstanceType<typeof PixelPet> | null>(null)
+const reactionMessage = ref('')
+let navigationTimer: ReturnType<typeof setTimeout> | null = null
 
 const visible = computed(() => route.path !== '/rewards/pet')
 const attentionMessage = computed(() => {
+  if (reactionMessage.value) return reactionMessage.value
   if (pet.isAway) return 'Complete 1h para eu voltar'
   if (pet.missedDays > 0) return 'Estou com fome'
   if (pet.streakAtRisk) return 'Nossa sequência está em risco'
@@ -30,6 +34,18 @@ const attentionMessage = computed(() => {
 const ariaLabel = computed(() => attentionMessage.value
   ? `${pet.name}: ${attentionMessage.value}. Abrir cuidados.`
   : `${pet.name}, ${pet.moodLabel.toLowerCase()}. Abrir cuidados.`)
+
+function handleTap() {
+  if (navigationTimer) return
+  sprite.value?.react()
+  reactionMessage.value = pet.isAway ? 'Ainda sinto seu carinho' : 'Carinho recebido!'
+  navigationTimer = setTimeout(() => {
+    navigationTimer = null
+    void router.push('/rewards/pet')
+  }, 680)
+}
+
+onBeforeUnmount(() => { if (navigationTimer) clearTimeout(navigationTimer) })
 </script>
 
 <style scoped>

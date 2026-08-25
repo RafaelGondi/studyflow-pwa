@@ -13,8 +13,8 @@
       <section class="habitat" :class="{ 'habitat--away': pet.isAway }">
         <span class="habitat__star habitat__star--one">✦</span>
         <span class="habitat__star habitat__star--two">·</span>
-        <PixelPet :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" />
-        <p class="speech">“{{ pet.message }}”</p>
+        <PixelPet interactive :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" @pet="handlePet" />
+        <p class="speech" aria-live="polite">“{{ displayedMessage }}”</p>
       </section>
 
       <section class="care-card" :class="{ 'care-card--danger': pet.isAway }">
@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { AkButton, AkIcon, AkInput, AkPageHeader } from '@rafael_dias/akoma'
 import PixelPet from '@/components/pet/PixelPet.vue'
@@ -98,8 +98,28 @@ const pet = usePetStore()
 const toast = useAppToast()
 const draftName = ref(pet.name)
 const saving = ref(false)
+const reactionMessage = ref('')
+let reactionTimer: ReturnType<typeof setTimeout> | null = null
+let reactionIndex = 0
 
 watch(() => pet.name, value => { draftName.value = value }, { immediate: true })
+
+const displayedMessage = computed(() => reactionMessage.value || pet.message)
+const PET_REACTIONS = [
+  'Hehe! Isso faz cócegas.',
+  'Eu gosto quando você vem me ver.',
+  'Carinho recebido. Agora vamos cuidar da nossa sequência?',
+]
+
+function handlePet() {
+  if (reactionTimer) clearTimeout(reactionTimer)
+  reactionMessage.value = pet.isAway
+    ? 'Ainda consigo sentir seu carinho daqui.'
+    : PET_REACTIONS[reactionIndex++ % PET_REACTIONS.length]
+  reactionTimer = setTimeout(() => { reactionMessage.value = '' }, 2200)
+}
+
+onBeforeUnmount(() => { if (reactionTimer) clearTimeout(reactionTimer) })
 
 const careTitle = computed(() => {
   if (pet.isAway) return `${pet.name} foi embora`
