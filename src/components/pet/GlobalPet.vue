@@ -3,7 +3,7 @@
     <div
       v-if="visible"
       class="global-pet"
-      :class="{ 'global-pet--dragging': dragging }"
+      :class="{ 'global-pet--dragging': dragging, 'global-pet--right': facing === 'left' }"
       :style="positionStyle"
     >
       <button
@@ -241,15 +241,24 @@ onBeforeUnmount(() => {
   font-size: var(--text-xs);
   font-weight: 650;
   line-height: 1.25;
+  overflow-wrap: anywhere;
+  white-space: normal;
   backdrop-filter: blur(12px);
   animation: bubble-in .35s var(--ease-out-expo) both;
+}
+
+.global-pet--right .global-pet__bubble {
+  right: 58px;
+  left: auto;
+  border-radius: var(--radius-md) var(--radius-md) 3px var(--radius-md);
+  animation-name: bubble-in-right;
 }
 
 .global-pet__alert {
   position: absolute;
   z-index: 6;
-  top: 5px;
-  right: 5px;
+  top: 42px;
+  right: 2px;
   display: grid;
   place-items: center;
   width: 19px;
@@ -270,6 +279,9 @@ onBeforeUnmount(() => {
 
 @keyframes bubble-in {
   from { opacity: 0; transform: translate(-5px, 4px) scale(.96); }
+}
+@keyframes bubble-in-right {
+  from { opacity: 0; transform: translate(5px, 4px) scale(.96); }
 }
 @keyframes global-star { 0%, 100% { transform: scale(.86) rotate(-5deg); opacity: .7; } 50% { transform: scale(1.08) rotate(5deg); opacity: 1; } }
 @keyframes global-egg { 0%, 75%, 100% { transform: rotate(0); } 84% { transform: rotate(-5deg); } 92% { transform: rotate(5deg); } }
