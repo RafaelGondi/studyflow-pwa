@@ -3,8 +3,9 @@
     class="pet-stage"
     :class="[
       `pet-stage--${mood}`,
+      `pet-stage--facing-${facing}`,
       idleAnimation && `pet-stage--idle-${idleAnimation}`,
-      { 'pet-stage--interactive': interactive, 'pet-stage--reacting': reacting },
+      { 'pet-stage--interactive': interactive, 'pet-stage--reacting': reacting, 'pet-stage--blinking': blinking },
     ]"
     :style="{ '--pet-size': `${size}px` }"
     :role="interactive ? 'button' : 'img'"
@@ -17,7 +18,11 @@
     <span class="pet-stage__spark pet-stage__spark--one">✦</span>
     <span class="pet-stage__spark pet-stage__spark--two">✦</span>
     <div class="pet-stage__sprite">
-      <img src="/pets/lumi.png" alt="" draggable="false" />
+      <div class="pet-stage__art">
+        <img src="/pets/lumi.png" alt="" draggable="false" />
+        <span class="pet-stage__eyelid pet-stage__eyelid--left" aria-hidden="true" />
+        <span class="pet-stage__eyelid pet-stage__eyelid--right" aria-hidden="true" />
+      </div>
     </div>
     <span class="pet-stage__heart pet-stage__heart--one" aria-hidden="true">♥</span>
     <span class="pet-stage__heart pet-stage__heart--two" aria-hidden="true">♥</span>
@@ -36,20 +41,25 @@ const props = withDefaults(defineProps<{
   moodLabel?: string
   size?: number
   interactive?: boolean
+  facing?: 'left' | 'right'
 }>(), {
   name: 'Lumi',
   moodLabel: 'feliz',
   size: 144,
   interactive: false,
+  facing: 'right',
 })
 
 const emit = defineEmits<{ pet: [] }>()
 const reacting = ref(false)
+const blinking = ref(false)
 type IdleAnimation = 'look' | 'stretch' | 'doze' | 'wobble' | 'bounce' | 'celebrate' | 'flicker'
 const idleAnimation = ref<IdleAnimation | ''>('')
 let reactionTimer: ReturnType<typeof setTimeout> | null = null
 let idleTimer: ReturnType<typeof setTimeout> | null = null
 let idleResetTimer: ReturnType<typeof setTimeout> | null = null
+let blinkTimer: ReturnType<typeof setTimeout> | null = null
+let blinkResetTimer: ReturnType<typeof setTimeout> | null = null
 
 const moodAnimations: Record<PetMood, IdleAnimation[]> = {
   sleepy: ['doze', 'stretch', 'look'],
@@ -65,6 +75,35 @@ function clearIdleTimers() {
   if (idleResetTimer) clearTimeout(idleResetTimer)
   idleTimer = null
   idleResetTimer = null
+}
+
+function clearBlinkTimers() {
+  if (blinkTimer) clearTimeout(blinkTimer)
+  if (blinkResetTimer) clearTimeout(blinkResetTimer)
+  blinkTimer = null
+  blinkResetTimer = null
+}
+
+function scheduleBlink(delay = 2600 + Math.random() * 5200) {
+  clearBlinkTimers()
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.hidden || props.mood === 'away') return
+  blinkTimer = setTimeout(() => blink(Math.random() < .22), delay)
+}
+
+function blink(doubleBlink = false) {
+  blinking.value = true
+  blinkResetTimer = setTimeout(() => {
+    blinking.value = false
+    if (doubleBlink) {
+      blinkTimer = setTimeout(() => {
+        blinking.value = true
+        blinkResetTimer = setTimeout(() => {
+          blinking.value = false
+          scheduleBlink()
+        }, 220)
+      }, 130)
+    } else scheduleBlink()
+  }, 230)
 }
 
 function scheduleIdle(delay = 4200 + Math.random() * 4200) {
@@ -87,8 +126,13 @@ async function playIdle(animation: IdleAnimation) {
 }
 
 function handleVisibility() {
-  if (document.hidden) clearIdleTimers()
-  else scheduleIdle(1800)
+  if (document.hidden) {
+    clearIdleTimers()
+    clearBlinkTimers()
+  } else {
+    scheduleIdle(1800)
+    scheduleBlink(1200)
+  }
 }
 
 async function react() {
@@ -110,14 +154,17 @@ defineExpose({ react })
 watch(() => props.mood, (mood, previous) => {
   if (mood === 'proud' && previous !== 'proud') void playIdle('celebrate')
   else scheduleIdle(1200)
+  scheduleBlink(900 + Math.random() * 1000)
 })
 onMounted(() => {
   scheduleIdle(1800 + Math.random() * 1800)
+  scheduleBlink(1400 + Math.random() * 2200)
   document.addEventListener('visibilitychange', handleVisibility)
 })
 onBeforeUnmount(() => {
   if (reactionTimer) clearTimeout(reactionTimer)
   clearIdleTimers()
+  clearBlinkTimers()
   document.removeEventListener('visibilitychange', handleVisibility)
 })
 </script>
@@ -143,7 +190,16 @@ onBeforeUnmount(() => {
   transform-origin: 50% 82%;
 }
 
-.pet-stage__sprite img {
+.pet-stage__art {
+  position: absolute;
+  inset: 0;
+  transition: transform .2s steps(2, end);
+  transform-origin: 50% 55%;
+}
+
+.pet-stage--facing-left .pet-stage__art { transform: scaleX(-1); }
+
+.pet-stage__art img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -151,6 +207,33 @@ onBeforeUnmount(() => {
   image-rendering: pixelated;
   user-select: none;
 }
+
+.pet-stage__eyelid {
+  position: absolute;
+  z-index: 2;
+  top: 48.2%;
+  width: 10.5%;
+  height: 11%;
+  border-radius: 45% 45% 50% 50%;
+  background: #f3dfae;
+  opacity: 0;
+  transform: scaleY(.35);
+  transform-origin: center;
+  pointer-events: none;
+}
+.pet-stage__eyelid::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 56%;
+  height: max(2px, calc(var(--pet-size) * .012));
+  border-radius: 999px;
+  background: #17394a;
+}
+.pet-stage__eyelid--left { left: 33.2%; }
+.pet-stage__eyelid--right { right: 33.2%; }
+.pet-stage--blinking .pet-stage__eyelid { opacity: 1; transform: scaleY(1); }
 
 .pet-stage__ground {
   position: absolute;

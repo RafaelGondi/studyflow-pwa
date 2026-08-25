@@ -15,7 +15,7 @@
         @keydown.space.prevent="handleTap"
       >
         <span v-if="attentionMessage" class="global-pet__bubble">{{ attentionMessage }}</span>
-        <PixelPet ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="74" />
+        <PixelPet ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :facing="facing" :size="74" />
         <span v-if="pet.isAway || pet.missedDays > 0" class="global-pet__alert" aria-hidden="true">!</span>
       </button>
     </div>
@@ -48,6 +48,12 @@ const visible = computed(() => route.path !== '/rewards/pet')
 const positionStyle = computed(() => position.value
   ? { left: `${position.value.x}px`, top: `${position.value.y}px`, bottom: 'auto' }
   : undefined)
+const facing = computed<'left' | 'right'>(() => {
+  if (!position.value) return 'right'
+  const bounds = movementBounds()
+  const center = bounds.minX + (bounds.maxX - bounds.minX) / 2
+  return position.value.x > center ? 'left' : 'right'
+})
 const attentionMessage = computed(() => {
   if (pet.isAway) return 'Complete 1h para eu voltar'
   if (pet.missedDays > 0) return 'Estou com fome'
