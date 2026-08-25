@@ -15,6 +15,17 @@
           <AkIcon name="minimize-outline" :size="18" />
         </button>
 
+        <div class="focus-pet" @dblclick.stop>
+          <PixelPet
+            interactive
+            facing="right"
+            :mood="petStore.mood"
+            :name="petStore.name"
+            :mood-label="petStore.moodLabel"
+            :size="focusPetSize"
+          />
+        </div>
+
         <!-- Break state -->
         <template v-if="timerStore.isInBreak">
           <div class="focus-phase-label">
@@ -127,8 +138,10 @@ import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import PomodoroCycle from '@/components/home/PomodoroCycle.vue'
 import CoinIcon from '@/components/ui/CoinIcon.vue'
 import AnimatedNumber from '@/components/ui/AnimatedNumber.vue'
+import PixelPet from '@/components/pet/PixelPet.vue'
 import { useLiveCoins } from '@/composables/useLiveCoins'
 import { useTimerStore } from '@/stores/timer'
+import { usePetStore } from '@/stores/pet'
 import { DEFAULT_SUBJECT_COLOR, subjectBgMix } from '@/utils/colors'
 import { formatDuration } from '@/types'
 import type { Subject } from '@/types'
@@ -141,7 +154,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: []; stop: [] }>()
 const timerStore = useTimerStore()
+const petStore = usePetStore()
 const prefs = computed(() => timerStore.prefs)
+const focusPetSize = 112
 
 const { liveCoins, activeMetal } = useLiveCoins()
 const showLiveCoins = computed(() => liveCoins.value >= 1)
@@ -196,6 +211,8 @@ onUnmounted(() => {
 
 <style scoped>
 .focus-overlay {
+  --fill-strong: #202421;
+  --text-inverse: #fffefa;
   position: fixed;
   inset: 0;
   z-index: 200;
@@ -228,6 +245,30 @@ onUnmounted(() => {
   outline: none;
   opacity: 1;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-inverse) 40%, transparent);
+}
+
+.focus-pet {
+  position: absolute;
+  left: clamp(10px, 3vw, 32px);
+  bottom: clamp(44px, 7vh, 72px);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 42%;
+  filter: drop-shadow(0 8px 18px rgb(0 0 0 / 18%));
+}
+
+@media (max-width: 420px), (max-height: 620px) {
+  .focus-pet {
+    left: 4px;
+    bottom: 42px;
+    width: 92px;
+    height: 92px;
+    transform: scale(.82);
+    transform-origin: left bottom;
+  }
 }
 
 .focus-phase-label {
