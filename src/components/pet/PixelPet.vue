@@ -1,7 +1,11 @@
 <template>
   <div
     class="pet-stage"
-    :class="[`pet-stage--${mood}`, { 'pet-stage--interactive': interactive, 'pet-stage--reacting': reacting }]"
+    :class="[
+      `pet-stage--${mood}`,
+      idleAnimation && `pet-stage--idle-${idleAnimation}`,
+      { 'pet-stage--interactive': interactive, 'pet-stage--reacting': reacting },
+    ]"
     :style="{ '--pet-size': `${size}px` }"
     :role="interactive ? 'button' : 'img'"
     :tabindex="interactive ? 0 : undefined"
@@ -23,10 +27,10 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { PetMood } from '@/types'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   mood: PetMood
   name?: string
   moodLabel?: string
@@ -41,20 +45,81 @@ withDefaults(defineProps<{
 
 const emit = defineEmits<{ pet: [] }>()
 const reacting = ref(false)
+type IdleAnimation = 'look' | 'stretch' | 'doze' | 'wobble' | 'bounce' | 'celebrate' | 'flicker'
+const idleAnimation = ref<IdleAnimation | ''>('')
 let reactionTimer: ReturnType<typeof setTimeout> | null = null
+let idleTimer: ReturnType<typeof setTimeout> | null = null
+let idleResetTimer: ReturnType<typeof setTimeout> | null = null
+
+const moodAnimations: Record<PetMood, IdleAnimation[]> = {
+  sleepy: ['doze', 'stretch', 'look'],
+  hungry: ['wobble', 'doze', 'look'],
+  curious: ['look', 'stretch', 'bounce'],
+  happy: ['bounce', 'look', 'celebrate'],
+  proud: ['celebrate', 'bounce', 'look'],
+  away: ['flicker'],
+}
+
+function clearIdleTimers() {
+  if (idleTimer) clearTimeout(idleTimer)
+  if (idleResetTimer) clearTimeout(idleResetTimer)
+  idleTimer = null
+  idleResetTimer = null
+}
+
+function scheduleIdle(delay = 4200 + Math.random() * 4200) {
+  clearIdleTimers()
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.hidden) return
+  idleTimer = setTimeout(() => {
+    const options = moodAnimations[props.mood]
+    playIdle(options[Math.floor(Math.random() * options.length)])
+  }, delay)
+}
+
+async function playIdle(animation: IdleAnimation) {
+  idleAnimation.value = ''
+  await nextTick()
+  idleAnimation.value = animation
+  idleResetTimer = setTimeout(() => {
+    idleAnimation.value = ''
+    scheduleIdle()
+  }, animation === 'celebrate' ? 1500 : 1250)
+}
+
+function handleVisibility() {
+  if (document.hidden) clearIdleTimers()
+  else scheduleIdle(1800)
+}
 
 async function react() {
   if (reactionTimer) clearTimeout(reactionTimer)
   reacting.value = false
   await nextTick()
   reacting.value = true
+  idleAnimation.value = ''
+  clearIdleTimers()
   emit('pet')
   try { navigator.vibrate?.(18) } catch {}
-  reactionTimer = setTimeout(() => { reacting.value = false }, 760)
+  reactionTimer = setTimeout(() => {
+    reacting.value = false
+    scheduleIdle()
+  }, 760)
 }
 
 defineExpose({ react })
-onBeforeUnmount(() => { if (reactionTimer) clearTimeout(reactionTimer) })
+watch(() => props.mood, (mood, previous) => {
+  if (mood === 'proud' && previous !== 'proud') void playIdle('celebrate')
+  else scheduleIdle(1200)
+})
+onMounted(() => {
+  scheduleIdle(1800 + Math.random() * 1800)
+  document.addEventListener('visibilitychange', handleVisibility)
+})
+onBeforeUnmount(() => {
+  if (reactionTimer) clearTimeout(reactionTimer)
+  clearIdleTimers()
+  document.removeEventListener('visibilitychange', handleVisibility)
+})
 </script>
 
 <style scoped>
@@ -123,6 +188,18 @@ onBeforeUnmount(() => { if (reactionTimer) clearTimeout(reactionTimer) })
 .pet-stage--away .pet-stage__sprite { animation: none; filter: grayscale(1); opacity: .16; }
 .pet-stage--away .pet-stage__ground { opacity: .2; }
 
+/* Pequenos gestos ocasionais. `steps` mantém o movimento com ritmo de sprite. */
+.pet-stage--idle-look .pet-stage__sprite { animation: pet-look 1.2s steps(6, end) both !important; }
+.pet-stage--idle-stretch .pet-stage__sprite { animation: pet-stretch 1.2s steps(5, end) both !important; }
+.pet-stage--idle-doze .pet-stage__sprite { animation: pet-doze 1.25s steps(5, end) both !important; }
+.pet-stage--idle-wobble .pet-stage__sprite { animation: pet-wobble 1.2s steps(7, end) both !important; }
+.pet-stage--idle-bounce .pet-stage__sprite { animation: pet-bounce 1.15s steps(7, end) both !important; }
+.pet-stage--idle-celebrate .pet-stage__sprite { animation: pet-celebrate 1.45s steps(9, end) both !important; }
+.pet-stage--idle-flicker .pet-stage__sprite { animation: pet-flicker 1.25s steps(4, end) both !important; }
+.pet-stage--idle-bounce .pet-stage__ground,
+.pet-stage--idle-celebrate .pet-stage__ground { animation: pet-bounce-shadow 1.2s steps(6, end) both !important; }
+.pet-stage--idle-celebrate .pet-stage__spark { animation: pet-celebrate-spark 1.45s steps(5, end) both !important; }
+
 .pet-stage__heart {
   position: absolute;
   z-index: 4;
@@ -179,6 +256,69 @@ onBeforeUnmount(() => { if (reactionTimer) clearTimeout(reactionTimer) })
   0% { transform: translateY(14px) scale(.3) rotate(-8deg); opacity: 0; }
   28% { opacity: 1; }
   100% { transform: translateY(-20px) scale(1.12) rotate(10deg); opacity: 0; }
+}
+
+@keyframes pet-look {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  22%, 42% { transform: translateX(-3%) rotate(-2deg); }
+  58%, 78% { transform: translateX(3%) rotate(2deg); }
+}
+
+@keyframes pet-stretch {
+  0%, 100% { transform: scale(1); }
+  25% { transform: translateY(3%) scale(1.06, .92); }
+  52% { transform: translateY(-3%) scale(.94, 1.08); }
+  74% { transform: translateY(1%) scale(1.03, .97); }
+}
+
+@keyframes pet-doze {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  28% { transform: translateY(4%) rotate(-3deg) scaleY(.97); }
+  48% { transform: translateY(5%) rotate(2deg) scaleY(.95); }
+  68% { transform: translateY(2%) rotate(-1deg); }
+}
+
+@keyframes pet-wobble {
+  0%, 100% { transform: translateX(0) rotate(0) scaleY(1); }
+  18% { transform: translateX(-2%) rotate(-3deg) scaleY(.98); }
+  36% { transform: translateX(2%) rotate(3deg) scaleY(.96); }
+  54% { transform: translateX(-2%) rotate(-2deg) scaleY(.97); }
+  72% { transform: translateX(1%) rotate(2deg) scaleY(.99); }
+}
+
+@keyframes pet-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  18% { transform: translateY(2%) scale(1.05, .94); }
+  36% { transform: translateY(-8%) scale(.97, 1.04); }
+  52% { transform: translateY(0) scale(1.04, .96); }
+  68% { transform: translateY(-4%) scale(.99, 1.02); }
+  82% { transform: translateY(0) scale(1.02, .98); }
+}
+
+@keyframes pet-celebrate {
+  0%, 100% { transform: translateY(0) rotate(0) scale(1); }
+  15% { transform: translateY(2%) rotate(-4deg) scale(1.05, .94); }
+  32% { transform: translateY(-10%) rotate(7deg) scale(.96, 1.05); }
+  48% { transform: translateY(-6%) rotate(-7deg); }
+  64% { transform: translateY(-9%) rotate(5deg); }
+  80% { transform: translateY(1%) rotate(-2deg) scale(1.04, .96); }
+}
+
+@keyframes pet-flicker {
+  0%, 100% { opacity: .16; transform: translateY(0); }
+  30% { opacity: .28; transform: translateY(-2%); }
+  55% { opacity: .1; transform: translateY(1%); }
+  78% { opacity: .22; transform: translateY(-1%); }
+}
+
+@keyframes pet-bounce-shadow {
+  0%, 100% { transform: scaleX(1); opacity: .7; }
+  35%, 68% { transform: scaleX(.62); opacity: .3; }
+}
+
+@keyframes pet-celebrate-spark {
+  0%, 100% { transform: translateY(8px) scale(.3) rotate(0); opacity: 0; }
+  28%, 72% { transform: translateY(-5px) scale(1) rotate(30deg); opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
