@@ -142,6 +142,32 @@ export async function savePetProfile(uid: string, profile: PetProfile): Promise<
   await setDoc(petDoc(uid), profile, { merge: true })
 }
 
+export async function purchasePetEgg(
+  uid: string,
+  profile: PetProfile,
+  cost: number,
+): Promise<RewardRedemption> {
+  const createdAt = Date.now()
+  const redemptionRef = doc(redemptionsCol(uid))
+  const redemption: RewardRedemption = {
+    id: redemptionRef.id,
+    rewardId: 'system-pet-egg',
+    rewardName: 'Ovo da Lumi',
+    rewardIcon: '🥚',
+    cost,
+    userId: uid,
+    createdAt,
+    systemKind: 'pet-egg',
+    nonRefundable: true,
+  }
+  const batch = writeBatch(db)
+  const { id: _id, ...redemptionData } = redemption
+  batch.set(redemptionRef, redemptionData)
+  batch.set(petDoc(uid), profile, { merge: true })
+  await batch.commit()
+  return redemption
+}
+
 export async function fetchRewards(uid: string): Promise<Reward[]> {
   const snap = await getDocs(query(rewardsCol(uid)))
   return snap.docs

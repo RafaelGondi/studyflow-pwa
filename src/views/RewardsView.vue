@@ -82,7 +82,9 @@
       </div>
 
       <button type="button" class="pet-entry" @click="router.push('/rewards/pet')">
-        <PixelPet :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="88" :bond-level="pet.level" />
+        <span v-if="pet.isDeparted" class="pet-entry__lifecycle">✦</span>
+        <span v-else-if="pet.hasEgg" class="pet-entry__lifecycle">🥚</span>
+        <PixelPet v-else :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="88" :bond-level="pet.level" />
         <span class="pet-entry__copy">
           <span class="pet-entry__label">Seu companheiro</span>
           <strong>{{ pet.name }}</strong>
@@ -196,7 +198,7 @@
                 <template #subtitle>
                   <span class="text-xs text-muted">{{ ledgerSubtitle(entry) }}</span>
                   <button
-                    v-if="entry.type === 'redemption' && !entry.redemption.undoneAt"
+                    v-if="entry.type === 'redemption' && !entry.redemption.undoneAt && !entry.redemption.nonRefundable"
                     type="button"
                     class="undo-button"
                     @click="confirmUndo(entry.redemption)"
@@ -411,6 +413,7 @@ const ledgerGroups = computed(() => {
 .pet-entry__copy > span:last-child { color: var(--text-secondary); font-size: var(--text-sm); }
 .pet-entry__label { color: var(--accent); font-size: var(--text-xs); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .pet-entry__arrow { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--bg-subtle); color: var(--text-secondary); }
+.pet-entry__lifecycle { display: grid; place-items: center; width: 88px; height: 88px; color: #e4ad36; font-size: 52px; text-shadow: 0 0 16px color-mix(in srgb, #e4ad36 40%, transparent); }
 
 /* ── Carteira ─────────────────────────────────────────── */
 .wallet {

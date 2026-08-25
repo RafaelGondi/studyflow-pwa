@@ -1,17 +1,20 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
+import { useGamificationStore } from './gamification'
 import { useSessionsStore } from './sessions'
 import { useSubjectsStore } from './subjects'
 import { useTimerStore } from './timer'
 import * as db from '@/firebase/db'
 import { isStudySession, localDateStr } from '@/types'
-import type { PetMood, PetProfile, StudySession } from '@/types'
+import type { PetMemorial, PetMood, PetProfile, StudySession } from '@/types'
 import { ACTIVITIES, DEFAULT_ACTIVITY, activityMultiplier } from '@/utils/coins'
 
 export const PET_DAILY_GOAL_SECONDS = 60 * 60
 export const PET_MAX_HEARTS = 5
 export const BOND_DAILY_GOAL_BONUS_SECONDS = 10 * 60
+export const PET_DEPARTURE_DAYS = 8
+export const PET_EGG_COST = 300
 
 export const BOND_LEVELS = [
   { level: 0, seconds: 0, reward: 'Companheira recém-chegada' },
@@ -54,8 +57,15 @@ function sessionCareMultiplier(session: StudySession) {
   return activityMultiplier(session.activityKind)
 }
 
+function eligibleSessionSeconds(session: StudySession, startedAt?: number) {
+  if (!startedAt || session.startTime >= startedAt) return session.duration
+  if (session.endTime < startedAt) return 0
+  return Math.min(session.duration, Math.max(0, (session.endTime - startedAt) / 1000))
+}
+
 export const usePetStore = defineStore('pet', () => {
   const auth = useAuthStore()
+  const gamification = useGamificationStore()
   const sessions = useSessionsStore()
   const subjects = useSubjectsStore()
   const timer = useTimerStore()
@@ -64,9 +74,15 @@ export const usePetStore = defineStore('pet', () => {
   const loading = ref(false)
 
   const name = computed(() => profile.value?.name || 'Lumi')
+  const lifecycleState = computed(() => profile.value?.lifecycleState ?? 'active')
+  const isDeparted = computed(() => lifecycleState.value === 'departed')
+  const hasEgg = computed(() => lifecycleState.value === 'egg')
+  const isActive = computed(() => lifecycleState.value === 'active')
+  const generation = computed(() => profile.value?.generation ?? 1)
+  const memorials = computed(() => profile.value?.memorials ?? [])
   const bondProgress = computed(() => {
     const startedAt = profile.value?.bondStartedAt
-    if (!startedAt) return { focusSeconds: 0, bonusDays: 0, totalSeconds: 0 }
+    if (!startedAt || !isActive.value) return { focusSeconds: 0, bonusDays: 0, totalSeconds: 0 }
     const today = localDateStr()
     const dailyBondTotals = new Map<string, number>()
     let focusSeconds = 0
@@ -75,9 +91,7 @@ export const usePetStore = defineStore('pet', () => {
       ...sessions.todayStudySessions,
     ]) {
       if (!isStudySession(session) || session.endTime < startedAt) continue
-      const eligibleSeconds = session.startTime < startedAt
-        ? Math.min(session.duration, Math.max(0, (session.endTime - startedAt) / 1000))
-        : session.duration
+      const eligibleSeconds = eligibleSessionSeconds(session, startedAt)
       const equivalent = eligibleSeconds * sessionCareMultiplier(session)
       focusSeconds += equivalent
       dailyBondTotals.set(session.date, (dailyBondTotals.get(session.date) ?? 0) + equivalent)
@@ -119,14 +133,16 @@ export const usePetStore = defineStore('pet', () => {
   })
   const todayCareSeconds = computed(() =>
     sessions.todayStudySessions.reduce((total, session) =>
-      total + session.duration * sessionCareMultiplier(session), 0) + liveCareSeconds.value,
+      total + eligibleSessionSeconds(session, profile.value?.careStartedAt) * sessionCareMultiplier(session), 0) + liveCareSeconds.value,
   )
   const todayCareBreakdown = computed(() => ACTIVITIES.map(activity => {
     let actualSeconds = sessions.todayStudySessions.reduce((total, session) =>
-      (session.activityKind ?? DEFAULT_ACTIVITY) === activity.id ? total + session.duration : total, 0)
+      (session.activityKind ?? DEFAULT_ACTIVITY) === activity.id
+        ? total + eligibleSessionSeconds(session, profile.value?.careStartedAt)
+        : total, 0)
     let equivalentSeconds = sessions.todayStudySessions.reduce((total, session) =>
       (session.activityKind ?? DEFAULT_ACTIVITY) === activity.id
-        ? total + session.duration * sessionCareMultiplier(session)
+        ? total + eligibleSessionSeconds(session, profile.value?.careStartedAt) * sessionCareMultiplier(session)
         : total, 0)
     if (timer.activeSubjectId && !timer.isInBreak && subjects.subjectActivityKind(timer.activeSubjectId) === activity.id) {
       actualSeconds += timer.studyElapsedSeconds
@@ -149,7 +165,7 @@ export const usePetStore = defineStore('pet', () => {
 
   /** Dias completos sem meta, contados até ontem. O dia atual só pode recuperar, nunca punir antes de acabar. */
   const missedDays = computed(() => {
-    if (!profile.value?.careStartedDate || todayGoalMet.value) return 0
+    if (!profile.value?.careStartedDate || !isActive.value) return 0
     let cursor = previousDate(localDateStr())
     let missed = 0
     while (cursor >= profile.value.careStartedDate) {
@@ -159,10 +175,15 @@ export const usePetStore = defineStore('pet', () => {
     }
     return missed
   })
-  const hearts = computed(() => todayGoalMet.value
+  const hearts = computed(() => !isActive.value
+    ? 0
+    : todayGoalMet.value
     ? PET_MAX_HEARTS
     : Math.max(0, PET_MAX_HEARTS - missedDays.value))
-  const isAway = computed(() => hearts.value === 0)
+  const isAway = computed(() => isActive.value && hearts.value === 0)
+  const rescueDaysRemaining = computed(() => isAway.value
+    ? Math.max(0, PET_DEPARTURE_DAYS - missedDays.value)
+    : 0)
 
   /** A sequência de ontem continua em risco durante hoje; atingir a meta confirma mais um dia. */
   const streak = computed(() => {
@@ -178,13 +199,15 @@ export const usePetStore = defineStore('pet', () => {
   })
   const streakAtRisk = computed(() => streak.value > 0 && !todayGoalMet.value)
   const careSummary = computed(() => {
+    if (isDeparted.value) return 'Virou estrela · um novo ovo está disponível'
+    if (hasEgg.value) return 'O novo ovo está esperando para eclodir'
     if (isAway.value) return 'Complete 1h hoje para trazê-la de volta'
     if (todayGoalMet.value) return `${streak.value} ${streak.value === 1 ? 'dia' : 'dias'} de sequência · bem alimentada`
     if (missedDays.value > 0) return `${hearts.value}/${PET_MAX_HEARTS} corações · sequência em risco`
     return `Meta diária: ${Math.floor(todayCareSeconds.value / 60)}/60 min equivalentes`
   })
   const mood = computed<PetMood>(() => {
-    if (isAway.value) return 'away'
+    if (isAway.value || isDeparted.value || hasEgg.value) return 'away'
     if (todaySeconds.value >= 3600) return 'proud'
     if (todaySeconds.value >= 1500) return 'happy'
     if (todaySeconds.value > 0) return 'curious'
@@ -194,6 +217,33 @@ export const usePetStore = defineStore('pet', () => {
   const moodLabel = computed(() => moodMeta[mood.value].label)
   const message = computed(() => moodMeta[mood.value].message)
 
+  function createMemorial(now: number): PetMemorial {
+    return {
+      id: `${generation.value}-${now}`,
+      petId: 'lumi',
+      name: name.value,
+      generation: generation.value,
+      bornAt: profile.value?.createdAt ?? now,
+      departedAt: now,
+      maxBondLevel: level.value,
+      bondSeconds: bondSeconds.value,
+    }
+  }
+
+  async function markDeparted() {
+    if (!auth.uid || !profile.value || !isActive.value) return
+    const now = Date.now()
+    const next: PetProfile = {
+      ...profile.value,
+      lifecycleState: 'departed',
+      departedAt: now,
+      memorials: [...memorials.value, createMemorial(now)],
+      updatedAt: now,
+    }
+    await db.savePetProfile(auth.uid, next)
+    profile.value = next
+  }
+
   async function load() {
     if (!auth.uid) return
     loading.value = true
@@ -201,15 +251,27 @@ export const usePetStore = defineStore('pet', () => {
       const saved = await db.fetchPetProfile(auth.uid)
       const now = Date.now()
       const careStartedDate = saved?.careStartedDate ?? localDateStr()
+      const careStartedAt = saved?.careStartedAt ?? parseDate(careStartedDate).getTime()
       const bondStartedAt = saved?.bondStartedAt ?? now
       profile.value = saved ?? {
-        petId: 'lumi', name: 'Lumi', careStartedDate, bondStartedAt, createdAt: now, updatedAt: now,
+        petId: 'lumi', name: 'Lumi', careStartedDate, careStartedAt, bondStartedAt,
+        lifecycleState: 'active', generation: 1, memorials: [], createdAt: now, updatedAt: now,
       }
-      if (!saved?.careStartedDate || !saved?.bondStartedAt) {
-        profile.value = { ...profile.value, careStartedDate, bondStartedAt, updatedAt: now }
+      if (!saved?.careStartedDate || !saved?.careStartedAt || !saved?.bondStartedAt || !saved?.lifecycleState || !saved?.generation) {
+        profile.value = {
+          ...profile.value,
+          careStartedDate,
+          careStartedAt,
+          bondStartedAt,
+          lifecycleState: saved?.lifecycleState ?? 'active',
+          generation: saved?.generation ?? 1,
+          memorials: saved?.memorials ?? [],
+          updatedAt: now,
+        }
         await db.savePetProfile(auth.uid, profile.value)
       }
       careSessions.value = await db.fetchSessionsByDateRange(auth.uid, careStartedDate, localDateStr())
+      if (isActive.value && missedDays.value >= PET_DEPARTURE_DAYS) await markDeparted()
     } catch (error) {
       console.error('[StudyFlow] Erro ao carregar mascote:', error)
     } finally {
@@ -218,7 +280,7 @@ export const usePetStore = defineStore('pet', () => {
   }
 
   async function rename(value: string) {
-    if (!auth.uid) return
+    if (!auth.uid || !isActive.value) return
     const trimmed = value.trim().slice(0, 20)
     if (!trimmed) return
     const now = Date.now()
@@ -233,12 +295,51 @@ export const usePetStore = defineStore('pet', () => {
     await db.savePetProfile(auth.uid, next)
   }
 
+  async function purchaseEgg() {
+    if (!auth.uid || !profile.value || !isDeparted.value) return
+    await gamification.refreshWallet()
+    if (gamification.balance < PET_EGG_COST) throw new Error('insufficient-balance')
+    const now = Date.now()
+    const next: PetProfile = {
+      ...profile.value,
+      lifecycleState: 'egg',
+      eggPurchasedAt: now,
+      updatedAt: now,
+    }
+    const redemption = await db.purchasePetEgg(auth.uid, next, PET_EGG_COST)
+    gamification.trackRedemption(redemption)
+    profile.value = next
+  }
+
+  async function hatchEgg() {
+    if (!auth.uid || !profile.value || !hasEgg.value) return
+    const now = Date.now()
+    const next: PetProfile = {
+      ...profile.value,
+      name: 'Lumi',
+      lifecycleState: 'active',
+      generation: generation.value + 1,
+      careStartedDate: localDateStr(),
+      careStartedAt: now,
+      bondStartedAt: now,
+      departedAt: null,
+      eggPurchasedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    }
+    await db.savePetProfile(auth.uid, next)
+    profile.value = next
+    careSessions.value = []
+  }
+
   return {
-    profile, loading, name, bondSeconds, bondBonusDays: computed(() => bondProgress.value.bonusDays),
+    profile, loading, name, lifecycleState, isActive, isDeparted, hasEgg, generation, memorials,
+    bondSeconds, bondBonusDays: computed(() => bondProgress.value.bonusDays),
     level, levelProgress, bondLevelSeconds, bondLevelTargetSeconds,
     bondRemainingSeconds, nextBondReward, todaySeconds, todayCareSeconds, todayCareBreakdown,
     dailyGoalSeconds: PET_DAILY_GOAL_SECONDS, maxHearts: PET_MAX_HEARTS,
-    todayGoalMet, careProgress, missedDays, hearts, isAway, streak, streakAtRisk, careSummary,
-    mood, moodLabel, message, load, rename,
+    todayGoalMet, careProgress, missedDays, hearts, isAway, rescueDaysRemaining, streak, streakAtRisk, careSummary,
+    mood, moodLabel, message, load, rename, purchaseEgg, hatchEgg,
+    eggCost: PET_EGG_COST, departureDays: PET_DEPARTURE_DAYS,
   }
 })

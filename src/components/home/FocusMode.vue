@@ -15,7 +15,7 @@
           <AkIcon name="minimize-outline" :size="18" />
         </button>
 
-        <div class="focus-pet" @dblclick.stop>
+        <div v-if="petStore.isActive" class="focus-pet" @dblclick.stop>
           <PixelPet
             interactive
             facing="right"

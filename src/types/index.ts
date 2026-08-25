@@ -61,12 +61,31 @@ export interface GamificationSettings {
 
 export type PetMood = 'sleepy' | 'hungry' | 'curious' | 'happy' | 'proud' | 'away'
 
+export type PetLifecycleState = 'active' | 'departed' | 'egg'
+
+export interface PetMemorial {
+  id: string
+  petId: 'lumi'
+  name: string
+  generation: number
+  bornAt: number
+  departedAt: number
+  maxBondLevel: number
+  bondSeconds: number
+}
+
 export interface PetProfile {
   petId: 'lumi'
   name: string
   careStartedDate?: string
+  careStartedAt?: number
   /** Marco da nova progressão de vínculo, independente do histórico de moedas. */
   bondStartedAt?: number
+  lifecycleState?: PetLifecycleState
+  generation?: number
+  departedAt?: number | null
+  eggPurchasedAt?: number | null
+  memorials?: PetMemorial[]
   createdAt: number
   updatedAt: number
 }
@@ -94,6 +113,8 @@ export interface RewardRedemption {
   userId: string
   createdAt: number
   undoneAt?: number | null
+  systemKind?: 'pet-egg'
+  nonRefundable?: boolean
 }
 
 

@@ -1,6 +1,6 @@
 <template>
   <div class="ak-app-page">
-    <AkPageHeader label="Companheiro" :title="pet.name" :meta="`Vínculo ${pet.level} · ${pet.moodLabel}`" size="md">
+    <AkPageHeader label="Companheiro" :title="pet.hasEgg ? 'Novo ovo' : pet.name" :meta="petHeaderMeta" size="md">
       <template #actions>
         <AkButton size="sm" variant="ghost" @click="router.back()">
           <template #icon><AkIcon name="arrow-left-outline" :size="16" /></template>
@@ -13,11 +13,34 @@
       <section class="habitat" :class="habitatClasses">
         <span class="habitat__star habitat__star--one">✦</span>
         <span class="habitat__star habitat__star--two">·</span>
-        <PixelPet interactive :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" :bond-level="pet.level" @pet="handlePet" />
+        <div v-if="pet.isDeparted" class="star-spirit" aria-label="Lumi virou estrela">✦</div>
+        <button v-else-if="pet.hasEgg" type="button" class="pet-egg" aria-label="Fazer o ovo eclodir" @click="hatchEgg">
+          <span class="pet-egg__shell" />
+          <span class="pet-egg__shadow" />
+        </button>
+        <PixelPet v-else interactive :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" :bond-level="pet.level" @pet="handlePet" />
         <p class="speech" aria-live="polite">“{{ displayedMessage }}”</p>
       </section>
 
-      <section class="care-card" :class="{ 'care-card--danger': pet.isAway }">
+      <section v-if="pet.isDeparted || pet.hasEgg" class="lifecycle-card">
+        <template v-if="pet.isDeparted">
+          <span class="eyebrow">Um novo começo</span>
+          <strong>{{ pet.name }} agora vive no seu memorial</strong>
+          <p>Um ovo custa {{ pet.eggCost }} moedas. A nova Lumi começa no vínculo 0 e o registro da sua antiga companheira permanece guardado.</p>
+          <AkButton variant="primary" :loading="buyingEgg" :disabled="gamification.balance < pet.eggCost" @click="buyEgg">
+            Comprar ovo · {{ pet.eggCost }} moedas
+          </AkButton>
+          <small v-if="gamification.balance < pet.eggCost">Faltam {{ pet.eggCost - gamification.balance }} moedas</small>
+        </template>
+        <template v-else>
+          <span class="eyebrow">Pronta para nascer</span>
+          <strong>Seu novo ovo chegou</strong>
+          <p>Toque no ovo acima ou no botão para conhecer sua nova companheira. Ela começará uma nova geração no vínculo 0.</p>
+          <AkButton variant="primary" :loading="hatching" @click="hatchEgg">Fazer o ovo eclodir</AkButton>
+        </template>
+      </section>
+
+      <section v-if="pet.isActive" class="care-card" :class="{ 'care-card--danger': pet.isAway }">
         <div class="care-card__head">
           <div>
             <span class="eyebrow">Cuidados diários</span>
@@ -44,7 +67,7 @@
         <p>{{ careHint }}</p>
       </section>
 
-      <section class="bond-card">
+      <section v-if="pet.isActive" class="bond-card">
         <div class="bond-card__head">
           <div>
             <span class="eyebrow">Vínculo</span>
@@ -73,7 +96,7 @@
         </details>
       </section>
 
-      <section class="today-card">
+      <section v-if="pet.isActive" class="today-card">
         <div class="today-card__icon">✦</div>
         <div>
           <span class="eyebrow">Ritmo de hoje</span>
@@ -82,7 +105,7 @@
         </div>
       </section>
 
-      <section class="name-card">
+      <section v-if="pet.isActive" class="name-card">
         <div>
           <span class="eyebrow">Nome do mascote</span>
           <p>Esse nome fica sincronizado com sua conta.</p>
@@ -93,9 +116,27 @@
         </form>
       </section>
 
-      <details class="care-rules">
+      <section v-if="pet.memorials.length" class="memorial-card">
+        <div class="memorial-card__head">
+          <div>
+            <span class="eyebrow">Memorial</span>
+            <strong>Companheiras que viveram com você</strong>
+          </div>
+          <span>✦</span>
+        </div>
+        <article v-for="memory in [...pet.memorials].reverse()" :key="memory.id" class="memory">
+          <span class="memory__star">✦</span>
+          <div>
+            <strong>{{ memory.name }} · geração {{ memory.generation }}</strong>
+            <p>Vínculo {{ memory.maxBondLevel }} · {{ formatDuration(memory.bondSeconds) }} equivalentes</p>
+            <small>{{ formatMemorialDate(memory.departedAt) }}</small>
+          </div>
+        </article>
+      </section>
+
+      <details v-if="pet.isActive" class="care-rules">
         <summary>Como funcionam os cuidados?</summary>
-        <p>A Lumi precisa do equivalente a 1h de estudo por dia. Estudo vale 1×, leitura ¼× e trabalho ⅛×, e os tempos podem ser combinados. Cada dia completo abaixo da meta remove um coração e encerra a sequência. Com cinco dias consecutivos sem a meta ela vai embora — mas completar a meta traz sua companheira de volta.</p>
+        <p>A Lumi precisa do equivalente a 1h de estudo por dia. Estudo vale 1×, leitura ¼× e trabalho ⅛×, e os tempos podem ser combinados. Cada dia completo abaixo da meta remove um coração e encerra a sequência. Com cinco dias consecutivos sem a meta ela vai embora e ainda pode ser recuperada. Depois de oito dias consecutivos, ela vira estrela e passa a viver no memorial.</p>
       </details>
     </div>
   </div>
@@ -107,14 +148,20 @@ import { useRouter } from 'vue-router'
 import { AkButton, AkIcon, AkInput, AkPageHeader } from '@rafael_dias/akoma'
 import PixelPet from '@/components/pet/PixelPet.vue'
 import { BOND_LEVELS, usePetStore } from '@/stores/pet'
+import { useGamificationStore } from '@/stores/gamification'
 import { useAppToast } from '@/composables/useAppToast'
+import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration } from '@/types'
 
 const router = useRouter()
 const pet = usePetStore()
+const gamification = useGamificationStore()
 const toast = useAppToast()
+const confirmSheet = useConfirmSheet()
 const draftName = ref(pet.name)
 const saving = ref(false)
+const buyingEgg = ref(false)
+const hatching = ref(false)
 const reactionMessage = ref('')
 const bondMilestones = BOND_LEVELS.slice(1)
 let reactionTimer: ReturnType<typeof setTimeout> | null = null
@@ -122,7 +169,16 @@ let reactionIndex = 0
 
 watch(() => pet.name, value => { draftName.value = value }, { immediate: true })
 
-const displayedMessage = computed(() => reactionMessage.value || pet.message)
+const petHeaderMeta = computed(() => {
+  if (pet.isDeparted) return `Geração ${pet.generation} · virou estrela`
+  if (pet.hasEgg) return `Próxima geração · esperando para nascer`
+  return `Vínculo ${pet.level} · ${pet.moodLabel}`
+})
+const displayedMessage = computed(() => {
+  if (pet.isDeparted) return 'Nossa história continua brilhando aqui.'
+  if (pet.hasEgg) return 'Tem alguém novo esperando para conhecer você.'
+  return reactionMessage.value || pet.message
+})
 const habitatClasses = computed(() => ({
   'habitat--away': pet.isAway,
   'habitat--bond-glow': pet.level >= 4,
@@ -131,6 +187,10 @@ const habitatClasses = computed(() => ({
   'habitat--aurora': pet.level >= 8,
   'habitat--constellation': pet.level >= 9,
 }))
+
+function formatMemorialDate(value: number) {
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).format(value)
+}
 const PET_REACTIONS = [
   'Hehe! Isso faz cócegas.',
   'Eu gosto quando você vem me ver.',
@@ -155,7 +215,7 @@ const careTitle = computed(() => {
 })
 
 const careHint = computed(() => {
-  if (pet.isAway) return `Complete a meta de hoje para ${pet.name} voltar para casa.`
+  if (pet.isAway) return `Complete a meta de hoje para ${pet.name} voltar. Restam ${pet.rescueDaysRemaining} ${pet.rescueDaysRemaining === 1 ? 'dia' : 'dias'} de resgate.`
   if (pet.todayGoalMet) return 'Meta cumprida. A sequência e os corações estão protegidos.'
   if (pet.streakAtRisk) return 'Sua sequência continua viva, mas precisa da meta de hoje para ser mantida.'
   if (pet.missedDays > 0) return `Foram ${pet.missedDays} ${pet.missedDays === 1 ? 'dia' : 'dias'} sem a meta diária.`
@@ -178,6 +238,42 @@ async function saveName() {
     saving.value = false
   }
 }
+
+async function buyEgg() {
+  const confirmed = await confirmSheet.ask({
+    title: 'Comprar um novo ovo?',
+    message: `${pet.eggCost} moedas serão usadas. Esse resgate não pode ser desfeito, mas o memorial de ${pet.name} continuará guardado.`,
+    confirmLabel: 'Comprar ovo',
+    confirmVariant: 'primary',
+  })
+  if (!confirmed) return
+  buyingEgg.value = true
+  try {
+    await pet.purchaseEgg()
+    toast.success('Ovo recebido', 'Uma nova companheira está esperando para nascer.')
+  } catch (error) {
+    const message = error instanceof Error && error.message === 'insufficient-balance'
+      ? 'Seu saldo não é mais suficiente para comprar o ovo.'
+      : 'Tente novamente quando estiver conectado.'
+    toast.error('Não foi possível comprar o ovo', message)
+  } finally {
+    buyingEgg.value = false
+  }
+}
+
+async function hatchEgg() {
+  if (hatching.value) return
+  hatching.value = true
+  try {
+    await pet.hatchEgg()
+    draftName.value = pet.name
+    toast.success('Uma nova Lumi nasceu', 'A nova geração começa no vínculo 0.')
+  } catch {
+    toast.error('O ovo ainda não eclodiu', 'Tente novamente quando estiver conectado.')
+  } finally {
+    hatching.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -190,7 +286,11 @@ async function saveName() {
 .habitat__star { position: absolute; color: color-mix(in srgb, #e4ad36 78%, var(--text)); font-size: 20px; }
 .habitat__star--one { top: 18%; left: 18%; }.habitat__star--two { top: 13%; right: 21%; font-size: 38px; }
 .speech { position: absolute; left: var(--space-4); right: var(--space-4); bottom: var(--space-4); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--bg) 88%, transparent); color: var(--text-secondary); text-align: center; font-size: var(--text-sm); backdrop-filter: blur(8px); }
-.care-card, .bond-card, .today-card, .name-card { margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elevated); }
+.care-card, .bond-card, .today-card, .name-card, .lifecycle-card, .memorial-card { margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elevated); }
+.star-spirit { color: #e4ad36; font-size: 92px; line-height: 1; text-shadow: 0 0 24px color-mix(in srgb, #e4ad36 55%, transparent); animation: star-spirit 2.8s ease-in-out infinite; }
+.pet-egg { position: relative; width: 150px; height: 170px; border: 0; background: transparent; cursor: pointer; }.pet-egg__shell { position: absolute; z-index: 2; left: 35px; top: 12px; width: 80px; height: 112px; border: 6px solid #193f55; border-radius: 48% 48% 44% 44% / 58% 58% 42% 42%; background: linear-gradient(145deg, #d9f3ee 0 42%, #79c7c2 43% 62%, #f1d275 63%); image-rendering: pixelated; animation: egg-wiggle 2.4s steps(2, end) infinite; }.pet-egg__shadow { position: absolute; left: 41px; right: 41px; bottom: 27px; height: 13px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.lifecycle-card { display: grid; gap: var(--space-3); text-align: center; border-color: color-mix(in srgb, #e4ad36 35%, var(--border)); }.lifecycle-card > strong { font-size: var(--text-lg); }.lifecycle-card p { color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.5; }.lifecycle-card small { color: var(--danger); }
+.memorial-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }.memorial-card__head > div { display: grid; gap: 3px; }.memorial-card__head > span { color: #e4ad36; font-size: 26px; }.memory { display: grid; grid-template-columns: 38px 1fr; gap: var(--space-3); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); }.memory__star { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: color-mix(in srgb, #e4ad36 14%, var(--bg-soft)); color: #c58a13; font-size: 19px; }.memory div { display: grid; gap: 2px; }.memory p, .memory small { color: var(--text-secondary); font-size: var(--text-xs); }
 .care-card { border-color: color-mix(in srgb, #d56a63 22%, var(--border)); }
 .care-card--danger { border-color: color-mix(in srgb, #d56a63 60%, var(--border)); background: color-mix(in srgb, #d56a63 7%, var(--bg-elevated)); }
 .care-card__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }.care-card__head > div:first-child { display: grid; gap: 3px; }
@@ -217,4 +317,6 @@ async function saveName() {
 .name-card { display: grid; gap: var(--space-4); }.name-form { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--space-2); }
 .care-rules { margin-top: var(--space-4); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); color: var(--text-secondary); font-size: var(--text-sm); }.care-rules summary { color: var(--text); font-weight: 650; cursor: pointer; }.care-rules p { margin-top: var(--space-2); line-height: 1.5; }
 @media (max-width: 390px) { .name-form { grid-template-columns: 1fr; } }
+@keyframes star-spirit { 0%, 100% { transform: scale(.9) rotate(-4deg); opacity: .68; } 50% { transform: scale(1.08) rotate(5deg); opacity: 1; } }
+@keyframes egg-wiggle { 0%, 72%, 100% { transform: rotate(0); } 80% { transform: rotate(-4deg); } 90% { transform: rotate(4deg); } }
 </style>

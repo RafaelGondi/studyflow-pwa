@@ -196,10 +196,15 @@ export const useGamificationStore = defineStore('gamification', () => {
   async function undoRedemption(id: string) {
     if (!auth.uid) return
     const redemption = redemptions.value.find(item => item.id === id)
-    if (!redemption || redemption.undoneAt) return
+    if (!redemption || redemption.undoneAt || redemption.nonRefundable) return
     const undoneAt = Date.now()
     await db.undoRedemption(auth.uid, id, undoneAt)
     redemption.undoneAt = undoneAt
+  }
+
+  function trackRedemption(redemption: RewardRedemption) {
+    redemptions.value = redemptions.value.filter(item => item.id !== redemption.id)
+    redemptions.value.unshift(redemption)
   }
 
   function calculateCoins(
@@ -223,6 +228,6 @@ export const useGamificationStore = defineStore('gamification', () => {
     earningsByActivity,
     load, refreshWallet, updateSettings, calculateCoins, trackSession, forgetSession,
     addReward, updateReward, archiveReward, restoreReward, removeReward,
-    hasActiveRedemption, canRedeem, redeemReward, undoRedemption,
+    hasActiveRedemption, canRedeem, redeemReward, undoRedemption, trackRedemption,
   }
 })

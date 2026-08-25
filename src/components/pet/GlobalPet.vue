@@ -15,8 +15,10 @@
         @keydown.space.prevent="handleTap"
       >
         <span v-if="attentionMessage" class="global-pet__bubble">{{ attentionMessage }}</span>
-        <PixelPet ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :facing="facing" :size="74" :bond-level="pet.level" />
-        <span v-if="pet.isAway || pet.missedDays > 0" class="global-pet__alert" aria-hidden="true">!</span>
+        <span v-if="pet.isDeparted" class="global-pet__star" aria-hidden="true">✦</span>
+        <span v-else-if="pet.hasEgg" class="global-pet__egg" aria-hidden="true">🥚</span>
+        <PixelPet v-else ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :facing="facing" :size="74" :bond-level="pet.level" />
+        <span v-if="pet.isDeparted || pet.hasEgg || pet.isAway || pet.missedDays > 0" class="global-pet__alert" aria-hidden="true">!</span>
       </button>
     </div>
   </Transition>
@@ -55,6 +57,8 @@ const facing = computed<'left' | 'right'>(() => {
   return position.value.x > center ? 'left' : 'right'
 })
 const attentionMessage = computed(() => {
+  if (pet.isDeparted) return 'Um novo ovo está disponível'
+  if (pet.hasEgg) return 'Toque para me fazer nascer'
   if (pet.isAway) return 'Complete 1h para eu voltar'
   if (pet.missedDays > 0) return 'Estou com fome'
   if (pet.streakAtRisk) return 'Nossa sequência está em risco'
@@ -66,7 +70,7 @@ const ariaLabel = computed(() => attentionMessage.value
 
 function handleTap() {
   if (navigationTimer) return
-  sprite.value?.react()
+  if (pet.isActive) sprite.value?.react()
   navigationTimer = setTimeout(() => {
     navigationTimer = null
     void router.push('/rewards/pet')
@@ -258,12 +262,17 @@ onBeforeUnmount(() => {
   font-weight: 800;
 }
 
+.global-pet__star { color: #e4ad36; font-size: 48px; line-height: 1; text-shadow: 0 0 16px color-mix(in srgb, #e4ad36 55%, transparent); animation: global-star 2.6s ease-in-out infinite; }
+.global-pet__egg { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: var(--bg-elevated); box-shadow: var(--shadow-sm); font-size: 38px; animation: global-egg 2.4s steps(2, end) infinite; }
+
 .global-pet-enter-active, .global-pet-leave-active { transition: opacity .2s, transform .28s var(--ease-out-expo); }
 .global-pet-enter-from, .global-pet-leave-to { opacity: 0; transform: translateY(12px) scale(.88); }
 
 @keyframes bubble-in {
   from { opacity: 0; transform: translate(-5px, 4px) scale(.96); }
 }
+@keyframes global-star { 0%, 100% { transform: scale(.86) rotate(-5deg); opacity: .7; } 50% { transform: scale(1.08) rotate(5deg); opacity: 1; } }
+@keyframes global-egg { 0%, 75%, 100% { transform: rotate(0); } 84% { transform: rotate(-5deg); } 92% { transform: rotate(5deg); } }
 
 @media (prefers-reduced-motion: reduce) {
   .global-pet-enter-active, .global-pet-leave-active { transition: none; }
