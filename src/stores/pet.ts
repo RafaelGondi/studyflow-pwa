@@ -40,9 +40,14 @@ export const BOND_LEVELS = [
 
 const moodMeta: Record<PetMood, { label: string; message: string }> = {
   sleepy: { label: 'Sonolenta', message: 'Estou esperando nosso primeiro foco de hoje.' },
+  bored: { label: 'Entediada', message: 'O dia está passando devagar… será que cabe um foco curtinho?' },
   hungry: { label: 'Com fome', message: 'Senti sua falta ontem. Um pouco de foco hoje vai me fazer bem.' },
+  nostalgic: { label: 'Com saudade', message: 'Estive lembrando dos nossos momentos de foco. Ainda dá tempo de voltarmos ao ritmo.' },
   curious: { label: 'Curiosa', message: 'Eu vi você começar. Vamos só mais um pouquinho?' },
+  focused: { label: 'Concentrada', message: 'Estou aqui com você. Uma coisa de cada vez.' },
   happy: { label: 'Animada', message: 'Seu ritmo de hoje já deixou minha estrela brilhando!' },
+  excited: { label: 'Empolgada', message: 'Nossa sequência está ganhando força! Quero ver até onde vamos juntos.' },
+  tired: { label: 'Cansada', message: 'Foi um foco bem longo. Que tal respirar, beber água e descansar um pouco?' },
   proud: { label: 'Orgulhosa', message: 'Que dia bonito de dedicação. Eu sabia que você conseguia.' },
   away: { label: 'Foi embora', message: 'Fiquei muito tempo sozinha. Complete a meta de hoje para eu encontrar o caminho de volta.' },
 }
@@ -291,6 +296,18 @@ export const usePetStore = defineStore('pet', () => {
     ? Math.max(0, PET_DEPARTURE_DAYS - missedDays.value)
     : 0)
 
+  const isDailyRecord = computed(() => {
+    if (todaySeconds.value < 30 * 60) return false
+    const today = localDateStr()
+    const pastTotals = new Map<string, number>()
+    for (const session of generationSessions.value) {
+      if (session.date === today) continue
+      pastTotals.set(session.date, (pastTotals.get(session.date) ?? 0) + session.duration)
+    }
+    const previousRecord = Math.max(0, ...pastTotals.values())
+    return previousRecord > 0 && todaySeconds.value > previousRecord
+  })
+
   /** A sequência de ontem continua em risco durante hoje; atingir a meta confirma mais um dia. */
   const streak = computed(() => {
     if (!profile.value?.careStartedDate) return 0
@@ -314,15 +331,23 @@ export const usePetStore = defineStore('pet', () => {
   })
   const mood = computed<PetMood>(() => {
     if (isAway.value || isDeparted.value || hasEgg.value) return 'away'
-    if (todaySeconds.value >= 3600) return 'proud'
+    if (timer.activeSubjectId && !timer.isInBreak) {
+      return timer.studyElapsedSeconds >= 90 * 60 ? 'tired' : 'focused'
+    }
+    const latest = lastCompletedSession.value
+    if (latest && latest.duration >= 90 * 60 && Date.now() - latest.endTime < 30 * 60 * 1000) return 'tired'
+    if (isDailyRecord.value || todayGoalMet.value) return 'proud'
+    if (streak.value >= 3 && todaySeconds.value > 0) return 'excited'
     if (todaySeconds.value >= 1500) return 'happy'
     if (todaySeconds.value > 0) return 'curious'
+    if (missedDays.value >= 2) return 'nostalgic'
     if (missedDays.value > 0) return 'hungry'
-    return 'sleepy'
+    const hour = new Date().getHours()
+    return hour >= 16 && hour < 22 ? 'bored' : 'sleepy'
   })
   const moodLabel = computed(() => moodMeta[mood.value].label)
   const message = computed(() => {
-    if (!isActive.value || isAway.value || missedDays.value > 0) return moodMeta[mood.value].message
+    if (!isActive.value || isAway.value || missedDays.value > 0 || mood.value === 'tired') return moodMeta[mood.value].message
     if (timer.activeSubjectId && !timer.isInBreak) {
       const subject = subjects.getSubject(timer.activeSubjectId)
       return `Estou aqui com você${subject ? ` em ${subject.name}` : ''}. Vamos no nosso ritmo.`
@@ -332,7 +357,9 @@ export const usePetStore = defineStore('pet', () => {
       const subject = latest.subjectId ? subjects.getSubject(latest.subjectId) : null
       return `Ainda estou pensando nos ${formatDuration(latest.duration)} que passamos${subject ? ` com ${subject.name}` : ' em foco'}.`
     }
+    if (isDailyRecord.value) return 'Hoje já é nosso melhor dia de foco desta geração. Estou muito orgulhosa!'
     if (todayGoalMet.value) return moodMeta.proud.message
+    if (mood.value === 'excited') return moodMeta.excited.message
     if (!todaySeconds.value && favoritePeriod.value) {
       const hour = new Date().getHours()
       const currentPeriod = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'night'
@@ -345,6 +372,9 @@ export const usePetStore = defineStore('pet', () => {
       'Hehe! Isso faz cócegas.',
       'Eu gosto quando você vem me ver.',
     ]
+    if (mood.value === 'tired') reactions.push('O carinho ajuda, mas uma pausinha e água ajudariam ainda mais.')
+    if (isDailyRecord.value) reactions.push('Você percebeu? Hoje já é nosso melhor dia desta geração!')
+    else if (mood.value === 'excited') reactions.push('Nossa sequência está me deixando cheia de energia!')
     if (favoriteSubject.value?.subject) reactions.push(`Será que hoje vamos passar um tempo com ${favoriteSubject.value.subject.name}?`)
     if (favoritePeriod.value) reactions.push(`Já percebi que nosso foco costuma render ${favoritePeriod.value.label}.`)
     if (lastReturnGapDays.value >= 3) reactions.push('Mesmo depois de uma pausa, eu fico feliz quando você volta.')
@@ -469,7 +499,7 @@ export const usePetStore = defineStore('pet', () => {
 
   return {
     profile, loading, name, lifecycleState, isActive, isDeparted, hasEgg, generation, memorials,
-    memories, reactionMessages, lastCompletedSession,
+    memories, reactionMessages, lastCompletedSession, isDailyRecord,
     bondSeconds, bondBonusDays: computed(() => bondProgress.value.bonusDays),
     level, levelProgress, bondLevelSeconds, bondLevelTargetSeconds,
     bondRemainingSeconds, nextBondReward, todaySeconds, todayCareSeconds, todayCareBreakdown,

@@ -72,9 +72,14 @@ let blinkResetTimer: ReturnType<typeof setTimeout> | null = null
 
 const moodAnimations: Record<PetMood, IdleAnimation[]> = {
   sleepy: ['doze', 'stretch', 'look'],
+  bored: ['look', 'doze', 'wobble'],
   hungry: ['wobble', 'doze', 'look'],
+  nostalgic: ['look', 'doze', 'wobble'],
   curious: ['look', 'stretch', 'bounce'],
+  focused: ['look', 'stretch'],
   happy: ['bounce', 'look', 'celebrate', 'dance'],
+  excited: ['bounce', 'celebrate', 'dance', 'look'],
+  tired: ['doze', 'stretch', 'look'],
   proud: ['celebrate', 'bounce', 'look', 'dance'],
   away: ['flicker'],
 }
@@ -277,14 +282,24 @@ onBeforeUnmount(() => {
 .pet-stage__spark--two { top: 36%; left: 13%; animation-delay: .45s !important; }
 
 .pet-stage--happy .pet-stage__sprite,
+.pet-stage--excited .pet-stage__sprite,
 .pet-stage--proud .pet-stage__sprite { animation-name: pet-hop; animation-duration: 2.3s; }
 
 .pet-stage--happy .pet-stage__spark,
+.pet-stage--excited .pet-stage__spark,
 .pet-stage--proud .pet-stage__spark { animation: pet-spark 2.3s steps(3, end) infinite; }
 
 .pet-stage--proud .pet-stage__spark { opacity: 1; }
 .pet-stage--sleepy .pet-stage__sprite { animation-duration: 4.5s; filter: saturate(.84); }
+.pet-stage--bored .pet-stage__sprite { animation-duration: 4.2s; filter: saturate(.88); }
 .pet-stage--hungry .pet-stage__sprite { animation-duration: 4.8s; filter: saturate(.58) brightness(.9); }
+.pet-stage--nostalgic .pet-stage__sprite { animation-duration: 4.4s; filter: saturate(.68) brightness(.94); }
+.pet-stage--focused .pet-stage__sprite { animation-duration: 2.8s; filter: saturate(1.06) drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 45%, transparent)); }
+.pet-stage--focused .pet-stage__ground { background: color-mix(in srgb, var(--accent) 42%, transparent); }
+.pet-stage--excited .pet-stage__sprite { animation-duration: 1.65s; filter: saturate(1.15); }
+.pet-stage--excited .pet-stage__spark { animation-duration: 1.65s; }
+.pet-stage--tired .pet-stage__sprite { animation-duration: 5.2s; filter: saturate(.78) brightness(.96); }
+.pet-stage--tired .pet-stage__eyelid { opacity: .36; transform: scaleY(.62); }
 .pet-stage--away .pet-stage__sprite { animation: none; filter: grayscale(1); opacity: .16; }
 .pet-stage--away .pet-stage__ground { opacity: .2; }
 .pet-stage--bond-glow .pet-stage__ground { box-shadow: 0 0 calc(var(--pet-size) * .12) color-mix(in srgb, #e4ad36 45%, transparent); }
@@ -442,6 +457,7 @@ onBeforeUnmount(() => {
 @media (prefers-reduced-motion: reduce) {
   .pet-stage *, .pet-stage__sprite { animation: none !important; }
   .pet-stage--happy .pet-stage__spark,
+  .pet-stage--excited .pet-stage__spark,
   .pet-stage--proud .pet-stage__spark { opacity: 1; }
 }
 </style>

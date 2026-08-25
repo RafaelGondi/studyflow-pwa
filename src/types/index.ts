@@ -59,7 +59,18 @@ export interface GamificationSettings {
   updatedAt: number
 }
 
-export type PetMood = 'sleepy' | 'hungry' | 'curious' | 'happy' | 'proud' | 'away'
+export type PetMood =
+  | 'sleepy'
+  | 'bored'
+  | 'hungry'
+  | 'nostalgic'
+  | 'curious'
+  | 'focused'
+  | 'happy'
+  | 'excited'
+  | 'tired'
+  | 'proud'
+  | 'away'
 
 export type PetLifecycleState = 'active' | 'departed' | 'egg'
 
