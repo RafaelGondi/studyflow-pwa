@@ -29,10 +29,18 @@
         </div>
         <div class="care-bar" :style="{ '--fill': `${pet.careProgress}%` }"><span /></div>
         <div class="care-card__foot">
-          <span>{{ formatDuration(pet.todaySeconds) }} de 1h hoje</span>
+          <span>{{ formatDuration(pet.todayCareSeconds) }} equivalentes de 1h</span>
           <strong v-if="pet.streak">🔥 {{ pet.streak }} {{ pet.streak === 1 ? 'dia' : 'dias' }}</strong>
           <strong v-else>Comece sua sequência</strong>
         </div>
+        <ul v-if="pet.todayCareBreakdown.length" class="care-mix">
+          <li v-for="part in pet.todayCareBreakdown" :key="part.id">
+            <span class="care-mix__metal" :class="`care-mix__metal--${part.token}`" />
+            <span>{{ formatDuration(part.actualSeconds) }} de {{ part.label.toLowerCase() }}</span>
+            <strong>→ {{ formatDuration(part.equivalentSeconds) }}</strong>
+          </li>
+        </ul>
+        <p v-else class="care-exchange">1h de estudo = 4h de leitura = 8h de trabalho</p>
         <p>{{ careHint }}</p>
       </section>
 
@@ -70,7 +78,7 @@
 
       <details class="care-rules">
         <summary>Como funcionam os cuidados?</summary>
-        <p>A Lumi precisa de 1h de foco por dia. Cada dia completo abaixo da meta remove um coração e encerra a sequência. Com cinco dias consecutivos sem a meta ela vai embora — mas completar 1h traz sua companheira de volta.</p>
+        <p>A Lumi precisa do equivalente a 1h de estudo por dia. Estudo vale 1×, leitura ¼× e trabalho ⅛×, e os tempos podem ser combinados. Cada dia completo abaixo da meta remove um coração e encerra a sequência. Com cinco dias consecutivos sem a meta ela vai embora — mas completar a meta traz sua companheira de volta.</p>
       </details>
     </div>
   </div>
@@ -110,7 +118,7 @@ const careHint = computed(() => {
 
 const nextCareHint = computed(() => {
   if (pet.todayGoalMet) return `${pet.name} está bem e a meta de hoje está garantida.`
-  return `Faltam ${formatDuration(Math.max(0, pet.dailyGoalSeconds - pet.todaySeconds))} para alimentar ${pet.name}.`
+  return `Faltam ${formatDuration(Math.max(0, pet.dailyGoalSeconds - pet.todayCareSeconds))} equivalentes para alimentar ${pet.name}.`
 })
 
 async function saveName() {
@@ -143,6 +151,8 @@ async function saveName() {
 .hearts { display: flex; gap: 3px; color: #d85f58; font-size: 18px; letter-spacing: -.03em; }.heart--empty { color: var(--border); }
 .care-bar { height: 8px; margin: var(--space-3) 0 var(--space-2); overflow: hidden; border-radius: 999px; background: var(--bg-subtle); }.care-bar span { display: block; width: var(--fill); height: 100%; border-radius: inherit; background: linear-gradient(90deg, #d85f58, #e4ad36); transition: width .45s var(--ease-smooth); }
 .care-card__foot { display: flex; justify-content: space-between; gap: var(--space-3); color: var(--text-secondary); font-size: var(--text-xs); }.care-card__foot strong { color: var(--text); }
+.care-mix { display: grid; gap: 6px; margin: var(--space-3) 0 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--bg-soft); list-style: none; }.care-mix li { display: grid; grid-template-columns: 8px 1fr auto; align-items: center; gap: var(--space-2); color: var(--text-secondary); font-size: var(--text-xs); }.care-mix li strong { color: var(--text); font-weight: 650; }.care-mix__metal { width: 8px; height: 8px; border-radius: 50%; }.care-mix__metal--ouro { background: var(--metal-ouro-lo); }.care-mix__metal--prata { background: var(--metal-prata-lo); }.care-mix__metal--bronze { background: var(--metal-bronze-lo); }
+.care-exchange { margin-top: var(--space-3); padding: 8px 10px; border-radius: var(--radius-sm); background: var(--bg-soft); text-align: center; }
 .care-card > p { margin-top: var(--space-3); color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.45; }
 .habitat--away { background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--text-secondary) 8%, transparent), transparent 48%), var(--bg-elevated); }
 .bond-card__head { display: flex; justify-content: space-between; align-items: end; }.bond-card__head div { display: grid; gap: 3px; }.bond-card__head > span { color: var(--accent); font-weight: 700; }

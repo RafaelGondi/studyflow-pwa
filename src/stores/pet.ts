@@ -3,10 +3,12 @@ import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
 import { useGamificationStore } from './gamification'
 import { useSessionsStore } from './sessions'
+import { useSubjectsStore } from './subjects'
 import { useTimerStore } from './timer'
 import * as db from '@/firebase/db'
 import { isStudySession, localDateStr } from '@/types'
 import type { PetMood, PetProfile, StudySession } from '@/types'
+import { ACTIVITIES, DEFAULT_ACTIVITY, activityMultiplier } from '@/utils/coins'
 
 const LEVEL_SIZE = 100
 export const PET_DAILY_GOAL_SECONDS = 60 * 60
@@ -32,10 +34,18 @@ function previousDate(value: string) {
   return localDateStr(date)
 }
 
+function sessionCareMultiplier(session: StudySession) {
+  if (Number.isFinite(session.coinMultiplier) && session.coinMultiplier! > 0) {
+    return session.coinMultiplier!
+  }
+  return activityMultiplier(session.activityKind)
+}
+
 export const usePetStore = defineStore('pet', () => {
   const auth = useAuthStore()
   const gamification = useGamificationStore()
   const sessions = useSessionsStore()
+  const subjects = useSubjectsStore()
   const timer = useTimerStore()
   const profile = ref<PetProfile | null>(null)
   const careSessions = ref<StudySession[]>([])
@@ -46,18 +56,39 @@ export const usePetStore = defineStore('pet', () => {
   const level = computed(() => Math.floor(bondPoints.value / LEVEL_SIZE) + 1)
   const levelProgress = computed(() => bondPoints.value % LEVEL_SIZE)
   const todaySeconds = computed(() => sessions.todayStudyTotalSeconds + timer.studyElapsedSeconds)
+  const liveCareSeconds = computed(() => {
+    if (!timer.activeSubjectId || timer.isInBreak) return 0
+    return timer.studyElapsedSeconds * subjects.subjectCoinMultiplier(timer.activeSubjectId)
+  })
+  const todayCareSeconds = computed(() =>
+    sessions.todayStudySessions.reduce((total, session) =>
+      total + session.duration * sessionCareMultiplier(session), 0) + liveCareSeconds.value,
+  )
+  const todayCareBreakdown = computed(() => ACTIVITIES.map(activity => {
+    let actualSeconds = sessions.todayStudySessions.reduce((total, session) =>
+      (session.activityKind ?? DEFAULT_ACTIVITY) === activity.id ? total + session.duration : total, 0)
+    let equivalentSeconds = sessions.todayStudySessions.reduce((total, session) =>
+      (session.activityKind ?? DEFAULT_ACTIVITY) === activity.id
+        ? total + session.duration * sessionCareMultiplier(session)
+        : total, 0)
+    if (timer.activeSubjectId && !timer.isInBreak && subjects.subjectActivityKind(timer.activeSubjectId) === activity.id) {
+      actualSeconds += timer.studyElapsedSeconds
+      equivalentSeconds += timer.studyElapsedSeconds * subjects.subjectCoinMultiplier(timer.activeSubjectId)
+    }
+    return { ...activity, actualSeconds, equivalentSeconds }
+  }).filter(part => part.actualSeconds > 0))
   const dailyTotals = computed(() => {
     const totals = new Map<string, number>()
     const today = localDateStr()
     for (const session of careSessions.value) {
       if (!isStudySession(session) || session.date === today) continue
-      totals.set(session.date, (totals.get(session.date) ?? 0) + session.duration)
+      totals.set(session.date, (totals.get(session.date) ?? 0) + session.duration * sessionCareMultiplier(session))
     }
-    totals.set(today, todaySeconds.value)
+    totals.set(today, todayCareSeconds.value)
     return totals
   })
-  const todayGoalMet = computed(() => todaySeconds.value >= PET_DAILY_GOAL_SECONDS)
-  const careProgress = computed(() => Math.min(100, todaySeconds.value / PET_DAILY_GOAL_SECONDS * 100))
+  const todayGoalMet = computed(() => todayCareSeconds.value >= PET_DAILY_GOAL_SECONDS)
+  const careProgress = computed(() => Math.min(100, todayCareSeconds.value / PET_DAILY_GOAL_SECONDS * 100))
 
   /** Dias completos sem meta, contados até ontem. O dia atual só pode recuperar, nunca punir antes de acabar. */
   const missedDays = computed(() => {
@@ -93,7 +124,7 @@ export const usePetStore = defineStore('pet', () => {
     if (isAway.value) return 'Complete 1h hoje para trazê-la de volta'
     if (todayGoalMet.value) return `${streak.value} ${streak.value === 1 ? 'dia' : 'dias'} de sequência · bem alimentada`
     if (missedDays.value > 0) return `${hearts.value}/${PET_MAX_HEARTS} corações · sequência em risco`
-    return `Meta diária: ${Math.floor(todaySeconds.value / 60)}/60 min`
+    return `Meta diária: ${Math.floor(todayCareSeconds.value / 60)}/60 min equivalentes`
   })
   const mood = computed<PetMood>(() => {
     if (isAway.value) return 'away'
@@ -145,7 +176,7 @@ export const usePetStore = defineStore('pet', () => {
   }
 
   return {
-    profile, loading, name, bondPoints, level, levelProgress, todaySeconds,
+    profile, loading, name, bondPoints, level, levelProgress, todaySeconds, todayCareSeconds, todayCareBreakdown,
     dailyGoalSeconds: PET_DAILY_GOAL_SECONDS, maxHearts: PET_MAX_HEARTS,
     todayGoalMet, careProgress, missedDays, hearts, isAway, streak, streakAtRisk, careSummary,
     mood, moodLabel, message, load, rename,
