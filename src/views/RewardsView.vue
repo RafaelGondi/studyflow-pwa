@@ -86,7 +86,7 @@
         <span class="pet-entry__copy">
           <span class="pet-entry__label">Seu companheiro</span>
           <strong>{{ pet.name }}</strong>
-          <span>Nível {{ pet.level }} · {{ pet.moodLabel }}</span>
+          <span>{{ pet.careSummary }}</span>
         </span>
         <span class="pet-entry__arrow"><AkIcon name="arrow-right-outline" :size="18" /></span>
       </button>

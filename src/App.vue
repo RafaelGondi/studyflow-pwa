@@ -11,6 +11,7 @@
         </div>
       </Transition>
     </main>
+    <GlobalPet v-if="appReady" />
     <AppTabBar v-if="appReady" />
     <AppToastHost />
     <AppConfirmSheet />
@@ -33,6 +34,7 @@ import UpdateBanner from '@/components/ui/UpdateBanner.vue'
 import AppToastHost from '@/components/ui/AppToastHost.vue'
 import AppConfirmSheet from '@/components/ui/AppConfirmSheet.vue'
 import CoinBurstHost from '@/components/ui/CoinBurstHost.vue'
+import GlobalPet from '@/components/pet/GlobalPet.vue'
 
 useAppTheme()
 

@@ -89,6 +89,9 @@ withDefaults(defineProps<{
 
 .pet-stage--proud .pet-stage__spark { opacity: 1; }
 .pet-stage--sleepy .pet-stage__sprite { animation-duration: 4.5s; filter: saturate(.84); }
+.pet-stage--hungry .pet-stage__sprite { animation-duration: 4.8s; filter: saturate(.58) brightness(.9); }
+.pet-stage--away .pet-stage__sprite { animation: none; filter: grayscale(1); opacity: .16; }
+.pet-stage--away .pet-stage__ground { opacity: .2; }
 
 @keyframes pet-breathe {
   0%, 100% { transform: translateY(0) scaleY(1); }
