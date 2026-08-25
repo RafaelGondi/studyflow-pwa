@@ -6,7 +6,7 @@ import { useSessionsStore } from './sessions'
 import { useSubjectsStore } from './subjects'
 import { useTimerStore } from './timer'
 import * as db from '@/firebase/db'
-import { isStudySession, localDateStr } from '@/types'
+import { formatDuration, isStudySession, localDateStr } from '@/types'
 import type { PetMemorial, PetMood, PetProfile, StudySession } from '@/types'
 import { ACTIVITIES, DEFAULT_ACTIVITY, activityMultiplier } from '@/utils/coins'
 
@@ -15,6 +15,14 @@ export const PET_MAX_HEARTS = 5
 export const BOND_DAILY_GOAL_BONUS_SECONDS = 10 * 60
 export const PET_DEPARTURE_DAYS = 8
 export const PET_EGG_COST = 300
+
+export interface PetMemory {
+  id: string
+  icon: string
+  title: string
+  text: string
+  subjectName?: string
+}
 
 export const BOND_LEVELS = [
   { level: 0, seconds: 0, reward: 'Companheira recém-chegada' },
@@ -80,6 +88,104 @@ export const usePetStore = defineStore('pet', () => {
   const isActive = computed(() => lifecycleState.value === 'active')
   const generation = computed(() => profile.value?.generation ?? 1)
   const memorials = computed(() => profile.value?.memorials ?? [])
+  const generationSessions = computed(() => {
+    if (!isActive.value) return []
+    const bornAt = profile.value?.createdAt ?? 0
+    const today = localDateStr()
+    return [
+      ...careSessions.value.filter(session => session.date !== today),
+      ...sessions.todayStudySessions,
+    ]
+      .filter(session => isStudySession(session) && session.endTime >= bornAt)
+      .sort((a, b) => a.endTime - b.endTime)
+  })
+  const lastCompletedSession = computed(() => {
+    const list = generationSessions.value
+    return list[list.length - 1] ?? null
+  })
+  const favoriteSubject = computed(() => {
+    const totals = new Map<string, { seconds: number; sessions: number }>()
+    for (const session of generationSessions.value) {
+      if (!session.subjectId) continue
+      const current = totals.get(session.subjectId) ?? { seconds: 0, sessions: 0 }
+      current.seconds += session.duration
+      current.sessions += 1
+      totals.set(session.subjectId, current)
+    }
+    const favorite = [...totals.entries()].sort((a, b) => b[1].seconds - a[1].seconds)[0]
+    if (!favorite || favorite[1].sessions < 2) return null
+    return { subject: subjects.getSubject(favorite[0]), ...favorite[1] }
+  })
+  const favoriteActivity = computed(() => {
+    const totals = new Map<string, number>()
+    for (const session of generationSessions.value) {
+      const kind = session.activityKind ?? DEFAULT_ACTIVITY
+      totals.set(kind, (totals.get(kind) ?? 0) + session.duration)
+    }
+    const favorite = [...totals.entries()].sort((a, b) => b[1] - a[1])[0]
+    if (!favorite || favorite[1] < 3600) return null
+    const activity = ACTIVITIES.find(item => item.id === favorite[0])
+    return activity ? { ...activity, seconds: favorite[1] } : null
+  })
+  const favoritePeriod = computed(() => {
+    const periods = [
+      { id: 'morning', label: 'pela manhã', icon: '☀️', sessions: 0 },
+      { id: 'afternoon', label: 'durante a tarde', icon: '🌤️', sessions: 0 },
+      { id: 'night', label: 'à noite', icon: '🌙', sessions: 0 },
+    ]
+    for (const session of generationSessions.value) {
+      const hour = new Date(session.startTime).getHours()
+      const index = hour < 12 ? 0 : hour < 18 ? 1 : 2
+      periods[index].sessions += 1
+    }
+    const favorite = periods.sort((a, b) => b.sessions - a.sessions)[0]
+    return favorite.sessions >= 3 ? favorite : null
+  })
+  const longestSession = computed(() => generationSessions.value
+    .reduce<StudySession | null>((longest, session) =>
+      !longest || session.duration > longest.duration ? session : longest, null))
+  const lastReturnGapDays = computed(() => {
+    const list = generationSessions.value
+    if (list.length < 2) return 0
+    const latest = list[list.length - 1]
+    const previous = [...list].reverse().find(session => session.date !== latest.date)
+    if (!previous) return 0
+    return Math.max(0, Math.floor((parseDate(latest.date).getTime() - parseDate(previous.date).getTime()) / 86400000))
+  })
+  const memories = computed<PetMemory[]>(() => {
+    const result: PetMemory[] = []
+    if (lastReturnGapDays.value >= 3) result.push({
+      id: 'comeback', icon: '🌱', title: 'Você sempre pode voltar',
+      text: `Depois de ${lastReturnGapDays.value} dias, você voltou e focamos juntos de novo.`,
+    })
+    if (favoriteSubject.value?.subject) result.push({
+      id: 'subject', icon: favoriteSubject.value.subject.icon || '📚',
+      subjectName: favoriteSubject.value.subject.name,
+      title: `${favoriteSubject.value.subject.name} faz parte da nossa história`,
+      text: `Já passamos ${formatDuration(favoriteSubject.value.seconds)} juntos nessa matéria.`,
+    })
+    if (favoritePeriod.value) result.push({
+      id: 'period', icon: favoritePeriod.value.icon, title: `Nosso horário é ${favoritePeriod.value.label}`,
+      text: `${favoritePeriod.value.sessions} das nossas sessões começaram nesse período.`,
+    })
+    if (favoriteActivity.value) result.push({
+      id: 'activity', icon: favoriteActivity.value.id === 'leitura' ? '📖' : favoriteActivity.value.id === 'trabalho' ? '💼' : '✦',
+      title: `${favoriteActivity.value.label} é o que mais fazemos`,
+      text: `${formatDuration(favoriteActivity.value.seconds)} do nosso tempo real foi dedicado a isso.`,
+    })
+    if (longestSession.value && longestSession.value.duration >= 15 * 60) {
+      const subject = longestSession.value.subjectId ? subjects.getSubject(longestSession.value.subjectId) : null
+      result.push({
+        id: 'record', icon: '🏅', title: 'Nossa maior aventura de foco',
+        text: `${formatDuration(longestSession.value.duration)}${subject ? ` com ${subject.name}` : ''}. Eu ainda lembro desse dia.`,
+      })
+    }
+    if (!result.length) result.push({
+      id: 'beginning', icon: '✨', title: 'Nossa história está começando',
+      text: 'Conforme focarmos juntos, vou lembrar dos nossos horários, matérias e momentos especiais.',
+    })
+    return result.slice(0, 4)
+  })
   const bondProgress = computed(() => {
     const startedAt = profile.value?.bondStartedAt
     if (!startedAt || !isActive.value) return { focusSeconds: 0, bonusDays: 0, totalSeconds: 0 }
@@ -215,7 +321,36 @@ export const usePetStore = defineStore('pet', () => {
     return 'sleepy'
   })
   const moodLabel = computed(() => moodMeta[mood.value].label)
-  const message = computed(() => moodMeta[mood.value].message)
+  const message = computed(() => {
+    if (!isActive.value || isAway.value || missedDays.value > 0) return moodMeta[mood.value].message
+    if (timer.activeSubjectId && !timer.isInBreak) {
+      const subject = subjects.getSubject(timer.activeSubjectId)
+      return `Estou aqui com você${subject ? ` em ${subject.name}` : ''}. Vamos no nosso ritmo.`
+    }
+    const latest = lastCompletedSession.value
+    if (latest && Date.now() - latest.endTime < 2 * 3600 * 1000) {
+      const subject = latest.subjectId ? subjects.getSubject(latest.subjectId) : null
+      return `Ainda estou pensando nos ${formatDuration(latest.duration)} que passamos${subject ? ` com ${subject.name}` : ' em foco'}.`
+    }
+    if (todayGoalMet.value) return moodMeta.proud.message
+    if (!todaySeconds.value && favoritePeriod.value) {
+      const hour = new Date().getHours()
+      const currentPeriod = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'night'
+      if (favoritePeriod.value.id === currentPeriod) return `Chegou nosso horário favorito. Geralmente focamos ${favoritePeriod.value.label}.`
+    }
+    return moodMeta[mood.value].message
+  })
+  const reactionMessages = computed(() => {
+    const reactions = [
+      'Hehe! Isso faz cócegas.',
+      'Eu gosto quando você vem me ver.',
+    ]
+    if (favoriteSubject.value?.subject) reactions.push(`Será que hoje vamos passar um tempo com ${favoriteSubject.value.subject.name}?`)
+    if (favoritePeriod.value) reactions.push(`Já percebi que nosso foco costuma render ${favoritePeriod.value.label}.`)
+    if (lastReturnGapDays.value >= 3) reactions.push('Mesmo depois de uma pausa, eu fico feliz quando você volta.')
+    if (streak.value >= 2) reactions.push(`Nossa sequência de ${streak.value} dias está ficando bonita!`)
+    return reactions
+  })
 
   function createMemorial(now: number): PetMemorial {
     return {
@@ -334,6 +469,7 @@ export const usePetStore = defineStore('pet', () => {
 
   return {
     profile, loading, name, lifecycleState, isActive, isDeparted, hasEgg, generation, memorials,
+    memories, reactionMessages, lastCompletedSession,
     bondSeconds, bondBonusDays: computed(() => bondProgress.value.bonusDays),
     level, levelProgress, bondLevelSeconds, bondLevelTargetSeconds,
     bondRemainingSeconds, nextBondReward, todaySeconds, todayCareSeconds, todayCareBreakdown,

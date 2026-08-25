@@ -105,6 +105,28 @@
         </div>
       </section>
 
+      <section v-if="pet.isActive" class="memory-card">
+        <div class="memory-card__head">
+          <div>
+            <span class="eyebrow">Memórias da {{ pet.name }}</span>
+            <strong>O que tenho notado sobre nós</strong>
+          </div>
+          <span>✦</span>
+        </div>
+        <div class="memory-list">
+          <article v-for="memory in pet.memories" :key="memory.id" class="pet-memory">
+            <span class="pet-memory__icon" aria-hidden="true">
+              <SubjectIcon v-if="memory.subjectName" :icon="memory.icon" :name="memory.subjectName" />
+              <template v-else>{{ memory.icon }}</template>
+            </span>
+            <div>
+              <strong>{{ memory.title }}</strong>
+              <p>{{ memory.text }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section v-if="pet.isActive" class="name-card">
         <div>
           <span class="eyebrow">Nome do mascote</span>
@@ -147,6 +169,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { AkButton, AkIcon, AkInput, AkPageHeader } from '@rafael_dias/akoma'
 import PixelPet from '@/components/pet/PixelPet.vue'
+import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import { BOND_LEVELS, usePetStore } from '@/stores/pet'
 import { useGamificationStore } from '@/stores/gamification'
 import { useAppToast } from '@/composables/useAppToast'
@@ -191,17 +214,11 @@ const habitatClasses = computed(() => ({
 function formatMemorialDate(value: number) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).format(value)
 }
-const PET_REACTIONS = [
-  'Hehe! Isso faz cócegas.',
-  'Eu gosto quando você vem me ver.',
-  'Carinho recebido. Agora vamos cuidar da nossa sequência?',
-]
-
 function handlePet() {
   if (reactionTimer) clearTimeout(reactionTimer)
   reactionMessage.value = pet.isAway
     ? 'Ainda consigo sentir seu carinho daqui.'
-    : PET_REACTIONS[reactionIndex++ % PET_REACTIONS.length]
+    : pet.reactionMessages[reactionIndex++ % pet.reactionMessages.length]
   reactionTimer = setTimeout(() => { reactionMessage.value = '' }, 2200)
 }
 
@@ -286,11 +303,12 @@ async function hatchEgg() {
 .habitat__star { position: absolute; color: color-mix(in srgb, #e4ad36 78%, var(--text)); font-size: 20px; }
 .habitat__star--one { top: 18%; left: 18%; }.habitat__star--two { top: 13%; right: 21%; font-size: 38px; }
 .speech { position: absolute; left: var(--space-4); right: var(--space-4); bottom: var(--space-4); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--bg) 88%, transparent); color: var(--text-secondary); text-align: center; font-size: var(--text-sm); backdrop-filter: blur(8px); }
-.care-card, .bond-card, .today-card, .name-card, .lifecycle-card, .memorial-card { margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elevated); }
+.care-card, .bond-card, .today-card, .name-card, .lifecycle-card, .memorial-card, .memory-card { margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elevated); }
 .star-spirit { color: #e4ad36; font-size: 92px; line-height: 1; text-shadow: 0 0 24px color-mix(in srgb, #e4ad36 55%, transparent); animation: star-spirit 2.8s ease-in-out infinite; }
 .pet-egg { position: relative; width: 150px; height: 170px; border: 0; background: transparent; cursor: pointer; }.pet-egg__shell { position: absolute; z-index: 2; left: 35px; top: 12px; width: 80px; height: 112px; border: 6px solid #193f55; border-radius: 48% 48% 44% 44% / 58% 58% 42% 42%; background: linear-gradient(145deg, #d9f3ee 0 42%, #79c7c2 43% 62%, #f1d275 63%); image-rendering: pixelated; animation: egg-wiggle 2.4s steps(2, end) infinite; }.pet-egg__shadow { position: absolute; left: 41px; right: 41px; bottom: 27px; height: 13px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 24%, transparent); }
 .lifecycle-card { display: grid; gap: var(--space-3); text-align: center; border-color: color-mix(in srgb, #e4ad36 35%, var(--border)); }.lifecycle-card > strong { font-size: var(--text-lg); }.lifecycle-card p { color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.5; }.lifecycle-card small { color: var(--danger); }
 .memorial-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }.memorial-card__head > div { display: grid; gap: 3px; }.memorial-card__head > span { color: #e4ad36; font-size: 26px; }.memory { display: grid; grid-template-columns: 38px 1fr; gap: var(--space-3); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); }.memory__star { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: color-mix(in srgb, #e4ad36 14%, var(--bg-soft)); color: #c58a13; font-size: 19px; }.memory div { display: grid; gap: 2px; }.memory p, .memory small { color: var(--text-secondary); font-size: var(--text-xs); }
+.memory-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }.memory-card__head > div { display: grid; gap: 3px; }.memory-card__head > span { color: var(--accent); font-size: 24px; }.memory-list { display: grid; gap: 0; margin-top: var(--space-2); }.pet-memory { display: grid; grid-template-columns: 42px 1fr; align-items: start; gap: var(--space-3); padding: var(--space-3) 0; border-top: 1px solid var(--border); }.pet-memory__icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: var(--radius-md); background: var(--bg-soft); font-size: 21px; }.pet-memory div { display: grid; gap: 3px; }.pet-memory strong { font-size: var(--text-sm); }.pet-memory p { color: var(--text-secondary); font-size: var(--text-xs); line-height: 1.45; }
 .care-card { border-color: color-mix(in srgb, #d56a63 22%, var(--border)); }
 .care-card--danger { border-color: color-mix(in srgb, #d56a63 60%, var(--border)); background: color-mix(in srgb, #d56a63 7%, var(--bg-elevated)); }
 .care-card__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }.care-card__head > div:first-child { display: grid; gap: 3px; }
