@@ -83,6 +83,19 @@ export interface PetMemorial {
   departedAt: number
   maxBondLevel: number
   bondSeconds: number
+  celebrationCount?: number
+}
+
+export type PetCelebrationKind = 'together' | 'bond' | 'record' | 'perfect-week' | 'comeback'
+
+export interface PetCelebration {
+  id: string
+  kind: PetCelebrationKind
+  icon: string
+  title: string
+  message: string
+  unlockedAt: number
+  generation: number
 }
 
 export interface PetProfile {
@@ -97,6 +110,8 @@ export interface PetProfile {
   departedAt?: number | null
   eggPurchasedAt?: number | null
   memorials?: PetMemorial[]
+  celebrations?: PetCelebration[]
+  lastCelebrationSeenAt?: number
   createdAt: number
   updatedAt: number
 }

@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
 import { useGamificationStore } from './gamification'
@@ -7,7 +7,7 @@ import { useSubjectsStore } from './subjects'
 import { useTimerStore } from './timer'
 import * as db from '@/firebase/db'
 import { formatDuration, isStudySession, localDateStr } from '@/types'
-import type { PetMemorial, PetMood, PetProfile, StudySession } from '@/types'
+import type { PetCelebration, PetMemorial, PetMood, PetProfile, StudySession } from '@/types'
 import { ACTIVITIES, DEFAULT_ACTIVITY, activityMultiplier } from '@/utils/coins'
 
 export const PET_DAILY_GOAL_SECONDS = 60 * 60
@@ -93,6 +93,7 @@ export const usePetStore = defineStore('pet', () => {
   const isActive = computed(() => lifecycleState.value === 'active')
   const generation = computed(() => profile.value?.generation ?? 1)
   const memorials = computed(() => profile.value?.memorials ?? [])
+  const celebrations = computed(() => profile.value?.celebrations ?? [])
   const generationSessions = computed(() => {
     if (!isActive.value) return []
     const bornAt = profile.value?.createdAt ?? 0
@@ -149,6 +150,13 @@ export const usePetStore = defineStore('pet', () => {
   const longestSession = computed(() => generationSessions.value
     .reduce<StudySession | null>((longest, session) =>
       !longest || session.duration > longest.duration ? session : longest, null))
+  const isLatestSessionRecord = computed(() => {
+    const latest = lastCompletedSession.value
+    if (!latest || latest.duration < 30 * 60) return false
+    return generationSessions.value
+      .filter(session => session.id !== latest.id)
+      .every(session => session.duration < latest.duration)
+  })
   const lastReturnGapDays = computed(() => {
     const list = generationSessions.value
     if (list.length < 2) return 0
@@ -382,6 +390,93 @@ export const usePetStore = defineStore('pet', () => {
     return reactions
   })
 
+  const celebrationCandidates = computed<PetCelebration[]>(() => {
+    if (!isActive.value || !profile.value) return []
+    const bornAt = profile.value.createdAt
+    const now = Date.now()
+    const togetherDays = Math.max(0, Math.floor((now - bornAt) / 86400000))
+    const result: PetCelebration[] = []
+    const add = (event: Omit<PetCelebration, 'generation'>) => result.push({ ...event, generation: generation.value })
+    for (const days of [7, 30, 100, 365]) {
+      if (togetherDays < days) continue
+      add({
+        id: `g${generation.value}-together-${days}`,
+        kind: 'together', icon: days >= 365 ? '🎂' : '💫',
+        title: days === 7 ? 'Uma semana juntos' : `${days} dias juntos`,
+        message: `${name.value} está com você há ${days} dias. Essa história já ganhou um capítulo especial.`,
+        unlockedAt: now,
+      })
+    }
+    for (const hours of [10, 50, 100, 250, 500]) {
+      if (bondSeconds.value < hours * 3600) continue
+      add({
+        id: `g${generation.value}-bond-${hours}`,
+        kind: 'bond', icon: '✨', title: `${hours}h de vínculo`,
+        message: `Vocês já construíram o equivalente a ${hours} horas de foco juntos.`,
+        unlockedAt: now,
+      })
+    }
+    if (streak.value >= 7) {
+      const streakStart = new Date()
+      streakStart.setDate(streakStart.getDate() - streak.value + 1)
+      add({
+      id: `g${generation.value}-perfect-week-${localDateStr(streakStart)}`,
+      kind: 'perfect-week', icon: '🔥', title: 'Semana perfeita',
+      message: 'Sete dias seguidos cuidando da Lumi e da sua própria constância.',
+      unlockedAt: now,
+      })
+    }
+    const latest = lastCompletedSession.value
+    if (latest && isLatestSessionRecord.value) add({
+      id: `g${generation.value}-record-${latest.id}`,
+      kind: 'record', icon: '🏆', title: 'Novo recorde de sessão',
+      message: `${formatDuration(latest.duration)} em uma única sessão. É a maior desta geração até agora.`,
+      unlockedAt: latest.endTime,
+    })
+    if (latest && lastReturnGapDays.value >= 3) add({
+      id: `g${generation.value}-comeback-${latest.date}`,
+      kind: 'comeback', icon: '🌱', title: 'O retorno também conta',
+      message: `Depois de ${lastReturnGapDays.value} dias, vocês encontraram o caminho de volta ao foco.`,
+      unlockedAt: latest.endTime,
+    })
+    return result
+  })
+  const unseenCelebrations = computed(() => {
+    const seenAt = profile.value?.lastCelebrationSeenAt ?? 0
+    return celebrations.value.filter(event => event.unlockedAt > seenAt)
+  })
+  let syncingCelebrations = false
+
+  async function syncCelebrations() {
+    if (!auth.uid || !profile.value || syncingCelebrations || !isActive.value) return
+    const known = new Set(celebrations.value.map(event => event.id))
+    const discovered = celebrationCandidates.value.filter(event => !known.has(event.id))
+    if (!discovered.length) return
+    syncingCelebrations = true
+    try {
+      const next: PetProfile = {
+        ...profile.value,
+        celebrations: [...celebrations.value, ...discovered].sort((a, b) => a.unlockedAt - b.unlockedAt),
+        updatedAt: Date.now(),
+      }
+      await db.savePetProfile(auth.uid, next)
+      profile.value = next
+    } finally {
+      syncingCelebrations = false
+    }
+  }
+
+  async function markCelebrationsSeen() {
+    if (!auth.uid || !profile.value || !unseenCelebrations.value.length) return
+    const next: PetProfile = {
+      ...profile.value,
+      lastCelebrationSeenAt: Math.max(...celebrations.value.map(event => event.unlockedAt), Date.now()),
+      updatedAt: Date.now(),
+    }
+    await db.savePetProfile(auth.uid, next)
+    profile.value = next
+  }
+
   function createMemorial(now: number): PetMemorial {
     return {
       id: `${generation.value}-${now}`,
@@ -392,6 +487,7 @@ export const usePetStore = defineStore('pet', () => {
       departedAt: now,
       maxBondLevel: level.value,
       bondSeconds: bondSeconds.value,
+      celebrationCount: celebrations.value.length,
     }
   }
 
@@ -420,7 +516,7 @@ export const usePetStore = defineStore('pet', () => {
       const bondStartedAt = saved?.bondStartedAt ?? now
       profile.value = saved ?? {
         petId: 'lumi', name: 'Lumi', careStartedDate, careStartedAt, bondStartedAt,
-        lifecycleState: 'active', generation: 1, memorials: [], createdAt: now, updatedAt: now,
+        lifecycleState: 'active', generation: 1, memorials: [], celebrations: [], createdAt: now, updatedAt: now,
       }
       if (!saved?.careStartedDate || !saved?.careStartedAt || !saved?.bondStartedAt || !saved?.lifecycleState || !saved?.generation) {
         profile.value = {
@@ -431,12 +527,14 @@ export const usePetStore = defineStore('pet', () => {
           lifecycleState: saved?.lifecycleState ?? 'active',
           generation: saved?.generation ?? 1,
           memorials: saved?.memorials ?? [],
+          celebrations: saved?.celebrations ?? [],
           updatedAt: now,
         }
         await db.savePetProfile(auth.uid, profile.value)
       }
       careSessions.value = await db.fetchSessionsByDateRange(auth.uid, careStartedDate, localDateStr())
       if (isActive.value && missedDays.value >= PET_DEPARTURE_DAYS) await markDeparted()
+      else await syncCelebrations()
     } catch (error) {
       console.error('[StudyFlow] Erro ao carregar mascote:', error)
     } finally {
@@ -490,6 +588,8 @@ export const usePetStore = defineStore('pet', () => {
       departedAt: null,
       eggPurchasedAt: null,
       createdAt: now,
+      celebrations: [],
+      lastCelebrationSeenAt: 0,
       updatedAt: now,
     }
     await db.savePetProfile(auth.uid, next)
@@ -497,15 +597,21 @@ export const usePetStore = defineStore('pet', () => {
     careSessions.value = []
   }
 
+  watch(
+    () => celebrationCandidates.value.map(event => event.id).join('|'),
+    () => { void syncCelebrations() },
+  )
+
   return {
     profile, loading, name, lifecycleState, isActive, isDeparted, hasEgg, generation, memorials,
+    celebrations, unseenCelebrations,
     memories, reactionMessages, lastCompletedSession, isDailyRecord,
     bondSeconds, bondBonusDays: computed(() => bondProgress.value.bonusDays),
     level, levelProgress, bondLevelSeconds, bondLevelTargetSeconds,
     bondRemainingSeconds, nextBondReward, todaySeconds, todayCareSeconds, todayCareBreakdown,
     dailyGoalSeconds: PET_DAILY_GOAL_SECONDS, maxHearts: PET_MAX_HEARTS,
     todayGoalMet, careProgress, missedDays, hearts, isAway, rescueDaysRemaining, streak, streakAtRisk, careSummary,
-    mood, moodLabel, message, load, rename, purchaseEgg, hatchEgg,
+    mood, moodLabel, message, load, rename, purchaseEgg, hatchEgg, markCelebrationsSeen,
     eggCost: PET_EGG_COST, departureDays: PET_DEPARTURE_DAYS,
   }
 })

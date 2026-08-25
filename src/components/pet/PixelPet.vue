@@ -172,7 +172,7 @@ async function react() {
   }, 760)
 }
 
-defineExpose({ react })
+defineExpose({ react, celebrate: () => playIdle('celebrate') })
 watch(() => props.mood, (mood, previous) => {
   if (mood === 'proud' && previous !== 'proud') void playIdle('celebrate')
   else scheduleIdle(1200)

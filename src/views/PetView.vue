@@ -18,8 +18,27 @@
           <span class="pet-egg__shell" />
           <span class="pet-egg__shadow" />
         </button>
-        <PixelPet v-else interactive :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" :bond-level="pet.level" @pet="handlePet" />
+        <PixelPet v-else ref="petSprite" interactive :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" :bond-level="pet.level" @pet="handlePet" />
         <p class="speech" aria-live="polite">“{{ displayedMessage }}”</p>
+      </section>
+
+      <section v-if="pet.isActive && latestCelebration" class="celebration-card" :class="{ 'celebration-card--new': pet.unseenCelebrations.length }">
+        <span class="celebration-card__icon" aria-hidden="true">{{ latestCelebration.icon }}</span>
+        <div class="celebration-card__copy">
+          <span class="eyebrow">{{ pet.unseenCelebrations.length ? 'Nova conquista' : 'Momento especial' }}</span>
+          <strong>{{ latestCelebration.title }}</strong>
+          <p>{{ latestCelebration.message }}</p>
+          <AkButton v-if="pet.unseenCelebrations.length" size="sm" variant="primary" @click="celebrateLatest">Comemorar com {{ pet.name }}</AkButton>
+        </div>
+        <details v-if="pet.celebrations.length > 1" class="celebration-history">
+          <summary>Ver momentos especiais ({{ pet.celebrations.length }})</summary>
+          <ol>
+            <li v-for="event in recentCelebrations" :key="event.id">
+              <span>{{ event.icon }}</span>
+              <div><strong>{{ event.title }}</strong><small>{{ formatShortDate(event.unlockedAt) }}</small></div>
+            </li>
+          </ol>
+        </details>
       </section>
 
       <section v-if="pet.isDeparted || pet.hasEgg" class="lifecycle-card">
@@ -150,7 +169,7 @@
           <span class="memory__star">✦</span>
           <div>
             <strong>{{ memory.name }} · geração {{ memory.generation }}</strong>
-            <p>Vínculo {{ memory.maxBondLevel }} · {{ formatDuration(memory.bondSeconds) }} equivalentes</p>
+            <p>Vínculo {{ memory.maxBondLevel }} · {{ formatDuration(memory.bondSeconds) }} equivalentes<span v-if="memory.celebrationCount"> · {{ memory.celebrationCount }} {{ memory.celebrationCount === 1 ? 'momento especial' : 'momentos especiais' }}</span></p>
             <small>{{ formatMemorialDate(memory.departedAt) }}</small>
           </div>
         </article>
@@ -175,6 +194,7 @@ import { useGamificationStore } from '@/stores/gamification'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration } from '@/types'
+import type { PetCelebration } from '@/types'
 
 const router = useRouter()
 const pet = usePetStore()
@@ -186,6 +206,7 @@ const saving = ref(false)
 const buyingEgg = ref(false)
 const hatching = ref(false)
 const reactionMessage = ref('')
+const petSprite = ref<InstanceType<typeof PixelPet> | null>(null)
 const bondMilestones = BOND_LEVELS.slice(1)
 let reactionTimer: ReturnType<typeof setTimeout> | null = null
 let reactionIndex = 0
@@ -202,6 +223,13 @@ const displayedMessage = computed(() => {
   if (pet.hasEgg) return 'Tem alguém novo esperando para conhecer você.'
   return reactionMessage.value || pet.message
 })
+const latestCelebration = computed(() => {
+  const unseen = pet.unseenCelebrations
+  if (unseen.length) return unseen[unseen.length - 1]
+  const all = pet.celebrations
+  return all[all.length - 1] ?? null
+})
+const recentCelebrations = computed(() => [...pet.celebrations].reverse().slice(0, 8))
 const habitatClasses = computed(() => ({
   'habitat--away': pet.isAway,
   'habitat--bond-glow': pet.level >= 4,
@@ -214,12 +242,30 @@ const habitatClasses = computed(() => ({
 function formatMemorialDate(value: number) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).format(value)
 }
+function formatShortDate(value: number) {
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(value)
+}
 function handlePet() {
   if (reactionTimer) clearTimeout(reactionTimer)
   reactionMessage.value = pet.isAway
     ? 'Ainda consigo sentir seu carinho daqui.'
     : pet.reactionMessages[reactionIndex++ % pet.reactionMessages.length]
   reactionTimer = setTimeout(() => { reactionMessage.value = '' }, 2200)
+}
+
+async function celebrateLatest() {
+  const event: PetCelebration | null = latestCelebration.value
+  if (!event) return
+  if (reactionTimer) clearTimeout(reactionTimer)
+  reactionMessage.value = event.message
+  void petSprite.value?.celebrate()
+  reactionTimer = setTimeout(() => { reactionMessage.value = '' }, 3600)
+  try {
+    await pet.markCelebrationsSeen()
+    toast.success('Momento guardado', `${event.title} entrou para a história de vocês.`)
+  } catch {
+    toast.error('Não foi possível guardar agora', 'A comemoração continua disponível para tentar novamente.')
+  }
 }
 
 onBeforeUnmount(() => { if (reactionTimer) clearTimeout(reactionTimer) })
@@ -303,7 +349,8 @@ async function hatchEgg() {
 .habitat__star { position: absolute; color: color-mix(in srgb, #e4ad36 78%, var(--text)); font-size: 20px; }
 .habitat__star--one { top: 18%; left: 18%; }.habitat__star--two { top: 13%; right: 21%; font-size: 38px; }
 .speech { position: absolute; left: var(--space-4); right: var(--space-4); bottom: var(--space-4); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--bg) 88%, transparent); color: var(--text-secondary); text-align: center; font-size: var(--text-sm); backdrop-filter: blur(8px); }
-.care-card, .bond-card, .today-card, .name-card, .lifecycle-card, .memorial-card, .memory-card { margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elevated); }
+.care-card, .bond-card, .today-card, .name-card, .lifecycle-card, .memorial-card, .memory-card, .celebration-card { margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elevated); }
+.celebration-card { position: relative; display: grid; grid-template-columns: 52px 1fr; gap: var(--space-3); overflow: hidden; border-color: color-mix(in srgb, #e4ad36 38%, var(--border)); }.celebration-card--new { background: radial-gradient(circle at 10% 15%, color-mix(in srgb, #e4ad36 16%, transparent), transparent 42%), var(--bg-elevated); box-shadow: 0 8px 28px color-mix(in srgb, #e4ad36 10%, transparent); }.celebration-card--new::after { content: '✦  ·  ✦'; position: absolute; top: 10px; right: 14px; color: color-mix(in srgb, #e4ad36 62%, transparent); font-size: 12px; letter-spacing: 5px; animation: celebration-spark 2s ease-in-out infinite; }.celebration-card__icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: var(--radius-md); background: color-mix(in srgb, #e4ad36 16%, var(--bg-soft)); font-size: 27px; }.celebration-card__copy { display: grid; gap: 4px; min-width: 0; }.celebration-card__copy > strong { font-size: var(--text-lg); }.celebration-card__copy p { color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.45; }.celebration-card__copy .ak-button { width: max-content; margin-top: var(--space-2); }.celebration-history { grid-column: 1 / -1; padding-top: var(--space-2); border-top: 1px solid var(--border); }.celebration-history summary { color: var(--accent); font-size: var(--text-sm); font-weight: 650; cursor: pointer; }.celebration-history ol { display: grid; margin-top: var(--space-2); padding: 0; list-style: none; }.celebration-history li { display: grid; grid-template-columns: 28px 1fr; align-items: center; gap: var(--space-2); padding: 8px 0; border-top: 1px solid var(--border); }.celebration-history li div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }.celebration-history li strong { font-size: var(--text-sm); }.celebration-history li small { color: var(--text-secondary); font-size: var(--text-xs); }
 .star-spirit { color: #e4ad36; font-size: 92px; line-height: 1; text-shadow: 0 0 24px color-mix(in srgb, #e4ad36 55%, transparent); animation: star-spirit 2.8s ease-in-out infinite; }
 .pet-egg { position: relative; width: 150px; height: 170px; border: 0; background: transparent; cursor: pointer; }.pet-egg__shell { position: absolute; z-index: 2; left: 35px; top: 12px; width: 80px; height: 112px; border: 6px solid #193f55; border-radius: 48% 48% 44% 44% / 58% 58% 42% 42%; background: linear-gradient(145deg, #d9f3ee 0 42%, #79c7c2 43% 62%, #f1d275 63%); image-rendering: pixelated; animation: egg-wiggle 2.4s steps(2, end) infinite; }.pet-egg__shadow { position: absolute; left: 41px; right: 41px; bottom: 27px; height: 13px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 24%, transparent); }
 .lifecycle-card { display: grid; gap: var(--space-3); text-align: center; border-color: color-mix(in srgb, #e4ad36 35%, var(--border)); }.lifecycle-card > strong { font-size: var(--text-lg); }.lifecycle-card p { color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.5; }.lifecycle-card small { color: var(--danger); }
@@ -337,4 +384,5 @@ async function hatchEgg() {
 @media (max-width: 390px) { .name-form { grid-template-columns: 1fr; } }
 @keyframes star-spirit { 0%, 100% { transform: scale(.9) rotate(-4deg); opacity: .68; } 50% { transform: scale(1.08) rotate(5deg); opacity: 1; } }
 @keyframes egg-wiggle { 0%, 72%, 100% { transform: rotate(0); } 80% { transform: rotate(-4deg); } 90% { transform: rotate(4deg); } }
+@keyframes celebration-spark { 0%, 100% { transform: translateY(2px) scale(.85); opacity: .45; } 50% { transform: translateY(-2px) scale(1.08); opacity: 1; } }
 </style>
