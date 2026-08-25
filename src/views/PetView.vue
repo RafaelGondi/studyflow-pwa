@@ -1,6 +1,6 @@
 <template>
   <div class="ak-app-page">
-    <AkPageHeader label="Companheiro" :title="pet.name" :meta="`Nível ${pet.level} · ${pet.moodLabel}`" size="md">
+    <AkPageHeader label="Companheiro" :title="pet.name" :meta="`Vínculo ${pet.level} · ${pet.moodLabel}`" size="md">
       <template #actions>
         <AkButton size="sm" variant="ghost" @click="router.back()">
           <template #icon><AkIcon name="arrow-left-outline" :size="16" /></template>
@@ -10,10 +10,10 @@
     </AkPageHeader>
 
     <div class="ak-app-scroll pet-page reveal reveal-d1">
-      <section class="habitat" :class="{ 'habitat--away': pet.isAway }">
+      <section class="habitat" :class="habitatClasses">
         <span class="habitat__star habitat__star--one">✦</span>
         <span class="habitat__star habitat__star--two">·</span>
-        <PixelPet interactive :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" @pet="handlePet" />
+        <PixelPet interactive :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" :bond-level="pet.level" @pet="handlePet" />
         <p class="speech" aria-live="polite">“{{ displayedMessage }}”</p>
       </section>
 
@@ -50,10 +50,27 @@
             <span class="eyebrow">Vínculo</span>
             <strong>Nível {{ pet.level }}</strong>
           </div>
-          <span class="numeric">{{ pet.levelProgress }} / 100</span>
+          <span v-if="pet.nextBondReward" class="numeric">
+            {{ formatDuration(pet.bondLevelSeconds) }} / {{ formatDuration(pet.bondLevelTargetSeconds) }}
+          </span>
+          <span v-else class="numeric">Vínculo máximo</span>
         </div>
         <div class="bond-bar" :style="{ '--fill': `${pet.levelProgress}%` }"><span /></div>
-        <p>Cada moeda conquistada aproxima {{ pet.name }} do próximo nível. Resgatar recompensas não reduz o vínculo.</p>
+        <div v-if="pet.nextBondReward" class="bond-next">
+          <span>Próxima recompensa · nível {{ pet.nextBondReward.level }}</span>
+          <strong>{{ pet.nextBondReward.reward }}</strong>
+          <small>Faltam {{ formatDuration(pet.bondRemainingSeconds) }} equivalentes</small>
+        </div>
+        <p>O vínculo cresce com o tempo equivalente em foco desde o nível zero. Cumprir a meta diária concede 10 min extras. Ele é independente das moedas e não diminui ao resgatar recompensas.</p>
+        <details class="bond-journey">
+          <summary>Ver jornada de vínculo</summary>
+          <ol>
+            <li v-for="milestone in bondMilestones" :key="milestone.level" :class="{ 'bond-journey__unlocked': pet.level >= milestone.level }">
+              <span>Nível {{ milestone.level }} · {{ formatDuration(milestone.seconds) }}</span>
+              <strong>{{ milestone.reward }}</strong>
+            </li>
+          </ol>
+        </details>
       </section>
 
       <section class="today-card">
@@ -89,7 +106,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { AkButton, AkIcon, AkInput, AkPageHeader } from '@rafael_dias/akoma'
 import PixelPet from '@/components/pet/PixelPet.vue'
-import { usePetStore } from '@/stores/pet'
+import { BOND_LEVELS, usePetStore } from '@/stores/pet'
 import { useAppToast } from '@/composables/useAppToast'
 import { formatDuration } from '@/types'
 
@@ -99,12 +116,21 @@ const toast = useAppToast()
 const draftName = ref(pet.name)
 const saving = ref(false)
 const reactionMessage = ref('')
+const bondMilestones = BOND_LEVELS.slice(1)
 let reactionTimer: ReturnType<typeof setTimeout> | null = null
 let reactionIndex = 0
 
 watch(() => pet.name, value => { draftName.value = value }, { immediate: true })
 
 const displayedMessage = computed(() => reactionMessage.value || pet.message)
+const habitatClasses = computed(() => ({
+  'habitat--away': pet.isAway,
+  'habitat--bond-glow': pet.level >= 4,
+  'habitat--night': pet.level >= 5,
+  'habitat--aura': pet.level >= 7,
+  'habitat--aurora': pet.level >= 8,
+  'habitat--constellation': pet.level >= 9,
+}))
 const PET_REACTIONS = [
   'Hehe! Isso faz cócegas.',
   'Eu gosto quando você vem me ver.',
@@ -175,9 +201,17 @@ async function saveName() {
 .care-exchange { margin-top: var(--space-3); padding: 8px 10px; border-radius: var(--radius-sm); background: var(--bg-soft); text-align: center; }
 .care-card > p { margin-top: var(--space-3); color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.45; }
 .habitat--away { background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--text-secondary) 8%, transparent), transparent 48%), var(--bg-elevated); }
+.habitat--bond-glow { box-shadow: inset 0 0 42px color-mix(in srgb, #e4ad36 12%, transparent); }
+.habitat--night { background: radial-gradient(circle at 50% 42%, color-mix(in srgb, #7bb9e8 20%, transparent), transparent 43%), linear-gradient(155deg, #121a32, #26385a); }
+.habitat--night .speech { background: color-mix(in srgb, #101729 82%, transparent); color: #eef5ff; }
+.habitat--aura { box-shadow: inset 0 0 52px color-mix(in srgb, #e4ad36 18%, transparent), 0 0 24px color-mix(in srgb, var(--accent) 13%, transparent); }
+.habitat--aurora { background: radial-gradient(circle at 50% 45%, color-mix(in srgb, #a7f0dc 27%, transparent), transparent 38%), linear-gradient(145deg, #17243d 10%, #315a6b 48%, #493e70); }
+.habitat--constellation .habitat__star { text-shadow: 24px 32px #f4d77d, -34px 70px #dcecff, 55px 84px #f4d77d, -12px 126px #dcecff; }
 .bond-card__head { display: flex; justify-content: space-between; align-items: end; }.bond-card__head div { display: grid; gap: 3px; }.bond-card__head > span { color: var(--accent); font-weight: 700; }
 .eyebrow { color: var(--text-secondary); font-size: var(--text-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .bond-bar { height: 8px; margin: var(--space-3) 0; overflow: hidden; border-radius: 999px; background: var(--bg-subtle); }.bond-bar span { display: block; width: var(--fill); height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), #e4ad36); transition: width .45s var(--ease-smooth); }
+.bond-next { display: grid; gap: 3px; margin-bottom: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); background: var(--bg-soft); }.bond-next span, .bond-next small { color: var(--text-secondary); font-size: var(--text-xs); }.bond-next strong { font-size: var(--text-sm); }
+.bond-journey { margin-top: var(--space-3); color: var(--text-secondary); font-size: var(--text-sm); }.bond-journey summary { color: var(--accent); font-weight: 650; cursor: pointer; }.bond-journey ol { display: grid; gap: 0; margin-top: var(--space-3); padding: 0; list-style: none; }.bond-journey li { display: grid; gap: 2px; padding: 9px 0; border-top: 1px solid var(--border); opacity: .58; }.bond-journey li span { font-size: var(--text-xs); }.bond-journey li strong { color: var(--text); font-size: var(--text-sm); }.bond-journey__unlocked { opacity: 1 !important; }.bond-journey__unlocked span::after { content: ' · desbloqueado'; color: var(--accent); font-weight: 700; }
 .bond-card p, .today-card p, .name-card p { color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.5; }
 .today-card { display: flex; align-items: center; gap: var(--space-3); }.today-card__icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: var(--radius-md); background: color-mix(in srgb, #e4ad36 15%, var(--bg-subtle)); color: #c58a13; font-size: 22px; }.today-card div:last-child { display: grid; gap: 3px; }
 .name-card { display: grid; gap: var(--space-4); }.name-form { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--space-2); }

@@ -22,6 +22,7 @@
             :mood="petStore.mood"
             :name="petStore.name"
             :mood-label="petStore.moodLabel"
+            :bond-level="petStore.level"
             :size="focusPetSize"
           />
         </div>

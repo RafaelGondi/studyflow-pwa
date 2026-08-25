@@ -65,6 +65,8 @@ export interface PetProfile {
   petId: 'lumi'
   name: string
   careStartedDate?: string
+  /** Marco da nova progressão de vínculo, independente do histórico de moedas. */
+  bondStartedAt?: number
   createdAt: number
   updatedAt: number
 }

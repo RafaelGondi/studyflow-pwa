@@ -1,7 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
-import { useGamificationStore } from './gamification'
 import { useSessionsStore } from './sessions'
 import { useSubjectsStore } from './subjects'
 import { useTimerStore } from './timer'
@@ -10,9 +9,23 @@ import { isStudySession, localDateStr } from '@/types'
 import type { PetMood, PetProfile, StudySession } from '@/types'
 import { ACTIVITIES, DEFAULT_ACTIVITY, activityMultiplier } from '@/utils/coins'
 
-const LEVEL_SIZE = 100
 export const PET_DAILY_GOAL_SECONDS = 60 * 60
 export const PET_MAX_HEARTS = 5
+export const BOND_DAILY_GOAL_BONUS_SECONDS = 10 * 60
+
+export const BOND_LEVELS = [
+  { level: 0, seconds: 0, reward: 'Companheira recém-chegada' },
+  { level: 1, seconds: 2 * 3600, reward: 'Nova animação: alongamento' },
+  { level: 2, seconds: 5 * 3600, reward: 'Nova animação: pulinhos' },
+  { level: 3, seconds: 12 * 3600, reward: 'Nova animação: celebração' },
+  { level: 4, seconds: 25 * 3600, reward: 'Brilho especial de vínculo' },
+  { level: 5, seconds: 50 * 3600, reward: 'Cenário: noite estrelada' },
+  { level: 6, seconds: 90 * 3600, reward: 'Animação rara da Lumi' },
+  { level: 7, seconds: 150 * 3600, reward: 'Aura estelar' },
+  { level: 8, seconds: 240 * 3600, reward: 'Cenário: aurora' },
+  { level: 9, seconds: 365 * 3600, reward: 'Cenário: constelação' },
+  { level: 10, seconds: 500 * 3600, reward: 'Evolução visual da Lumi' },
+] as const
 
 const moodMeta: Record<PetMood, { label: string; message: string }> = {
   sleepy: { label: 'Sonolenta', message: 'Estou esperando nosso primeiro foco de hoje.' },
@@ -43,7 +56,6 @@ function sessionCareMultiplier(session: StudySession) {
 
 export const usePetStore = defineStore('pet', () => {
   const auth = useAuthStore()
-  const gamification = useGamificationStore()
   const sessions = useSessionsStore()
   const subjects = useSubjectsStore()
   const timer = useTimerStore()
@@ -52,9 +64,54 @@ export const usePetStore = defineStore('pet', () => {
   const loading = ref(false)
 
   const name = computed(() => profile.value?.name || 'Lumi')
-  const bondPoints = computed(() => Math.max(0, Math.floor(gamification.earnedCoins)))
-  const level = computed(() => Math.floor(bondPoints.value / LEVEL_SIZE) + 1)
-  const levelProgress = computed(() => bondPoints.value % LEVEL_SIZE)
+  const bondProgress = computed(() => {
+    const startedAt = profile.value?.bondStartedAt
+    if (!startedAt) return { focusSeconds: 0, bonusDays: 0, totalSeconds: 0 }
+    const today = localDateStr()
+    const dailyBondTotals = new Map<string, number>()
+    let focusSeconds = 0
+    for (const session of [
+      ...careSessions.value.filter(session => session.date !== today),
+      ...sessions.todayStudySessions,
+    ]) {
+      if (!isStudySession(session) || session.endTime < startedAt) continue
+      const eligibleSeconds = session.startTime < startedAt
+        ? Math.min(session.duration, Math.max(0, (session.endTime - startedAt) / 1000))
+        : session.duration
+      const equivalent = eligibleSeconds * sessionCareMultiplier(session)
+      focusSeconds += equivalent
+      dailyBondTotals.set(session.date, (dailyBondTotals.get(session.date) ?? 0) + equivalent)
+    }
+    if (timer.activeSubjectId && !timer.isInBreak) {
+      const eligibleLiveSeconds = Math.min(
+        timer.studyElapsedSeconds,
+        Math.max(0, (Date.now() - startedAt) / 1000),
+      )
+      const liveEquivalent = eligibleLiveSeconds * subjects.subjectCoinMultiplier(timer.activeSubjectId)
+      focusSeconds += liveEquivalent
+      dailyBondTotals.set(today, (dailyBondTotals.get(today) ?? 0) + liveEquivalent)
+    }
+    const bonusDays = [...dailyBondTotals.values()].filter(total => total >= PET_DAILY_GOAL_SECONDS).length
+    return {
+      focusSeconds,
+      bonusDays,
+      totalSeconds: focusSeconds + bonusDays * BOND_DAILY_GOAL_BONUS_SECONDS,
+    }
+  })
+  const bondSeconds = computed(() => bondProgress.value.totalSeconds)
+  const currentBondLevel = computed(() => [...BOND_LEVELS]
+    .reverse()
+    .find(milestone => bondSeconds.value >= milestone.seconds) ?? BOND_LEVELS[0])
+  const level = computed(() => currentBondLevel.value.level)
+  const nextBondReward = computed(() => BOND_LEVELS.find(milestone => milestone.level === level.value + 1) ?? null)
+  const bondLevelStartSeconds = computed(() => currentBondLevel.value.seconds)
+  const bondLevelEndSeconds = computed(() => nextBondReward.value?.seconds ?? currentBondLevel.value.seconds)
+  const bondLevelSeconds = computed(() => Math.max(0, bondSeconds.value - bondLevelStartSeconds.value))
+  const bondLevelTargetSeconds = computed(() => Math.max(0, bondLevelEndSeconds.value - bondLevelStartSeconds.value))
+  const levelProgress = computed(() => nextBondReward.value && bondLevelTargetSeconds.value
+    ? Math.min(100, bondLevelSeconds.value / bondLevelTargetSeconds.value * 100)
+    : 100)
+  const bondRemainingSeconds = computed(() => Math.max(0, bondLevelEndSeconds.value - bondSeconds.value))
   const todaySeconds = computed(() => sessions.todayStudyTotalSeconds + timer.studyElapsedSeconds)
   const liveCareSeconds = computed(() => {
     if (!timer.activeSubjectId || timer.isInBreak) return 0
@@ -144,11 +201,12 @@ export const usePetStore = defineStore('pet', () => {
       const saved = await db.fetchPetProfile(auth.uid)
       const now = Date.now()
       const careStartedDate = saved?.careStartedDate ?? localDateStr()
+      const bondStartedAt = saved?.bondStartedAt ?? now
       profile.value = saved ?? {
-        petId: 'lumi', name: 'Lumi', careStartedDate, createdAt: now, updatedAt: now,
+        petId: 'lumi', name: 'Lumi', careStartedDate, bondStartedAt, createdAt: now, updatedAt: now,
       }
-      if (!saved?.careStartedDate) {
-        profile.value = { ...profile.value, careStartedDate, updatedAt: now }
+      if (!saved?.careStartedDate || !saved?.bondStartedAt) {
+        profile.value = { ...profile.value, careStartedDate, bondStartedAt, updatedAt: now }
         await db.savePetProfile(auth.uid, profile.value)
       }
       careSessions.value = await db.fetchSessionsByDateRange(auth.uid, careStartedDate, localDateStr())
@@ -165,10 +223,10 @@ export const usePetStore = defineStore('pet', () => {
     if (!trimmed) return
     const now = Date.now()
     const next: PetProfile = {
-      petId: 'lumi',
+      ...(profile.value ?? { petId: 'lumi', createdAt: now, updatedAt: now }),
       name: trimmed,
       careStartedDate: profile.value?.careStartedDate ?? localDateStr(),
-      createdAt: profile.value?.createdAt ?? now,
+      bondStartedAt: profile.value?.bondStartedAt ?? now,
       updatedAt: now,
     }
     profile.value = next
@@ -176,7 +234,9 @@ export const usePetStore = defineStore('pet', () => {
   }
 
   return {
-    profile, loading, name, bondPoints, level, levelProgress, todaySeconds, todayCareSeconds, todayCareBreakdown,
+    profile, loading, name, bondSeconds, bondBonusDays: computed(() => bondProgress.value.bonusDays),
+    level, levelProgress, bondLevelSeconds, bondLevelTargetSeconds,
+    bondRemainingSeconds, nextBondReward, todaySeconds, todayCareSeconds, todayCareBreakdown,
     dailyGoalSeconds: PET_DAILY_GOAL_SECONDS, maxHearts: PET_MAX_HEARTS,
     todayGoalMet, careProgress, missedDays, hearts, isAway, streak, streakAtRisk, careSummary,
     mood, moodLabel, message, load, rename,

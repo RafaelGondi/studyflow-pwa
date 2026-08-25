@@ -5,7 +5,14 @@
       `pet-stage--${mood}`,
       `pet-stage--facing-${facing}`,
       idleAnimation && `pet-stage--idle-${idleAnimation}`,
-      { 'pet-stage--interactive': interactive, 'pet-stage--reacting': reacting, 'pet-stage--blinking': blinking },
+      {
+        'pet-stage--interactive': interactive,
+        'pet-stage--reacting': reacting,
+        'pet-stage--blinking': blinking,
+        'pet-stage--bond-glow': bondLevel >= 4,
+        'pet-stage--bond-aura': bondLevel >= 7,
+        'pet-stage--evolved': bondLevel >= 10,
+      },
     ]"
     :style="{ '--pet-size': `${size}px` }"
     :role="interactive ? 'button' : 'img'"
@@ -42,18 +49,20 @@ const props = withDefaults(defineProps<{
   size?: number
   interactive?: boolean
   facing?: 'left' | 'right'
+  bondLevel?: number
 }>(), {
   name: 'Lumi',
   moodLabel: 'feliz',
   size: 144,
   interactive: false,
   facing: 'right',
+  bondLevel: 0,
 })
 
 const emit = defineEmits<{ pet: [] }>()
 const reacting = ref(false)
 const blinking = ref(false)
-type IdleAnimation = 'look' | 'stretch' | 'doze' | 'wobble' | 'bounce' | 'celebrate' | 'flicker'
+type IdleAnimation = 'look' | 'stretch' | 'doze' | 'wobble' | 'bounce' | 'celebrate' | 'dance' | 'flicker'
 const idleAnimation = ref<IdleAnimation | ''>('')
 let reactionTimer: ReturnType<typeof setTimeout> | null = null
 let idleTimer: ReturnType<typeof setTimeout> | null = null
@@ -65,9 +74,16 @@ const moodAnimations: Record<PetMood, IdleAnimation[]> = {
   sleepy: ['doze', 'stretch', 'look'],
   hungry: ['wobble', 'doze', 'look'],
   curious: ['look', 'stretch', 'bounce'],
-  happy: ['bounce', 'look', 'celebrate'],
-  proud: ['celebrate', 'bounce', 'look'],
+  happy: ['bounce', 'look', 'celebrate', 'dance'],
+  proud: ['celebrate', 'bounce', 'look', 'dance'],
   away: ['flicker'],
+}
+
+const animationUnlockLevel: Partial<Record<IdleAnimation, number>> = {
+  stretch: 1,
+  bounce: 2,
+  celebrate: 3,
+  dance: 6,
 }
 
 function clearIdleTimers() {
@@ -110,7 +126,8 @@ function scheduleIdle(delay = 4200 + Math.random() * 4200) {
   clearIdleTimers()
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.hidden) return
   idleTimer = setTimeout(() => {
-    const options = moodAnimations[props.mood]
+    const options = moodAnimations[props.mood].filter(animation =>
+      props.bondLevel >= (animationUnlockLevel[animation] ?? 0))
     playIdle(options[Math.floor(Math.random() * options.length)])
   }, delay)
 }
@@ -270,6 +287,9 @@ onBeforeUnmount(() => {
 .pet-stage--hungry .pet-stage__sprite { animation-duration: 4.8s; filter: saturate(.58) brightness(.9); }
 .pet-stage--away .pet-stage__sprite { animation: none; filter: grayscale(1); opacity: .16; }
 .pet-stage--away .pet-stage__ground { opacity: .2; }
+.pet-stage--bond-glow .pet-stage__ground { box-shadow: 0 0 calc(var(--pet-size) * .12) color-mix(in srgb, #e4ad36 45%, transparent); }
+.pet-stage--bond-aura::before { content: ''; position: absolute; inset: 15%; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 68%); filter: blur(5px); animation: pet-aura 3.4s ease-in-out infinite; }
+.pet-stage--evolved .pet-stage__art img { filter: saturate(1.16) drop-shadow(0 0 4px #f4d77d); }
 
 /* Pequenos gestos ocasionais. `steps` mantém o movimento com ritmo de sprite. */
 .pet-stage--idle-look .pet-stage__sprite { animation: pet-look 1.2s steps(6, end) both !important; }
@@ -278,10 +298,12 @@ onBeforeUnmount(() => {
 .pet-stage--idle-wobble .pet-stage__sprite { animation: pet-wobble 1.2s steps(7, end) both !important; }
 .pet-stage--idle-bounce .pet-stage__sprite { animation: pet-bounce 1.15s steps(7, end) both !important; }
 .pet-stage--idle-celebrate .pet-stage__sprite { animation: pet-celebrate 1.45s steps(9, end) both !important; }
+.pet-stage--idle-dance .pet-stage__sprite { animation: pet-dance 1.65s steps(10, end) both !important; }
 .pet-stage--idle-flicker .pet-stage__sprite { animation: pet-flicker 1.25s steps(4, end) both !important; }
 .pet-stage--idle-bounce .pet-stage__ground,
 .pet-stage--idle-celebrate .pet-stage__ground { animation: pet-bounce-shadow 1.2s steps(6, end) both !important; }
 .pet-stage--idle-celebrate .pet-stage__spark { animation: pet-celebrate-spark 1.45s steps(5, end) both !important; }
+.pet-stage--idle-dance .pet-stage__spark { animation: pet-celebrate-spark 1.65s steps(5, end) both !important; }
 
 .pet-stage__heart {
   position: absolute;
@@ -386,6 +408,19 @@ onBeforeUnmount(() => {
   64% { transform: translateY(-9%) rotate(5deg); }
   80% { transform: translateY(1%) rotate(-2deg) scale(1.04, .96); }
 }
+
+@keyframes pet-dance {
+  0%, 100% { transform: translate(0, 0) rotate(0) scale(1); }
+  12% { transform: translate(-5%, -2%) rotate(-7deg) scale(1.02); }
+  25% { transform: translate(4%, -7%) rotate(7deg) scale(.98, 1.04); }
+  38% { transform: translate(-4%, -3%) rotate(-6deg); }
+  52% { transform: translate(5%, -8%) rotate(8deg) scale(.97, 1.05); }
+  66% { transform: translate(-3%, -4%) rotate(-5deg); }
+  80% { transform: translate(3%, -7%) rotate(5deg); }
+  91% { transform: translateY(1%) scale(1.04, .96); }
+}
+
+@keyframes pet-aura { 0%, 100% { transform: scale(.92); opacity: .45; } 50% { transform: scale(1.08); opacity: .82; } }
 
 @keyframes pet-flicker {
   0%, 100% { opacity: .16; transform: translateY(0); }

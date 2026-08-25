@@ -82,7 +82,7 @@
       </div>
 
       <button type="button" class="pet-entry" @click="router.push('/rewards/pet')">
-        <PixelPet :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="88" />
+        <PixelPet :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="88" :bond-level="pet.level" />
         <span class="pet-entry__copy">
           <span class="pet-entry__label">Seu companheiro</span>
           <strong>{{ pet.name }}</strong>

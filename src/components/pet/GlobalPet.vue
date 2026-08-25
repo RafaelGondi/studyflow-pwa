@@ -15,7 +15,7 @@
         @keydown.space.prevent="handleTap"
       >
         <span v-if="attentionMessage" class="global-pet__bubble">{{ attentionMessage }}</span>
-        <PixelPet ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :facing="facing" :size="74" />
+        <PixelPet ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :facing="facing" :size="74" :bond-level="pet.level" />
         <span v-if="pet.isAway || pet.missedDays > 0" class="global-pet__alert" aria-hidden="true">!</span>
       </button>
     </div>
