@@ -1,7 +1,19 @@
 <template>
   <Transition name="global-pet">
-    <div v-if="visible" class="global-pet">
-      <button type="button" class="global-pet__button" :aria-label="ariaLabel" @click="handleTap">
+    <div
+      v-if="visible"
+      class="global-pet"
+      :class="{ 'global-pet--dragging': dragging }"
+      :style="positionStyle"
+    >
+      <button
+        type="button"
+        class="global-pet__button"
+        :aria-label="ariaLabel"
+        @pointerdown="startDrag"
+        @keydown.enter.prevent="handleTap"
+        @keydown.space.prevent="handleTap"
+      >
         <span v-if="attentionMessage" class="global-pet__bubble">{{ attentionMessage }}</span>
         <PixelPet ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="74" />
         <span v-if="pet.isAway || pet.missedDays > 0" class="global-pet__alert" aria-hidden="true">!</span>
@@ -11,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PixelPet from './PixelPet.vue'
 import { usePetStore } from '@/stores/pet'
@@ -20,12 +32,23 @@ const route = useRoute()
 const router = useRouter()
 const pet = usePetStore()
 const sprite = ref<InstanceType<typeof PixelPet> | null>(null)
-const reactionMessage = ref('')
+const position = ref<{ x: number; y: number } | null>(null)
+const dragging = ref(false)
 let navigationTimer: ReturnType<typeof setTimeout> | null = null
+let pointerId: number | null = null
+let dragTarget: HTMLElement | null = null
+let pressX = 0
+let pressY = 0
+let originX = 0
+let originY = 0
+const POSITION_KEY = 'studyflow_pet_position'
+const DRAG_THRESHOLD = 6
 
 const visible = computed(() => route.path !== '/rewards/pet')
+const positionStyle = computed(() => position.value
+  ? { left: `${position.value.x}px`, top: `${position.value.y}px`, bottom: 'auto' }
+  : undefined)
 const attentionMessage = computed(() => {
-  if (reactionMessage.value) return reactionMessage.value
   if (pet.isAway) return 'Complete 1h para eu voltar'
   if (pet.missedDays > 0) return 'Estou com fome'
   if (pet.streakAtRisk) return 'Nossa sequência está em risco'
@@ -38,14 +61,120 @@ const ariaLabel = computed(() => attentionMessage.value
 function handleTap() {
   if (navigationTimer) return
   sprite.value?.react()
-  reactionMessage.value = pet.isAway ? 'Ainda sinto seu carinho' : 'Carinho recebido!'
   navigationTimer = setTimeout(() => {
     navigationTimer = null
     void router.push('/rewards/pet')
   }, 680)
 }
 
-onBeforeUnmount(() => { if (navigationTimer) clearTimeout(navigationTimer) })
+function movementBounds() {
+  const shell = document.querySelector('.ak-app-root')?.getBoundingClientRect()
+  const nav = document.querySelector('.ak-tab-bar')?.getBoundingClientRect()
+  const minX = (shell?.left ?? 0) + 2
+  const maxX = Math.max(minX, (shell?.right ?? window.innerWidth) - 80)
+  const minY = (shell?.top ?? 0) + 4
+  const maxY = Math.max(minY, (nav?.top ?? window.innerHeight - 68) - 80)
+  return { minX, maxX, minY, maxY }
+}
+
+function clampPosition(x: number, y: number) {
+  const bounds = movementBounds()
+  return {
+    x: Math.min(bounds.maxX, Math.max(bounds.minX, x)),
+    y: Math.min(bounds.maxY, Math.max(bounds.minY, y)),
+  }
+}
+
+function startDrag(event: PointerEvent) {
+  if (event.button !== 0 || pointerId !== null) return
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  pointerId = event.pointerId
+  dragTarget = target
+  pressX = event.clientX
+  pressY = event.clientY
+  originX = rect.left
+  originY = rect.top
+  dragging.value = false
+  try { target.setPointerCapture(event.pointerId) } catch {}
+  window.addEventListener('pointermove', moveDrag)
+  window.addEventListener('pointerup', finishDrag)
+  window.addEventListener('pointercancel', cancelDrag)
+}
+
+function moveDrag(event: PointerEvent) {
+  if (event.pointerId !== pointerId) return
+  const dx = event.clientX - pressX
+  const dy = event.clientY - pressY
+  if (!dragging.value && Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+  dragging.value = true
+  position.value = clampPosition(originX + dx, originY + dy)
+}
+
+function finishDrag(event: PointerEvent) {
+  if (event.pointerId !== pointerId) return
+  if (dragTarget?.hasPointerCapture(event.pointerId)) dragTarget.releasePointerCapture(event.pointerId)
+  pointerId = null
+  dragTarget = null
+  removeDragListeners()
+  if (dragging.value && position.value) savePosition()
+  else handleTap()
+  dragging.value = false
+}
+
+function cancelDrag(event: PointerEvent) {
+  if (event.pointerId !== pointerId) return
+  pointerId = null
+  dragTarget = null
+  dragging.value = false
+  removeDragListeners()
+}
+
+function removeDragListeners() {
+  window.removeEventListener('pointermove', moveDrag)
+  window.removeEventListener('pointerup', finishDrag)
+  window.removeEventListener('pointercancel', cancelDrag)
+}
+
+function savePosition() {
+  if (!position.value) return
+  const bounds = movementBounds()
+  const width = Math.max(1, bounds.maxX - bounds.minX)
+  const height = Math.max(1, bounds.maxY - bounds.minY)
+  localStorage.setItem(POSITION_KEY, JSON.stringify({
+    x: (position.value.x - bounds.minX) / width,
+    y: (position.value.y - bounds.minY) / height,
+  }))
+}
+
+function restorePosition() {
+  try {
+    const raw = localStorage.getItem(POSITION_KEY)
+    if (!raw) return
+    const saved = JSON.parse(raw) as { x?: number; y?: number }
+    if (!Number.isFinite(saved.x) || !Number.isFinite(saved.y)) return
+    const bounds = movementBounds()
+    position.value = clampPosition(
+      bounds.minX + Math.min(1, Math.max(0, saved.x!)) * (bounds.maxX - bounds.minX),
+      bounds.minY + Math.min(1, Math.max(0, saved.y!)) * (bounds.maxY - bounds.minY),
+    )
+  } catch {}
+}
+
+function handleResize() {
+  if (!position.value) return
+  restorePosition()
+}
+
+onMounted(() => {
+  restorePosition()
+  window.addEventListener('resize', handleResize)
+})
+onBeforeUnmount(() => {
+  if (navigationTimer) clearTimeout(navigationTimer)
+  removeDragListeners()
+  window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <style scoped>
@@ -71,8 +200,14 @@ onBeforeUnmount(() => { if (navigationTimer) clearTimeout(navigationTimer) })
   color: var(--text);
   cursor: pointer;
   pointer-events: auto;
+  touch-action: none;
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
+
+.global-pet--dragging { z-index: 39; }
+.global-pet--dragging .global-pet__button { cursor: grabbing; transform: scale(1.06); }
+.global-pet:not(.global-pet--dragging) .global-pet__button { transition: transform .18s var(--ease-spring); }
 
 .global-pet__button:focus-visible {
   border-radius: var(--radius-full);
