@@ -59,6 +59,15 @@ export interface GamificationSettings {
   updatedAt: number
 }
 
+export type PetMood = 'sleepy' | 'curious' | 'happy' | 'proud'
+
+export interface PetProfile {
+  petId: 'lumi'
+  name: string
+  createdAt: number
+  updatedAt: number
+}
+
 export interface Reward {
   id: string
   name: string

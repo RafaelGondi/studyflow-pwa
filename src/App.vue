@@ -26,6 +26,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useSessionsStore } from '@/stores/sessions'
 import { useGamificationStore } from '@/stores/gamification'
+import { usePetStore } from '@/stores/pet'
 import { useAppTheme } from '@/composables/useAppTheme'
 import AppTabBar from '@/components/layout/AppTabBar.vue'
 import UpdateBanner from '@/components/ui/UpdateBanner.vue'
@@ -40,19 +41,20 @@ const authStore = useAuthStore()
 const subjectsStore = useSubjectsStore()
 const sessionsStore = useSessionsStore()
 const gamificationStore = useGamificationStore()
+const petStore = usePetStore()
 
 const appReady = ref(false)
 
 watch(() => authStore.uid, (newUid, oldUid) => {
   if (newUid && oldUid && newUid !== oldUid) {
-    void Promise.all([subjectsStore.load(), sessionsStore.loadToday(), gamificationStore.load()])
+    void Promise.all([subjectsStore.load(), sessionsStore.loadToday(), gamificationStore.load(), petStore.load()])
   }
 })
 
 onMounted(async () => {
   await authStore.init()
   try {
-    await Promise.all([subjectsStore.load(), sessionsStore.loadToday(), gamificationStore.load()])
+    await Promise.all([subjectsStore.load(), sessionsStore.loadToday(), gamificationStore.load(), petStore.load()])
   } catch (e) {
     console.error('[StudyFlow] Erro ao carregar dados iniciais:', e)
   } finally {

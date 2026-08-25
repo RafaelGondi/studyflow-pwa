@@ -3,7 +3,7 @@ import {
   getDoc, getDocs, query, where, orderBy, Timestamp, writeBatch, setDoc,
 } from 'firebase/firestore'
 import { db } from './config'
-import type { Subject, Category, StudySession, GamificationSettings, Reward, RewardRedemption } from '@/types'
+import type { Subject, Category, StudySession, GamificationSettings, PetProfile, Reward, RewardRedemption } from '@/types'
 
 // ── Collections ──────────────────────────────────────────────────────────────
 
@@ -11,6 +11,7 @@ function subjectsCol(uid: string) { return collection(db, 'users', uid, 'subject
 function categoriesCol(uid: string) { return collection(db, 'users', uid, 'categories') }
 function sessionsCol(uid: string) { return collection(db, 'users', uid, 'sessions') }
 function gamificationDoc(uid: string) { return doc(db, 'users', uid, 'settings', 'gamification') }
+function petDoc(uid: string) { return doc(db, 'users', uid, 'settings', 'pet') }
 function rewardsCol(uid: string) { return collection(db, 'users', uid, 'rewards') }
 function redemptionsCol(uid: string) { return collection(db, 'users', uid, 'rewardRedemptions') }
 
@@ -130,6 +131,15 @@ export async function saveGamificationSettings(
   settings: GamificationSettings,
 ): Promise<void> {
   await setDoc(gamificationDoc(uid), settings, { merge: true })
+}
+
+export async function fetchPetProfile(uid: string): Promise<PetProfile | null> {
+  const snap = await getDoc(petDoc(uid))
+  return snap.exists() ? snap.data() as PetProfile : null
+}
+
+export async function savePetProfile(uid: string, profile: PetProfile): Promise<void> {
+  await setDoc(petDoc(uid), profile, { merge: true })
 }
 
 export async function fetchRewards(uid: string): Promise<Reward[]> {

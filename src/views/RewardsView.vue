@@ -81,6 +81,16 @@
         <p>Seu saldo ficou negativo após uma alteração nos registros. Os próximos ganhos compensarão essa diferença.</p>
       </div>
 
+      <button type="button" class="pet-entry" @click="router.push('/rewards/pet')">
+        <PixelPet :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="88" />
+        <span class="pet-entry__copy">
+          <span class="pet-entry__label">Seu companheiro</span>
+          <strong>{{ pet.name }}</strong>
+          <span>Nível {{ pet.level }} · {{ pet.moodLabel }}</span>
+        </span>
+        <span class="pet-entry__arrow"><AkIcon name="arrow-right-outline" :size="18" /></span>
+      </button>
+
       <!--
         A entrada da lojinha. A lista inteira vivia aqui: com dez recompensas
         eram ~1400px de cromo quase idêntico entre o saldo e o extrato. Agora
@@ -219,7 +229,9 @@ import {
 } from '@rafael_dias/akoma'
 import CoinIcon from '@/components/ui/CoinIcon.vue'
 import AnimatedNumber from '@/components/ui/AnimatedNumber.vue'
+import PixelPet from '@/components/pet/PixelPet.vue'
 import { useGamificationStore, type WalletEntry } from '@/stores/gamification'
+import { usePetStore } from '@/stores/pet'
 import { useSubjectsStore } from '@/stores/subjects'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { useAppToast } from '@/composables/useAppToast'
@@ -232,6 +244,7 @@ import type { Reward, RewardRedemption } from '@/types'
 
 const router = useRouter()
 const gamification = useGamificationStore()
+const pet = usePetStore()
 const subjects = useSubjectsStore()
 const confirmSheet = useConfirmSheet()
 const toast = useAppToast()
@@ -375,6 +388,30 @@ const ledgerGroups = computed(() => {
 </script>
 
 <style scoped>
+/* ── Companheiro ─────────────────────────────────────── */
+.pet-entry {
+  display: grid;
+  grid-template-columns: 88px 1fr auto;
+  align-items: center;
+  width: 100%;
+  min-height: 104px;
+  margin-top: var(--space-4);
+  padding: 0 var(--space-4) 0 var(--space-2);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 8% 50%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 35%), var(--bg-elevated);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pet-entry__copy { display: grid; min-width: 0; gap: 2px; }
+.pet-entry__copy strong { font-family: var(--font-display); font-size: var(--text-lg); }
+.pet-entry__copy > span:last-child { color: var(--text-secondary); font-size: var(--text-sm); }
+.pet-entry__label { color: var(--accent); font-size: var(--text-xs); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.pet-entry__arrow { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--bg-subtle); color: var(--text-secondary); }
+
 /* ── Carteira ─────────────────────────────────────────── */
 .wallet {
   position: relative;
