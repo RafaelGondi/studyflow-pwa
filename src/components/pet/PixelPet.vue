@@ -9,6 +9,7 @@
         'pet-stage--interactive': interactive,
         'pet-stage--reacting': reacting,
         'pet-stage--blinking': blinking,
+        'pet-stage--feeding': feeding,
         'pet-stage--bond-glow': bondLevel >= 4,
         'pet-stage--bond-aura': bondLevel >= 7,
         'pet-stage--evolved': bondLevel >= 10,
@@ -62,9 +63,11 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ pet: [] }>()
 const reacting = ref(false)
 const blinking = ref(false)
+const feeding = ref(false)
 type IdleAnimation = 'look' | 'stretch' | 'doze' | 'wobble' | 'bounce' | 'celebrate' | 'dance' | 'flicker'
 const idleAnimation = ref<IdleAnimation | ''>('')
 let reactionTimer: ReturnType<typeof setTimeout> | null = null
+let feedingTimer: ReturnType<typeof setTimeout> | null = null
 let idleTimer: ReturnType<typeof setTimeout> | null = null
 let idleResetTimer: ReturnType<typeof setTimeout> | null = null
 let blinkTimer: ReturnType<typeof setTimeout> | null = null
@@ -172,7 +175,21 @@ async function react() {
   }, 760)
 }
 
-defineExpose({ react, celebrate: () => playIdle('celebrate') })
+async function feed() {
+  if (feedingTimer) clearTimeout(feedingTimer)
+  feeding.value = false
+  await nextTick()
+  feeding.value = true
+  idleAnimation.value = ''
+  clearIdleTimers()
+  try { navigator.vibrate?.([24, 35, 38]) } catch {}
+  feedingTimer = setTimeout(() => {
+    feeding.value = false
+    scheduleIdle(1800)
+  }, 1800)
+}
+
+defineExpose({ react, feed, celebrate: () => playIdle('celebrate') })
 watch(() => props.mood, (mood, previous) => {
   if (mood === 'proud' && previous !== 'proud') void playIdle('celebrate')
   else scheduleIdle(1200)
@@ -185,6 +202,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   if (reactionTimer) clearTimeout(reactionTimer)
+  if (feedingTimer) clearTimeout(feedingTimer)
   clearIdleTimers()
   clearBlinkTimers()
   document.removeEventListener('visibilitychange', handleVisibility)
@@ -336,6 +354,10 @@ onBeforeUnmount(() => {
 .pet-stage--reacting .pet-stage__sprite { animation: pet-petted .76s steps(6, end) both !important; }
 .pet-stage--reacting .pet-stage__ground { animation: pet-petted-shadow .76s steps(6, end) both !important; }
 .pet-stage--reacting .pet-stage__heart { animation: pet-heart .76s var(--ease-out-expo) both; }
+.pet-stage--feeding .pet-stage__sprite { animation: pet-fed 1.8s steps(10, end) both !important; filter: saturate(1.18) brightness(1.04); }
+.pet-stage--feeding .pet-stage__ground { animation: pet-fed-shadow 1.8s steps(8, end) both !important; }
+.pet-stage--feeding .pet-stage__spark { animation: pet-fed-spark 1.8s steps(6, end) both !important; }
+.pet-stage--feeding .pet-stage__heart { animation: pet-fed-heart 1.8s var(--ease-out-expo) both; }
 
 @keyframes pet-breathe {
   0%, 100% { transform: translateY(0) scaleY(1); }
@@ -377,6 +399,19 @@ onBeforeUnmount(() => {
   28% { opacity: 1; }
   100% { transform: translateY(-20px) scale(1.12) rotate(10deg); opacity: 0; }
 }
+
+@keyframes pet-fed {
+  0%, 100% { transform: translateY(0) rotate(0) scale(1); }
+  12% { transform: translateY(3%) scale(1.08, .91); }
+  28% { transform: translateY(-11%) rotate(-5deg) scale(.96, 1.07); }
+  43% { transform: translateY(-7%) rotate(6deg); }
+  58% { transform: translateY(-12%) rotate(-4deg) scale(.97, 1.06); }
+  73% { transform: translateY(1%) rotate(3deg) scale(1.08, .93); }
+  87% { transform: translateY(-3%) rotate(-1deg); }
+}
+@keyframes pet-fed-shadow { 0%, 100% { transform: scaleX(1); opacity: .7; } 28%, 60% { transform: scaleX(.55); opacity: .25; } 75% { transform: scaleX(1.12); opacity: .58; } }
+@keyframes pet-fed-spark { 0%, 100% { transform: translateY(9px) scale(.2) rotate(0); opacity: 0; } 25%, 72% { transform: translateY(-8px) scale(1.25) rotate(40deg); opacity: 1; } }
+@keyframes pet-fed-heart { 0% { transform: translateY(12px) scale(.25); opacity: 0; } 20%, 75% { opacity: 1; } 100% { transform: translateY(-30px) scale(1.22) rotate(12deg); opacity: 0; } }
 
 @keyframes pet-look {
   0%, 100% { transform: translateX(0) rotate(0); }

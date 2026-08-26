@@ -223,6 +223,13 @@ const displayedMessage = computed(() => {
   if (pet.hasEgg) return 'Tem alguém novo esperando para conhecer você.'
   return reactionMessage.value || pet.message
 })
+watch(() => pet.todayGoalMet, (met, wasMet) => {
+  if (!met || wasMet) return
+  if (reactionTimer) clearTimeout(reactionTimer)
+  reactionMessage.value = 'Estou saciada! Nossa meta de hoje está protegida. Obrigada por cuidar de mim.'
+  void petSprite.value?.feed()
+  reactionTimer = setTimeout(() => { reactionMessage.value = '' }, 4200)
+})
 const latestCelebration = computed(() => {
   const unseen = pet.unseenCelebrations
   if (unseen.length) return unseen[unseen.length - 1]

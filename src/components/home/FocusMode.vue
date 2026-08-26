@@ -17,6 +17,7 @@
 
         <div v-if="petStore.isActive" class="focus-pet" @dblclick.stop>
           <PixelPet
+            ref="focusPetSprite"
             interactive
             facing="right"
             :mood="petStore.mood"
@@ -133,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { AkIcon } from '@rafael_dias/akoma'
 import SubjectIcon from '@/components/ui/SubjectIcon.vue'
 import PomodoroCycle from '@/components/home/PomodoroCycle.vue'
@@ -156,6 +157,7 @@ const props = defineProps<{
 const emit = defineEmits<{ close: []; stop: [] }>()
 const timerStore = useTimerStore()
 const petStore = usePetStore()
+const focusPetSprite = ref<InstanceType<typeof PixelPet> | null>(null)
 const prefs = computed(() => timerStore.prefs)
 const focusPetSize = 112
 
@@ -184,6 +186,9 @@ watch(() => props.active, async (val) => {
       try { await document.exitFullscreen() } catch {}
     }
   }
+})
+watch(() => petStore.todayGoalMet, (met, wasMet) => {
+  if (met && !wasMet && props.active) void focusPetSprite.value?.feed()
 })
 
 function handleFullscreenChange() {

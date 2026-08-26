@@ -18,14 +18,14 @@
         <span v-if="pet.isDeparted" class="global-pet__star" aria-hidden="true">✦</span>
         <span v-else-if="pet.hasEgg" class="global-pet__egg" aria-hidden="true">🥚</span>
         <PixelPet v-else ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :facing="facing" :size="74" :bond-level="pet.level" />
-        <span v-if="pet.isDeparted || pet.hasEgg || pet.isAway || pet.missedDays > 0" class="global-pet__alert" aria-hidden="true">!</span>
+        <span v-if="pet.isDeparted || pet.hasEgg || (!pet.todayGoalMet && (pet.isAway || pet.missedDays > 0))" class="global-pet__alert" aria-hidden="true">!</span>
       </button>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PixelPet from './PixelPet.vue'
 import { usePetStore } from '@/stores/pet'
@@ -59,6 +59,7 @@ const facing = computed<'left' | 'right'>(() => {
 const attentionMessage = computed(() => {
   if (pet.isDeparted) return 'Um novo ovo está disponível'
   if (pet.hasEgg) return 'Toque para me fazer nascer'
+  if (pet.todayGoalMet) return ''
   if (pet.isAway) return 'Complete 1h para eu voltar'
   if (pet.missedDays > 0) return 'Estou com fome'
   if (pet.streakAtRisk) return 'Nossa sequência está em risco'
@@ -179,6 +180,9 @@ function handleResize() {
 onMounted(() => {
   restorePosition()
   window.addEventListener('resize', handleResize)
+})
+watch(() => pet.todayGoalMet, (met, wasMet) => {
+  if (met && !wasMet) void sprite.value?.feed()
 })
 onBeforeUnmount(() => {
   if (navigationTimer) clearTimeout(navigationTimer)
