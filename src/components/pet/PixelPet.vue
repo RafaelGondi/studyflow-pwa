@@ -272,7 +272,7 @@ onBeforeUnmount(() => {
   image-rendering: pixelated;
   user-select: none;
 }
-.pet-stage--caju .pet-stage__art img { transform: scale(1.03); }
+.pet-stage--caju .pet-stage__art img { transform: scale(1.16); }
 .pet-stage--caju .pet-stage__eyelid { display: none; }
 
 .pet-stage__eyelid {
