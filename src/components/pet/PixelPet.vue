@@ -3,6 +3,7 @@
     class="pet-stage"
     :class="[
       `pet-stage--${mood}`,
+      `pet-stage--${petId}`,
       `pet-stage--facing-${facing}`,
       idleAnimation && `pet-stage--idle-${idleAnimation}`,
       {
@@ -27,7 +28,7 @@
     <span class="pet-stage__spark pet-stage__spark--two">✦</span>
     <div class="pet-stage__sprite">
       <div class="pet-stage__art">
-        <img src="/pets/lumi.png" alt="" draggable="false" />
+        <img :src="`/pets/${petId}.png`" alt="" draggable="false" />
         <span class="pet-stage__eyelid pet-stage__eyelid--left" aria-hidden="true" />
         <span class="pet-stage__eyelid pet-stage__eyelid--right" aria-hidden="true" />
       </div>
@@ -41,7 +42,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { PetMood } from '@/types'
+import type { PetId, PetMood } from '@/types'
 
 const props = withDefaults(defineProps<{
   mood: PetMood
@@ -51,6 +52,7 @@ const props = withDefaults(defineProps<{
   interactive?: boolean
   facing?: 'left' | 'right'
   bondLevel?: number
+  petId?: PetId
 }>(), {
   name: 'Lumi',
   moodLabel: 'feliz',
@@ -58,6 +60,7 @@ const props = withDefaults(defineProps<{
   interactive: false,
   facing: 'right',
   bondLevel: 0,
+  petId: 'lumi',
 })
 
 const emit = defineEmits<{ pet: [] }>()
@@ -92,6 +95,22 @@ const animationUnlockLevel: Partial<Record<IdleAnimation, number>> = {
   bounce: 2,
   celebrate: 3,
   dance: 6,
+}
+
+const bondUnlockAnimations: Array<{ level: number; animation: IdleAnimation }> = [
+  { level: 1, animation: 'stretch' },
+  { level: 2, animation: 'bounce' },
+  { level: 3, animation: 'celebrate' },
+  { level: 6, animation: 'dance' },
+]
+
+function availableIdleAnimations() {
+  if (props.mood === 'away') return moodAnimations.away
+  const unlocked = bondUnlockAnimations
+    .filter(item => props.bondLevel >= item.level)
+    .map(item => item.animation)
+  return [...new Set([...moodAnimations[props.mood], ...unlocked])]
+    .filter(animation => props.bondLevel >= (animationUnlockLevel[animation] ?? 0))
 }
 
 function clearIdleTimers() {
@@ -134,8 +153,7 @@ function scheduleIdle(delay = 4200 + Math.random() * 4200) {
   clearIdleTimers()
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.hidden) return
   idleTimer = setTimeout(() => {
-    const options = moodAnimations[props.mood].filter(animation =>
-      props.bondLevel >= (animationUnlockLevel[animation] ?? 0))
+    const options = availableIdleAnimations()
     playIdle(options[Math.floor(Math.random() * options.length)])
   }, delay)
 }
@@ -144,10 +162,11 @@ async function playIdle(animation: IdleAnimation) {
   idleAnimation.value = ''
   await nextTick()
   idleAnimation.value = animation
+  const duration = ({ stretch: 1500, bounce: 1450, celebrate: 1500, dance: 1700 } as Partial<Record<IdleAnimation, number>>)[animation] ?? 1250
   idleResetTimer = setTimeout(() => {
     idleAnimation.value = ''
     scheduleIdle()
-  }, animation === 'celebrate' ? 1500 : 1250)
+  }, duration)
 }
 
 function handleVisibility() {
@@ -194,6 +213,12 @@ watch(() => props.mood, (mood, previous) => {
   if (mood === 'proud' && previous !== 'proud') void playIdle('celebrate')
   else scheduleIdle(1200)
   scheduleBlink(900 + Math.random() * 1000)
+})
+watch(() => props.bondLevel, (level, previous) => {
+  if (level <= previous || document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const unlocked = bondUnlockAnimations.filter(item => item.level > previous && item.level <= level)
+  const latest = unlocked[unlocked.length - 1]
+  if (latest) void playIdle(latest.animation)
 })
 onMounted(() => {
   scheduleIdle(1800 + Math.random() * 1800)
@@ -247,6 +272,8 @@ onBeforeUnmount(() => {
   image-rendering: pixelated;
   user-select: none;
 }
+.pet-stage--caju .pet-stage__art img { transform: scale(1.03); }
+.pet-stage--caju .pet-stage__eyelid { display: none; }
 
 .pet-stage__eyelid {
   position: absolute;
@@ -326,10 +353,10 @@ onBeforeUnmount(() => {
 
 /* Pequenos gestos ocasionais. `steps` mantém o movimento com ritmo de sprite. */
 .pet-stage--idle-look .pet-stage__sprite { animation: pet-look 1.2s steps(6, end) both !important; }
-.pet-stage--idle-stretch .pet-stage__sprite { animation: pet-stretch 1.2s steps(5, end) both !important; }
+.pet-stage--idle-stretch .pet-stage__sprite { animation: pet-stretch 1.45s steps(6, end) both !important; }
 .pet-stage--idle-doze .pet-stage__sprite { animation: pet-doze 1.25s steps(5, end) both !important; }
 .pet-stage--idle-wobble .pet-stage__sprite { animation: pet-wobble 1.2s steps(7, end) both !important; }
-.pet-stage--idle-bounce .pet-stage__sprite { animation: pet-bounce 1.15s steps(7, end) both !important; }
+.pet-stage--idle-bounce .pet-stage__sprite { animation: pet-bounce 1.4s steps(8, end) both !important; }
 .pet-stage--idle-celebrate .pet-stage__sprite { animation: pet-celebrate 1.45s steps(9, end) both !important; }
 .pet-stage--idle-dance .pet-stage__sprite { animation: pet-dance 1.65s steps(10, end) both !important; }
 .pet-stage--idle-flicker .pet-stage__sprite { animation: pet-flicker 1.25s steps(4, end) both !important; }
@@ -421,9 +448,10 @@ onBeforeUnmount(() => {
 
 @keyframes pet-stretch {
   0%, 100% { transform: scale(1); }
-  25% { transform: translateY(3%) scale(1.06, .92); }
-  52% { transform: translateY(-3%) scale(.94, 1.08); }
-  74% { transform: translateY(1%) scale(1.03, .97); }
+  18% { transform: translateY(5%) scale(1.12, .86); }
+  45% { transform: translateY(-7%) scale(.89, 1.14); }
+  68% { transform: translateY(-3%) rotate(-3deg) scale(.96, 1.07); }
+  84% { transform: translateY(2%) rotate(2deg) scale(1.05, .95); }
 }
 
 @keyframes pet-doze {
@@ -443,11 +471,11 @@ onBeforeUnmount(() => {
 
 @keyframes pet-bounce {
   0%, 100% { transform: translateY(0) scale(1); }
-  18% { transform: translateY(2%) scale(1.05, .94); }
-  36% { transform: translateY(-8%) scale(.97, 1.04); }
-  52% { transform: translateY(0) scale(1.04, .96); }
-  68% { transform: translateY(-4%) scale(.99, 1.02); }
-  82% { transform: translateY(0) scale(1.02, .98); }
+  14% { transform: translateY(4%) scale(1.09, .9); }
+  31% { transform: translateY(-15%) scale(.95, 1.08); }
+  48% { transform: translateY(1%) scale(1.08, .92); }
+  65% { transform: translateY(-10%) scale(.97, 1.05); }
+  82% { transform: translateY(1%) scale(1.04, .96); }
 }
 
 @keyframes pet-celebrate {

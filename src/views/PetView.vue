@@ -18,7 +18,7 @@
           <span class="pet-egg__shell" />
           <span class="pet-egg__shadow" />
         </button>
-        <PixelPet v-else ref="petSprite" interactive :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" :bond-level="pet.level" @pet="handlePet" />
+        <PixelPet v-else ref="petSprite" interactive :pet-id="pet.petId" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="224" :bond-level="pet.level" @pet="handlePet" />
         <p class="speech" aria-live="polite">“{{ displayedMessage }}”</p>
       </section>
 
@@ -41,11 +41,37 @@
         </details>
       </section>
 
+      <section v-if="pet.isActive" class="companion-picker">
+        <div class="companion-picker__head">
+          <div>
+            <span class="eyebrow">Companheiro</span>
+            <strong>Quem acompanha seu foco?</strong>
+          </div>
+          <small>Trocar preserva todo o progresso</small>
+        </div>
+        <div class="companion-options">
+          <button
+            v-for="option in petOptions"
+            :key="option.id"
+            type="button"
+            class="companion-option"
+            :class="{ 'companion-option--selected': pet.petId === option.id }"
+            :aria-pressed="pet.petId === option.id"
+            :disabled="selectingPet"
+            @click="selectPet(option.id)"
+          >
+            <PixelPet :pet-id="option.id" mood="curious" mood-label="curioso" :name="option.name" :size="76" />
+            <span><strong>{{ option.name }}</strong><small>{{ option.description }}</small></span>
+            <span class="companion-option__check">{{ pet.petId === option.id ? '✓' : '' }}</span>
+          </button>
+        </div>
+      </section>
+
       <section v-if="pet.isDeparted || pet.hasEgg" class="lifecycle-card">
         <template v-if="pet.isDeparted">
           <span class="eyebrow">Um novo começo</span>
           <strong>{{ pet.name }} agora vive no seu memorial</strong>
-          <p>Um ovo custa {{ pet.eggCost }} moedas. A nova Lumi começa no vínculo 0 e o registro da sua antiga companheira permanece guardado.</p>
+          <p>Um ovo custa {{ pet.eggCost }} moedas. O novo companheiro começa no vínculo 0 e o registro do anterior permanece guardado.</p>
           <AkButton variant="primary" :loading="buyingEgg" :disabled="gamification.balance < pet.eggCost" @click="buyEgg">
             Comprar ovo · {{ pet.eggCost }} moedas
           </AkButton>
@@ -189,12 +215,12 @@ import { useRouter } from 'vue-router'
 import { AkButton, AkIcon, AkInput, AkPageHeader } from '@rafael_dias/akoma'
 import PixelPet from '@/components/pet/PixelPet.vue'
 import SubjectIcon from '@/components/ui/SubjectIcon.vue'
-import { BOND_LEVELS, usePetStore } from '@/stores/pet'
+import { BOND_LEVELS, PET_OPTIONS, usePetStore } from '@/stores/pet'
 import { useGamificationStore } from '@/stores/gamification'
 import { useAppToast } from '@/composables/useAppToast'
 import { useConfirmSheet } from '@/composables/useConfirmSheet'
 import { formatDuration } from '@/types'
-import type { PetCelebration } from '@/types'
+import type { PetCelebration, PetId } from '@/types'
 
 const router = useRouter()
 const pet = usePetStore()
@@ -205,9 +231,11 @@ const draftName = ref(pet.name)
 const saving = ref(false)
 const buyingEgg = ref(false)
 const hatching = ref(false)
+const selectingPet = ref(false)
 const reactionMessage = ref('')
 const petSprite = ref<InstanceType<typeof PixelPet> | null>(null)
 const bondMilestones = BOND_LEVELS.slice(1)
+const petOptions = PET_OPTIONS
 let reactionTimer: ReturnType<typeof setTimeout> | null = null
 let reactionIndex = 0
 
@@ -309,6 +337,21 @@ async function saveName() {
   }
 }
 
+async function selectPet(nextPetId: PetId) {
+  if (pet.petId === nextPetId || selectingPet.value) return
+  selectingPet.value = true
+  try {
+    await pet.choosePet(nextPetId)
+    draftName.value = pet.name
+    void petSprite.value?.celebrate()
+    toast.success(`${pet.name} chegou`, 'Vínculo, corações e memórias foram preservados.')
+  } catch {
+    toast.error('Não foi possível trocar agora', 'Tente novamente quando estiver conectado.')
+  } finally {
+    selectingPet.value = false
+  }
+}
+
 async function buyEgg() {
   const confirmed = await confirmSheet.ask({
     title: 'Comprar um novo ovo?',
@@ -337,7 +380,7 @@ async function hatchEgg() {
   try {
     await pet.hatchEgg()
     draftName.value = pet.name
-    toast.success('Uma nova Lumi nasceu', 'A nova geração começa no vínculo 0.')
+    toast.success(`${pet.name} nasceu`, 'A nova geração começa no vínculo 0.')
   } catch {
     toast.error('O ovo ainda não eclodiu', 'Tente novamente quando estiver conectado.')
   } finally {
@@ -356,7 +399,8 @@ async function hatchEgg() {
 .habitat__star { position: absolute; color: color-mix(in srgb, #e4ad36 78%, var(--text)); font-size: 20px; }
 .habitat__star--one { top: 18%; left: 18%; }.habitat__star--two { top: 13%; right: 21%; font-size: 38px; }
 .speech { position: absolute; left: var(--space-4); right: var(--space-4); bottom: var(--space-4); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--bg) 88%, transparent); color: var(--text-secondary); text-align: center; font-size: var(--text-sm); backdrop-filter: blur(8px); }
-.care-card, .bond-card, .today-card, .name-card, .lifecycle-card, .memorial-card, .memory-card, .celebration-card { margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elevated); }
+.care-card, .bond-card, .today-card, .name-card, .lifecycle-card, .memorial-card, .memory-card, .celebration-card, .companion-picker { margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-elevated); }
+.companion-picker__head { display: flex; align-items: end; justify-content: space-between; gap: var(--space-3); }.companion-picker__head > div { display: grid; gap: 3px; }.companion-picker__head > small { color: var(--text-secondary); font-size: var(--text-xs); text-align: right; }.companion-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-3); }.companion-option { position: relative; display: grid; grid-template-columns: 76px 1fr; align-items: center; min-width: 0; padding: 4px var(--space-3) 4px 2px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-soft); color: var(--text); text-align: left; cursor: pointer; transition: border-color .18s, background .18s, transform .18s var(--ease-spring); }.companion-option:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }.companion-option--selected { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--bg-soft)); }.companion-option > span:nth-child(2) { display: grid; gap: 3px; min-width: 0; }.companion-option > span:nth-child(2) small { color: var(--text-secondary); font-size: 10px; line-height: 1.3; }.companion-option__check { position: absolute; top: 7px; right: 8px; color: var(--accent); font-size: var(--text-sm); font-weight: 800; }
 .celebration-card { position: relative; display: grid; grid-template-columns: 52px 1fr; gap: var(--space-3); overflow: hidden; border-color: color-mix(in srgb, #e4ad36 38%, var(--border)); }.celebration-card--new { background: radial-gradient(circle at 10% 15%, color-mix(in srgb, #e4ad36 16%, transparent), transparent 42%), var(--bg-elevated); box-shadow: 0 8px 28px color-mix(in srgb, #e4ad36 10%, transparent); }.celebration-card--new::after { content: '✦  ·  ✦'; position: absolute; top: 10px; right: 14px; color: color-mix(in srgb, #e4ad36 62%, transparent); font-size: 12px; letter-spacing: 5px; animation: celebration-spark 2s ease-in-out infinite; }.celebration-card__icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: var(--radius-md); background: color-mix(in srgb, #e4ad36 16%, var(--bg-soft)); font-size: 27px; }.celebration-card__copy { display: grid; gap: 4px; min-width: 0; }.celebration-card__copy > strong { font-size: var(--text-lg); }.celebration-card__copy p { color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.45; }.celebration-card__copy .ak-button { width: max-content; margin-top: var(--space-2); }.celebration-history { grid-column: 1 / -1; padding-top: var(--space-2); border-top: 1px solid var(--border); }.celebration-history summary { color: var(--accent); font-size: var(--text-sm); font-weight: 650; cursor: pointer; }.celebration-history ol { display: grid; margin-top: var(--space-2); padding: 0; list-style: none; }.celebration-history li { display: grid; grid-template-columns: 28px 1fr; align-items: center; gap: var(--space-2); padding: 8px 0; border-top: 1px solid var(--border); }.celebration-history li div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }.celebration-history li strong { font-size: var(--text-sm); }.celebration-history li small { color: var(--text-secondary); font-size: var(--text-xs); }
 .star-spirit { color: #e4ad36; font-size: 92px; line-height: 1; text-shadow: 0 0 24px color-mix(in srgb, #e4ad36 55%, transparent); animation: star-spirit 2.8s ease-in-out infinite; }
 .pet-egg { position: relative; width: 150px; height: 170px; border: 0; background: transparent; cursor: pointer; }.pet-egg__shell { position: absolute; z-index: 2; left: 35px; top: 12px; width: 80px; height: 112px; border: 6px solid #193f55; border-radius: 48% 48% 44% 44% / 58% 58% 42% 42%; background: linear-gradient(145deg, #d9f3ee 0 42%, #79c7c2 43% 62%, #f1d275 63%); image-rendering: pixelated; animation: egg-wiggle 2.4s steps(2, end) infinite; }.pet-egg__shadow { position: absolute; left: 41px; right: 41px; bottom: 27px; height: 13px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 24%, transparent); }
@@ -388,6 +432,7 @@ async function hatchEgg() {
 .today-card { display: flex; align-items: center; gap: var(--space-3); }.today-card__icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: var(--radius-md); background: color-mix(in srgb, #e4ad36 15%, var(--bg-subtle)); color: #c58a13; font-size: 22px; }.today-card div:last-child { display: grid; gap: 3px; }
 .name-card { display: grid; gap: var(--space-4); }.name-form { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--space-2); }
 .care-rules { margin-top: var(--space-4); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); color: var(--text-secondary); font-size: var(--text-sm); }.care-rules summary { color: var(--text); font-weight: 650; cursor: pointer; }.care-rules p { margin-top: var(--space-2); line-height: 1.5; }
+@media (max-width: 430px) { .companion-options { grid-template-columns: 1fr; }.companion-picker__head { align-items: start; }.companion-picker__head > small { max-width: 120px; } }
 @media (max-width: 390px) { .name-form { grid-template-columns: 1fr; } }
 @keyframes star-spirit { 0%, 100% { transform: scale(.9) rotate(-4deg); opacity: .68; } 50% { transform: scale(1.08) rotate(5deg); opacity: 1; } }
 @keyframes egg-wiggle { 0%, 72%, 100% { transform: rotate(0); } 80% { transform: rotate(-4deg); } 90% { transform: rotate(4deg); } }

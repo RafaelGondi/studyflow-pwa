@@ -19,6 +19,7 @@
           <PixelPet
             ref="focusPetSprite"
             interactive
+            :pet-id="petStore.petId"
             facing="right"
             :mood="petStore.mood"
             :name="petStore.name"

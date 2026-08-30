@@ -73,10 +73,11 @@ export type PetMood =
   | 'away'
 
 export type PetLifecycleState = 'active' | 'departed' | 'egg'
+export type PetId = 'lumi' | 'caju'
 
 export interface PetMemorial {
   id: string
-  petId: 'lumi'
+  petId: PetId
   name: string
   generation: number
   bornAt: number
@@ -99,8 +100,9 @@ export interface PetCelebration {
 }
 
 export interface PetProfile {
-  petId: 'lumi'
+  petId: PetId
   name: string
+  petNames?: Partial<Record<PetId, string>>
   careStartedDate?: string
   careStartedAt?: number
   /** Marco da nova progressão de vínculo, independente do histórico de moedas. */

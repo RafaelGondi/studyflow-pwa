@@ -17,7 +17,7 @@
         <span v-if="attentionMessage" class="global-pet__bubble">{{ attentionMessage }}</span>
         <span v-if="pet.isDeparted" class="global-pet__star" aria-hidden="true">✦</span>
         <span v-else-if="pet.hasEgg" class="global-pet__egg" aria-hidden="true">🥚</span>
-        <PixelPet v-else ref="sprite" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :facing="facing" :size="74" :bond-level="pet.level" />
+        <PixelPet v-else ref="sprite" :pet-id="pet.petId" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :facing="facing" :size="74" :bond-level="pet.level" />
         <span v-if="pet.isDeparted || pet.hasEgg || (!pet.todayGoalMet && (pet.isAway || pet.missedDays > 0))" class="global-pet__alert" aria-hidden="true">!</span>
       </button>
     </div>

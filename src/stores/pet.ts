@@ -7,7 +7,7 @@ import { useSubjectsStore } from './subjects'
 import { useTimerStore } from './timer'
 import * as db from '@/firebase/db'
 import { formatDuration, isStudySession, localDateStr } from '@/types'
-import type { PetCelebration, PetMemorial, PetMood, PetProfile, StudySession } from '@/types'
+import type { PetCelebration, PetId, PetMemorial, PetMood, PetProfile, StudySession } from '@/types'
 import { ACTIVITIES, DEFAULT_ACTIVITY, activityMultiplier } from '@/utils/coins'
 
 export const PET_DAILY_GOAL_SECONDS = 60 * 60
@@ -15,6 +15,15 @@ export const PET_MAX_HEARTS = 5
 export const BOND_DAILY_GOAL_BONUS_SECONDS = 10 * 60
 export const PET_DEPARTURE_DAYS = 8
 export const PET_EGG_COST = 300
+
+export const PET_OPTIONS: ReadonlyArray<{ id: PetId; name: string; description: string }> = [
+  { id: 'lumi', name: 'Lumi', description: 'Espírito de foco curioso e brilhante.' },
+  { id: 'caju', name: 'Caju', description: 'Panda-vermelho calmo e companheiro.' },
+]
+
+function defaultPetName(petId: PetId) {
+  return PET_OPTIONS.find(option => option.id === petId)?.name ?? 'Lumi'
+}
 
 export interface PetMemory {
   id: string
@@ -86,7 +95,8 @@ export const usePetStore = defineStore('pet', () => {
   const careSessions = ref<StudySession[]>([])
   const loading = ref(false)
 
-  const name = computed(() => profile.value?.name || 'Lumi')
+  const petId = computed<PetId>(() => profile.value?.petId ?? 'lumi')
+  const name = computed(() => profile.value?.name || defaultPetName(petId.value))
   const lifecycleState = computed(() => profile.value?.lifecycleState ?? 'active')
   const isDeparted = computed(() => lifecycleState.value === 'departed')
   const hasEgg = computed(() => lifecycleState.value === 'egg')
@@ -480,7 +490,7 @@ export const usePetStore = defineStore('pet', () => {
   function createMemorial(now: number): PetMemorial {
     return {
       id: `${generation.value}-${now}`,
-      petId: 'lumi',
+      petId: petId.value,
       name: name.value,
       generation: generation.value,
       bornAt: profile.value?.createdAt ?? now,
@@ -514,13 +524,18 @@ export const usePetStore = defineStore('pet', () => {
       const careStartedDate = saved?.careStartedDate ?? localDateStr()
       const careStartedAt = saved?.careStartedAt ?? parseDate(careStartedDate).getTime()
       const bondStartedAt = saved?.bondStartedAt ?? now
+      const savedPetId: PetId = saved?.petId === 'caju' ? 'caju' : 'lumi'
+      const petNames = saved?.petNames ?? { [savedPetId]: saved?.name ?? defaultPetName(savedPetId) }
       profile.value = saved ?? {
-        petId: 'lumi', name: 'Lumi', careStartedDate, careStartedAt, bondStartedAt,
+        petId: 'lumi', name: 'Lumi', petNames: { lumi: 'Lumi' }, careStartedDate, careStartedAt, bondStartedAt,
         lifecycleState: 'active', generation: 1, memorials: [], celebrations: [], createdAt: now, updatedAt: now,
       }
-      if (!saved?.careStartedDate || !saved?.careStartedAt || !saved?.bondStartedAt || !saved?.lifecycleState || !saved?.generation) {
+      if (!saved?.careStartedDate || !saved?.careStartedAt || !saved?.bondStartedAt || !saved?.lifecycleState || !saved?.generation || !saved?.petNames) {
         profile.value = {
           ...profile.value,
+          petId: savedPetId,
+          name: saved?.name ?? defaultPetName(savedPetId),
+          petNames,
           careStartedDate,
           careStartedAt,
           bondStartedAt,
@@ -550,12 +565,29 @@ export const usePetStore = defineStore('pet', () => {
     const next: PetProfile = {
       ...(profile.value ?? { petId: 'lumi', createdAt: now, updatedAt: now }),
       name: trimmed,
+      petNames: { ...(profile.value?.petNames ?? {}), [petId.value]: trimmed },
       careStartedDate: profile.value?.careStartedDate ?? localDateStr(),
       bondStartedAt: profile.value?.bondStartedAt ?? now,
       updatedAt: now,
     }
     profile.value = next
     await db.savePetProfile(auth.uid, next)
+  }
+
+  async function choosePet(nextPetId: PetId) {
+    if (!auth.uid || !profile.value || !isActive.value || nextPetId === petId.value) return
+    const now = Date.now()
+    const names = { ...(profile.value.petNames ?? {}), [petId.value]: name.value }
+    const nextName = names[nextPetId] ?? defaultPetName(nextPetId)
+    const next: PetProfile = {
+      ...profile.value,
+      petId: nextPetId,
+      name: nextName,
+      petNames: { ...names, [nextPetId]: nextName },
+      updatedAt: now,
+    }
+    await db.savePetProfile(auth.uid, next)
+    profile.value = next
   }
 
   async function purchaseEgg() {
@@ -579,7 +611,7 @@ export const usePetStore = defineStore('pet', () => {
     const now = Date.now()
     const next: PetProfile = {
       ...profile.value,
-      name: 'Lumi',
+      name: profile.value.petNames?.[petId.value] ?? defaultPetName(petId.value),
       lifecycleState: 'active',
       generation: generation.value + 1,
       careStartedDate: localDateStr(),
@@ -603,7 +635,7 @@ export const usePetStore = defineStore('pet', () => {
   )
 
   return {
-    profile, loading, name, lifecycleState, isActive, isDeparted, hasEgg, generation, memorials,
+    profile, loading, petId, name, lifecycleState, isActive, isDeparted, hasEgg, generation, memorials,
     celebrations, unseenCelebrations,
     memories, reactionMessages, lastCompletedSession, isDailyRecord,
     bondSeconds, bondBonusDays: computed(() => bondProgress.value.bonusDays),
@@ -611,7 +643,7 @@ export const usePetStore = defineStore('pet', () => {
     bondRemainingSeconds, nextBondReward, todaySeconds, todayCareSeconds, todayCareBreakdown,
     dailyGoalSeconds: PET_DAILY_GOAL_SECONDS, maxHearts: PET_MAX_HEARTS,
     todayGoalMet, careProgress, missedDays, hearts, isAway, rescueDaysRemaining, streak, streakAtRisk, careSummary,
-    mood, moodLabel, message, load, rename, purchaseEgg, hatchEgg, markCelebrationsSeen,
+    mood, moodLabel, message, load, rename, choosePet, purchaseEgg, hatchEgg, markCelebrationsSeen,
     eggCost: PET_EGG_COST, departureDays: PET_DEPARTURE_DAYS,
   }
 })

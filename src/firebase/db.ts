@@ -152,7 +152,7 @@ export async function purchasePetEgg(
   const redemption: RewardRedemption = {
     id: redemptionRef.id,
     rewardId: 'system-pet-egg',
-    rewardName: 'Ovo da Lumi',
+    rewardName: 'Ovo de mascote',
     rewardIcon: '🥚',
     cost,
     userId: uid,

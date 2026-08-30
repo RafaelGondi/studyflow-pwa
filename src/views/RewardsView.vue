@@ -84,7 +84,7 @@
       <button type="button" class="pet-entry" @click="router.push('/rewards/pet')">
         <span v-if="pet.isDeparted" class="pet-entry__lifecycle">✦</span>
         <span v-else-if="pet.hasEgg" class="pet-entry__lifecycle">🥚</span>
-        <PixelPet v-else :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="88" :bond-level="pet.level" />
+        <PixelPet v-else :pet-id="pet.petId" :mood="pet.mood" :name="pet.name" :mood-label="pet.moodLabel" :size="88" :bond-level="pet.level" />
         <span class="pet-entry__copy">
           <span class="pet-entry__label">Seu companheiro</span>
           <strong>{{ pet.name }}</strong>
